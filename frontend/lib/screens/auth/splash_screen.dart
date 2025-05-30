@@ -22,12 +22,12 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     
     _logoController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     
     _textController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
@@ -59,13 +59,13 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _startAnimations() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 200));
     _logoController.forward();
     
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 400));
     _textController.forward();
     
-    await Future.delayed(const Duration(milliseconds: 2000));
+    await Future.delayed(const Duration(milliseconds: 900));
     if (mounted) {
       context.go('/home');
     }

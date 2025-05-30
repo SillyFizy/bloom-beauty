@@ -247,7 +247,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
                 label: 'Home',
                 index: 0,
               ),
-              _buildNavItem(
+                _buildNavItem(
                 icon: Icons.grid_view_outlined,
                 activeIcon: Icons.grid_view,
                 label: 'Categories',
