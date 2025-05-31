@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_constants.dart';
 import '../../models/product_model.dart';
+import '../../screens/celebrity/celebrity_screen.dart';
 
 class CelebrityPickCard extends StatefulWidget {
   final Product product;
@@ -8,6 +9,7 @@ class CelebrityPickCard extends StatefulWidget {
   final String celebrityImage;
   final String? testimonial;
   final VoidCallback? onTap;
+  final VoidCallback? onCelebrityTap;
   final int index;
 
   const CelebrityPickCard({
@@ -17,6 +19,7 @@ class CelebrityPickCard extends StatefulWidget {
     required this.celebrityImage,
     this.testimonial,
     this.onTap,
+    this.onCelebrityTap,
     required this.index,
   });
 
@@ -327,92 +330,106 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                               bottom: 0,
                               left: 0,
                               right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.black.withOpacity(0.8),
-                                      Colors.black.withOpacity(0.4),
-                                      Colors.transparent,
-                                    ],
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    // Celebrity avatar
-                                    Container(
-                                      width: 32,
-                                      height: 32,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            AppConstants.accentColor,
-                                            AppConstants.favoriteColor,
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 2,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.2),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          widget.celebrityName[0],
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CelebrityScreen(
+                                        celebrityName: widget.celebrityName,
+                                        celebrityImage: widget.celebrityImage,
+                                        testimonial: widget.testimonial,
                                       ),
                                     ),
-                                    
-                                    const SizedBox(width: 10),
-                                    
-                                    // Celebrity name
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            widget.celebrityName,
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.black.withOpacity(0.8),
+                                        Colors.black.withOpacity(0.4),
+                                        Colors.transparent,
+                                      ],
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      // Celebrity avatar
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              AppConstants.accentColor,
+                                              AppConstants.favoriteColor,
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.2),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            widget.celebrityName[0],
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.2,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 1),
-                                          Text(
-                                            'Celebrity Pick',
-                                            style: TextStyle(
-                                              color: AppConstants.accentColor.withOpacity(0.9),
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w500,
-                                              letterSpacing: 0.3,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      
+                                      const SizedBox(width: 10),
+                                      
+                                      // Celebrity name
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              widget.celebrityName,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: 0.2,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 1),
+                                            Text(
+                                              'Celebrity Pick',
+                                              style: TextStyle(
+                                                color: AppConstants.accentColor.withOpacity(0.9),
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w500,
+                                                letterSpacing: 0.3,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

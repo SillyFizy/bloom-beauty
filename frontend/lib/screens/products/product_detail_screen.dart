@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
+import '../celebrity/celebrity_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -1218,101 +1219,115 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
     final endorsement = widget.product.celebrityEndorsement!;
     
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppConstants.favoriteColor.withOpacity(0.08),
-            AppConstants.accentColor.withOpacity(0.05),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CelebrityScreen(
+              celebrityName: endorsement.celebrityName,
+              celebrityImage: endorsement.celebrityImage,
+              testimonial: endorsement.testimonial,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppConstants.favoriteColor.withOpacity(0.08),
+              AppConstants.accentColor.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppConstants.favoriteColor.withOpacity(0.3),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppConstants.favoriteColor.withOpacity(0.1),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppConstants.favoriteColor.withOpacity(0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppConstants.favoriteColor.withOpacity(0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Celebrity Profile Picture
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppConstants.favoriteColor,
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppConstants.favoriteColor.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: CircleAvatar(
-              radius: 28,
-              backgroundColor: AppConstants.surfaceColor,
-              backgroundImage: NetworkImage(endorsement.celebrityImage),
-              onBackgroundImageError: (exception, stackTrace) {
-                // Fallback to icon if image fails to load
-              },
-              child: endorsement.celebrityImage.isEmpty ? 
-                Icon(
-                  Icons.star_rounded,
+        child: Row(
+          children: [
+            // Celebrity Profile Picture
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
                   color: AppConstants.favoriteColor,
-                  size: 28,
-                ) : null,
-            ),
-          ),
-          
-          const SizedBox(width: 16),
-          
-          // "Picked by" text and celebrity name
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Picked by',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppConstants.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  width: 2,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  endorsement.celebrityName,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppConstants.favoriteColor.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: CircleAvatar(
+                radius: 28,
+                backgroundColor: AppConstants.surfaceColor,
+                backgroundImage: NetworkImage(endorsement.celebrityImage),
+                onBackgroundImageError: (exception, stackTrace) {
+                  // Fallback to icon if image fails to load
+                },
+                child: endorsement.celebrityImage.isEmpty ? 
+                  Icon(
+                    Icons.star_rounded,
                     color: AppConstants.favoriteColor,
-                  ),
-                ),
-              ],
+                    size: 28,
+                  ) : null,
+              ),
             ),
-          ),
-          
-          // Star icon accent
-          Icon(
-            Icons.star_rounded,
-            color: AppConstants.favoriteColor,
-            size: 20,
-          ),
-        ],
+            
+            const SizedBox(width: 16),
+            
+            // "Picked by" text and celebrity name
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Picked by',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppConstants.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    endorsement.celebrityName,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppConstants.favoriteColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Star icon accent
+            Icon(
+              Icons.star_rounded,
+              color: AppConstants.favoriteColor,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
