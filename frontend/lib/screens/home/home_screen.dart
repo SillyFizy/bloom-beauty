@@ -40,6 +40,24 @@ class _HomeScreenState extends State<HomeScreen> {
       'name': 'Emma Stone',
       'image': 'emma.jpg',
       'testimonial': 'This serum transformed my skin overnight!',
+      'socialMediaLinks': {
+        'instagram': 'https://instagram.com/emmastone',
+        'facebook': 'https://facebook.com/EmmaStoneOfficial',
+      },
+      'recommendedProducts': [
+        _bestsellingProducts[0], // Anti-aging Serum
+        _newArrivals[0], // Retinol Night Cream
+      ],
+      'morningRoutineProducts': [
+        _bestsellingProducts[0], // Anti-aging Serum
+        _bestsellingProducts[1], // Aloe Vera Gel
+        _newArrivals[1], // Sunscreen SPF 50
+      ],
+      'eveningRoutineProducts': [
+        _newArrivals[0], // Retinol Night Cream
+        _bestsellingProducts[2], // Vitamin C Brightening Mask
+        _trendingProducts[0], // Hydrating Toner
+      ],
       'product': Product(
         id: 'cp1',
         name: 'Glow Serum',
@@ -90,6 +108,26 @@ class _HomeScreenState extends State<HomeScreen> {
       'name': 'Rihanna',
       'image': 'rihanna.jpg',
       'testimonial': 'Perfect for my everyday glow',
+      'socialMediaLinks': {
+        'instagram': 'https://instagram.com/badgalriri',
+        'facebook': 'https://facebook.com/rihanna',
+        'snapchat': 'https://snapchat.com/add/rihanna',
+      },
+      'recommendedProducts': [
+        _bestsellingProducts[1], // Aloe Vera Gel
+        _bestsellingProducts[2], // Vitamin C Brightening Mask
+      ],
+      'morningRoutineProducts': [
+        _trendingProducts[1], // Charcoal Face Wash
+        _bestsellingProducts[1], // Aloe Vera Gel
+        _newArrivals[1], // Sunscreen SPF 50
+      ],
+      'eveningRoutineProducts': [
+        _trendingProducts[1], // Charcoal Face Wash
+        _bestsellingProducts[2], // Vitamin C Brightening Mask
+        _newArrivals[0], // Retinol Night Cream
+        _trendingProducts[0], // Hydrating Toner
+      ],
       'product': Product(
         id: 'cp2',
         name: 'Fenty Cream',
@@ -140,6 +178,24 @@ class _HomeScreenState extends State<HomeScreen> {
       'name': 'Zendaya',
       'image': 'zendaya.jpg',
       'testimonial': 'Love how natural this makes my skin look',
+      'socialMediaLinks': {
+        'instagram': 'https://instagram.com/zendaya',
+        'snapchat': 'https://snapchat.com/add/zendayaa',
+      },
+      'recommendedProducts': [
+        _newArrivals[1], // Sunscreen SPF 50
+        _trendingProducts[0], // Hydrating Toner
+      ],
+      'morningRoutineProducts': [
+        _trendingProducts[0], // Hydrating Toner
+        _bestsellingProducts[0], // Anti-aging Serum
+        _newArrivals[1], // Sunscreen SPF 50
+      ],
+      'eveningRoutineProducts': [
+        _trendingProducts[1], // Charcoal Face Wash
+        _trendingProducts[0], // Hydrating Toner
+        _bestsellingProducts[0], // Anti-aging Serum
+      ],
       'product': Product(
         id: 'cp3',
         name: 'Natural Foundation',
@@ -195,6 +251,26 @@ class _HomeScreenState extends State<HomeScreen> {
       'name': 'Selena Gomez',
       'image': 'selena.jpg',
       'testimonial': 'This lipstick is my go-to for every occasion',
+      'socialMediaLinks': {
+        'instagram': 'https://instagram.com/selenagomez',
+        'facebook': 'https://facebook.com/Selena',
+        'snapchat': 'https://snapchat.com/add/selenagomez',
+      },
+      'recommendedProducts': [
+        _bestsellingProducts[2], // Vitamin C Brightening Mask
+        _trendingProducts[1], // Charcoal Face Wash
+      ],
+      'morningRoutineProducts': [
+        _trendingProducts[1], // Charcoal Face Wash
+        _bestsellingProducts[2], // Vitamin C Brightening Mask
+        _bestsellingProducts[1], // Aloe Vera Gel
+        _newArrivals[1], // Sunscreen SPF 50
+      ],
+      'eveningRoutineProducts': [
+        _trendingProducts[1], // Charcoal Face Wash
+        _bestsellingProducts[0], // Anti-aging Serum
+        _newArrivals[0], // Retinol Night Cream
+      ],
       'product': Product(
         id: 'cp4',
         name: 'Rare Lipstick',
@@ -250,6 +326,26 @@ class _HomeScreenState extends State<HomeScreen> {
       'name': 'Kim Kardashian',
       'image': 'kim.jpg',
       'testimonial': 'The contouring power is incredible',
+      'socialMediaLinks': {
+        'instagram': 'https://instagram.com/kimkardashian',
+        'facebook': 'https://facebook.com/KimKardashian',
+        'snapchat': 'https://snapchat.com/add/kimkardashian',
+      },
+      'recommendedProducts': [
+        _bestsellingProducts[0], // Anti-aging Serum
+        _newArrivals[0], // Retinol Night Cream
+      ],
+      'morningRoutineProducts': [
+        _trendingProducts[1], // Charcoal Face Wash
+        _bestsellingProducts[0], // Anti-aging Serum
+        _bestsellingProducts[1], // Aloe Vera Gel
+        _newArrivals[1], // Sunscreen SPF 50
+      ],
+      'eveningRoutineProducts': [
+        _trendingProducts[1], // Charcoal Face Wash
+        _newArrivals[0], // Retinol Night Cream
+        _trendingProducts[0], // Hydrating Toner
+      ],
       'product': Product(
         id: 'cp5',
         name: 'Contour Kit',
@@ -299,6 +395,24 @@ class _HomeScreenState extends State<HomeScreen> {
       'name': 'Taylor Swift',
       'image': 'taylor.jpg',
       'testimonial': 'Perfect red for my signature look',
+      'socialMediaLinks': {
+        'instagram': 'https://instagram.com/taylorswift',
+        'facebook': 'https://facebook.com/TaylorSwift',
+      },
+      'recommendedProducts': [
+        _trendingProducts[0], // Hydrating Toner
+        _bestsellingProducts[1], // Aloe Vera Gel
+      ],
+      'morningRoutineProducts': [
+        _trendingProducts[0], // Hydrating Toner
+        _bestsellingProducts[1], // Aloe Vera Gel
+        _newArrivals[1], // Sunscreen SPF 50
+      ],
+      'eveningRoutineProducts': [
+        _trendingProducts[1], // Charcoal Face Wash
+        _bestsellingProducts[2], // Vitamin C Brightening Mask
+        _newArrivals[0], // Retinol Night Cream
+      ],
       'product': Product(
         id: 'cp6',
         name: 'Red Lip Classic',
@@ -655,49 +769,57 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppConstants.backgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              _buildHeader(),
-              
-              // Banner Section
-              _buildBannerSection(),
-              
-              // Celebrity Beauty Picks
-              _buildCelebritySection(),
-              
-              // New Arrivals
-              _buildNewArrivalsSection(),
-              
-              // Bestselling Skincare
-              _buildBestsellingSection(),
-              
-              // Trending Makeup
-              _buildTrendingSection(),
-              
-              const SizedBox(height: 40), // Bottom padding for nav bar
-            ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Determine screen size
+        final isSmallScreen = constraints.maxWidth < 600;
+        final isMediumScreen = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
+        
+        return Scaffold(
+          backgroundColor: AppConstants.backgroundColor,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  _buildHeader(isSmallScreen),
+                  
+                  // Banner Section
+                  _buildBannerSection(isSmallScreen),
+                  
+                  // Celebrity Beauty Picks
+                  _buildCelebritySection(isSmallScreen, isMediumScreen),
+                  
+                  // New Arrivals
+                  _buildNewArrivalsSection(isSmallScreen, isMediumScreen),
+                  
+                  // Bestselling Skincare
+                  _buildBestsellingSection(isSmallScreen, isMediumScreen),
+                  
+                  // Trending Makeup
+                  _buildTrendingSection(isSmallScreen, isMediumScreen),
+                  
+                  const SizedBox(height: 40), // Bottom padding for nav bar
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isSmallScreen) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             'Bloom Beauty',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: isSmallScreen ? 20 : 24,
               fontWeight: FontWeight.w600,
               color: AppConstants.accentColor,
             ),
@@ -711,7 +833,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(
               Icons.notifications_outlined,
               color: AppConstants.accentColor,
-              size: 28,
+              size: isSmallScreen ? 24 : 28,
             ),
           ),
         ],
@@ -719,12 +841,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBannerSection() {
+  Widget _buildBannerSection(bool isSmallScreen) {
     return Column(
       children: [
         Container(
-          height: 200,
-          margin: const EdgeInsets.symmetric(horizontal: 16),
+          height: isSmallScreen ? 160 : 200,
+          margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             color: AppConstants.backgroundColor,
@@ -759,15 +881,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Icon(
                             Icons.spa_outlined,
-                            size: 60,
+                            size: isSmallScreen ? 45 : 60,
                             color: Colors.white,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             _bannerImages[index],
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: isSmallScreen ? 16 : 18,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -787,8 +909,8 @@ class _HomeScreenState extends State<HomeScreen> {
           children: List.generate(
             _bannerImages.length,
             (index) => Container(
-              width: 8,
-              height: 8,
+              width: isSmallScreen ? 6 : 8,
+              height: isSmallScreen ? 6 : 8,
               margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -803,7 +925,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCelebritySection() {
+  Widget _buildCelebritySection(bool isSmallScreen, bool isMediumScreen) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 400),
@@ -818,7 +940,12 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // Animated title section
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 32, 16, 20),
+                  padding: EdgeInsets.fromLTRB(
+                    isSmallScreen ? 12 : 16, 
+                    isSmallScreen ? 24 : 32, 
+                    isSmallScreen ? 12 : 16, 
+                    isSmallScreen ? 16 : 20
+                  ),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutBack,
@@ -837,7 +964,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Transform.rotate(
                                 angle: (1 - starValue) * 0.3,
                                 child: Container(
-                                  padding: const EdgeInsets.all(8),
+                                  padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     gradient: LinearGradient(
@@ -850,14 +977,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Icon(
                                     Icons.star_rounded,
                                     color: AppConstants.accentColor,
-                                    size: 20,
+                                    size: isSmallScreen ? 16 : 20,
                                   ),
                                 ),
                               ),
                             );
                           },
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: isSmallScreen ? 8 : 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -874,10 +1001,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                       child: Text(
                                         'CELEBRITY PICKS',
                                         style: TextStyle(
-                                          fontSize: 18,
+                                          fontSize: isSmallScreen ? 16 : 18,
                                           fontWeight: FontWeight.bold,
                                           color: AppConstants.textPrimary,
-                                          letterSpacing: 1.2,
+                                          letterSpacing: isSmallScreen ? 0.8 : 1.2,
                                         ),
                                       ),
                                     ),
@@ -897,7 +1024,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       child: Text(
                                         'Handpicked by your favorite stars',
                                         style: TextStyle(
-                                          fontSize: 13,
+                                          fontSize: isSmallScreen ? 11 : 13,
                                           color: AppConstants.textSecondary,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -914,13 +1041,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 
-                // Enhanced horizontal scrolling list with faster animations
+                // Enhanced horizontal scrolling list with responsive sizing
                 SizedBox(
-                  height: 300,
+                  height: isSmallScreen ? 280 : 300,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
                     itemCount: _celebrityPicks.length,
                     itemBuilder: (context, index) {
                       final pick = _celebrityPicks[index];
@@ -934,13 +1061,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Opacity(
                               opacity: itemValue,
                               child: Container(
-                                width: 200,
-                                margin: const EdgeInsets.only(right: 16),
+                                width: isSmallScreen ? 180 : 200,
+                                margin: EdgeInsets.only(right: isSmallScreen ? 12 : 16),
                                 child: CelebrityPickCard(
                                   product: pick['product'] as Product,
                                   celebrityName: pick['name'] as String,
                                   celebrityImage: pick['image'] as String,
                                   testimonial: pick['testimonial'] as String?,
+                                  socialMediaLinks: pick['socialMediaLinks'] as Map<String, String>? ?? {},
+                                  recommendedProducts: pick['recommendedProducts'] as List<Product>? ?? [],
+                                  morningRoutineProducts: pick['morningRoutineProducts'] as List<Product>? ?? [],
+                                  eveningRoutineProducts: pick['eveningRoutineProducts'] as List<Product>? ?? [],
                                   index: index,
                                   onTap: () {
                                     Navigator.push(
@@ -969,37 +1100,57 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildNewArrivalsSection() {
+  Widget _buildNewArrivalsSection(bool isSmallScreen, bool isMediumScreen) {
+    // Calculate grid columns based on screen size
+    int crossAxisCount;
+    double childAspectRatio;
+    
+    if (isSmallScreen) {
+      crossAxisCount = 2;
+      childAspectRatio = 0.7;
+    } else if (isMediumScreen) {
+      crossAxisCount = 3;
+      childAspectRatio = 0.75;
+    } else {
+      crossAxisCount = 4;
+      childAspectRatio = 0.8;
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
+          padding: EdgeInsets.fromLTRB(
+            isSmallScreen ? 12 : 16, 
+            isSmallScreen ? 24 : 32, 
+            isSmallScreen ? 12 : 16, 
+            isSmallScreen ? 12 : 16
+          ),
           child: Text(
             'NEW ARRIVALS',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isSmallScreen ? 14 : 16,
               fontWeight: FontWeight.bold,
               color: AppConstants.accentColor,
-              letterSpacing: 1.2,
+              letterSpacing: isSmallScreen ? 0.8 : 1.2,
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
           child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.75,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: isSmallScreen ? 8 : 12,
+              mainAxisSpacing: isSmallScreen ? 8 : 12,
+              childAspectRatio: childAspectRatio,
             ),
             itemCount: _newArrivals.length,
             itemBuilder: (context, index) {
               final product = _newArrivals[index];
-              return _buildNewArrivalCard(product);
+              return _buildNewArrivalCard(product, isSmallScreen);
             },
           ),
         ),
@@ -1007,7 +1158,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildNewArrivalCard(Product product) {
+  Widget _buildNewArrivalCard(Product product, bool isSmallScreen) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -1050,17 +1201,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Center(
                       child: Icon(
                         Icons.spa_outlined,
-                        size: 40,
+                        size: isSmallScreen ? 32 : 40,
                         color: AppConstants.accentColor.withOpacity(0.5),
                       ),
                     ),
                   ),
                   Positioned(
-                    top: 8,
-                    right: 8,
+                    top: isSmallScreen ? 6 : 8,
+                    right: isSmallScreen ? 6 : 8,
                     child: Container(
-                      width: 32,
-                      height: 32,
+                      width: isSmallScreen ? 28 : 32,
+                      height: isSmallScreen ? 28 : 32,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
@@ -1074,7 +1225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Icon(
                         Icons.favorite_border,
-                        size: 18,
+                        size: isSmallScreen ? 14 : 18,
                         color: AppConstants.favoriteColor,
                       ),
                     ),
@@ -1086,7 +1237,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1095,7 +1246,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         product.name,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: isSmallScreen ? 11 : 13,
                           fontWeight: FontWeight.w600,
                           color: AppConstants.textPrimary,
                           height: 1.2,
@@ -1104,14 +1255,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: isSmallScreen ? 4 : 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           _formatPrice(product.price),
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: isSmallScreen ? 11 : 13,
                             fontWeight: FontWeight.bold,
                             color: AppConstants.textPrimary,
                           ),
@@ -1122,7 +1273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Icon(
                               Icons.star,
-                              size: 12,
+                              size: isSmallScreen ? 10 : 12,
                               color: AppConstants.accentColor,
                             ),
                             const SizedBox(width: 2),
@@ -1130,7 +1281,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Text(
                                 product.rating.toString(),
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: isSmallScreen ? 9 : 11,
                                   color: AppConstants.textSecondary,
                                 ),
                               ),
@@ -1149,31 +1300,36 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBestsellingSection() {
+  Widget _buildBestsellingSection(bool isSmallScreen, bool isMediumScreen) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
+          padding: EdgeInsets.fromLTRB(
+            isSmallScreen ? 12 : 16, 
+            isSmallScreen ? 24 : 32, 
+            isSmallScreen ? 12 : 16, 
+            isSmallScreen ? 12 : 16
+          ),
           child: Text(
             'BESTSELLING SKINCARE',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isSmallScreen ? 14 : 16,
               fontWeight: FontWeight.bold,
               color: AppConstants.accentColor,
-              letterSpacing: 1.2,
+              letterSpacing: isSmallScreen ? 0.8 : 1.2,
             ),
           ),
         ),
         SizedBox(
-          height: 180, // Increased height to prevent overflow
+          height: isSmallScreen ? 160 : 180,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
             itemCount: _bestsellingProducts.length,
             itemBuilder: (context, index) {
               final product = _bestsellingProducts[index];
-              return _buildHorizontalProductCard(product);
+              return _buildHorizontalProductCard(product, isSmallScreen);
             },
           ),
         ),
@@ -1181,31 +1337,36 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTrendingSection() {
+  Widget _buildTrendingSection(bool isSmallScreen, bool isMediumScreen) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
+          padding: EdgeInsets.fromLTRB(
+            isSmallScreen ? 12 : 16, 
+            isSmallScreen ? 24 : 32, 
+            isSmallScreen ? 12 : 16, 
+            isSmallScreen ? 12 : 16
+          ),
           child: Text(
             'TRENDING MAKEUP',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isSmallScreen ? 14 : 16,
               fontWeight: FontWeight.bold,
               color: AppConstants.accentColor,
-              letterSpacing: 1.2,
+              letterSpacing: isSmallScreen ? 0.8 : 1.2,
             ),
           ),
         ),
         SizedBox(
-          height: 180, // Increased height to prevent overflow
+          height: isSmallScreen ? 160 : 180,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
             itemCount: _trendingProducts.length,
             itemBuilder: (context, index) {
               final product = _trendingProducts[index];
-              return _buildHorizontalProductCard(product);
+              return _buildHorizontalProductCard(product, isSmallScreen);
             },
           ),
         ),
@@ -1213,83 +1374,140 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHorizontalProductCard(Product product) {
+  Widget _buildHorizontalProductCard(Product product, bool isSmallScreen) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(
-              product: product,
-            ),
+            builder: (context) => ProductDetailScreen(product: product),
           ),
         );
       },
       child: Container(
-        width: 140, // Increased width for better layout
-        margin: const EdgeInsets.only(right: 16),
+        width: isSmallScreen ? 120 : 140,
+        margin: EdgeInsets.only(right: isSmallScreen ? 8 : 12),
+        decoration: BoxDecoration(
+          color: AppConstants.surfaceColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product image container
+            // Image with favorite button
             Expanded(
               flex: 3,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: AppConstants.backgroundColor,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.spa_outlined,
-                    size: 40,
-                    color: AppConstants.accentColor.withOpacity(0.5),
-                  ),
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 12),
-            
-            // Product details
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-                  // Product name
-                  Text(
-                    product.name,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppConstants.textPrimary,
-                      height: 1.2,
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      color: AppConstants.backgroundColor,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    child: Center(
+                      child: Icon(
+                        Icons.spa_outlined,
+                        size: isSmallScreen ? 28 : 35,
+                        color: AppConstants.accentColor.withOpacity(0.5),
+                      ),
+                    ),
                   ),
-                  
-                  const Spacer(),
-                  
-                  // Price
-                  Text(
-                    _formatPrice(product.price),
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppConstants.accentColor,
+                  Positioned(
+                    top: isSmallScreen ? 4 : 6,
+                    right: isSmallScreen ? 4 : 6,
+                    child: Container(
+                      width: isSmallScreen ? 24 : 28,
+                      height: isSmallScreen ? 24 : 28,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.favorite_border,
+                        size: isSmallScreen ? 12 : 14,
+                        color: AppConstants.favoriteColor,
+                      ),
                     ),
                   ),
                 ],
+              ),
+            ),
+            // Product details
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        product.name,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 10 : 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppConstants.textPrimary,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    SizedBox(height: isSmallScreen ? 2 : 4),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _formatPrice(product.price),
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 9 : 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppConstants.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.star,
+                              size: isSmallScreen ? 8 : 10,
+                              color: AppConstants.accentColor,
+                            ),
+                            const SizedBox(width: 2),
+                            Flexible(
+                              child: Text(
+                                product.rating.toString(),
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 8 : 9,
+                                  color: AppConstants.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

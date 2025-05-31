@@ -11,6 +11,10 @@ class CelebrityPickCard extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onCelebrityTap;
   final int index;
+  final Map<String, String> socialMediaLinks;
+  final List<Product> recommendedProducts;
+  final List<Product> morningRoutineProducts;
+  final List<Product> eveningRoutineProducts;
 
   const CelebrityPickCard({
     super.key,
@@ -21,6 +25,10 @@ class CelebrityPickCard extends StatefulWidget {
     this.onTap,
     this.onCelebrityTap,
     required this.index,
+    this.socialMediaLinks = const {},
+    this.recommendedProducts = const [],
+    this.morningRoutineProducts = const [],
+    this.eveningRoutineProducts = const [],
   });
 
   @override
@@ -339,6 +347,10 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                         celebrityName: widget.celebrityName,
                                         celebrityImage: widget.celebrityImage,
                                         testimonial: widget.testimonial,
+                                        socialMediaLinks: widget.socialMediaLinks,
+                                        recommendedProducts: widget.recommendedProducts,
+                                        morningRoutineProducts: widget.morningRoutineProducts,
+                                        eveningRoutineProducts: widget.eveningRoutineProducts,
                                       ),
                                     ),
                                   );
