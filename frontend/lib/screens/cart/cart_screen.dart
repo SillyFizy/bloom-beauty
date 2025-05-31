@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/cart/cart_item_widget.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../utils/formatters.dart';
 import '../../constants/app_constants.dart';
+import '../../providers/cart_provider.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -13,69 +15,20 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  List<Map<String, dynamic>> cartItems = [
-    {
-      'id': '1',
-      'imageUrl': 'image1.jpg',
-      'name': 'Hydrating Face Cream',
-      'brand': 'BeautyBrand',
-      'price': 24.99,
-      'quantity': 2,
-    },
-    {
-      'id': '2',
-      'imageUrl': 'image2.jpg',
-      'name': 'Matte Lipstick',
-      'brand': 'ColorCo',
-      'price': 19.99,
-      'quantity': 1,
-    },
-    {
-      'id': '3',
-      'imageUrl': 'image3.jpg',
-      'name': 'Vitamin C Serum',
-      'brand': 'VitaminPlus',
-      'price': 34.99,
-      'quantity': 1,
-    },
-  ];
-
-  double get subtotal {
-    return cartItems.fold(0.0, (sum, item) => 
-        sum + (item['price'] * item['quantity']));
-  }
-
+  
   double get shipping => 5.99;
-  double get tax => subtotal * 0.08;
-  double get total => subtotal + shipping + tax;
+  double get taxRate => 0.08;
 
-  void _incrementQuantity(String id) {
-    setState(() {
-      final index = cartItems.indexWhere((item) => item['id'] == id);
-      if (index != -1) {
-        cartItems[index]['quantity']++;
-      }
-    });
-  }
-
-  void _decrementQuantity(String id) {
-    setState(() {
-      final index = cartItems.indexWhere((item) => item['id'] == id);
-      if (index != -1 && cartItems[index]['quantity'] > 1) {
-        cartItems[index]['quantity']--;
-      }
-    });
-  }
-
-  void _removeItem(String id) {
-    setState(() {
-      cartItems.removeWhere((item) => item['id'] == id);
-    });
+  void _clearCart() {
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    cartProvider.clearCart();
     
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Item removed from cart'),
-        backgroundColor: AppConstants.errorColor,
+      const SnackBar(
+        content: Text('Cart cleared'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -86,25 +39,27 @@ class _CartScreenState extends State<CartScreen> {
       appBar: AppBar(
         title: const Text('Shopping Cart'),
         actions: [
-          if (cartItems.isNotEmpty)
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  cartItems.clear();
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Cart cleared'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              },
-              child: const Text('Clear All'),
-            ),
+          Consumer<CartProvider>(
+            builder: (context, cart, child) {
+              return cart.isEmpty ? const SizedBox.shrink() : TextButton(
+                onPressed: _clearCart,
+                child: const Text('Clear All'),
+              );
+            },
+          ),
         ],
       ),
-      body: cartItems.isEmpty ? _buildEmptyCart() : _buildCartContent(),
-      bottomNavigationBar: cartItems.isNotEmpty ? _buildCheckoutSection() : null,
+      body: Consumer<CartProvider>(
+        builder: (context, cart, child) {
+          return cart.isEmpty ? _buildEmptyCart() : _buildCartContent(cart);
+        },
+      ),
+      bottomNavigationBar: Consumer<CartProvider>(
+        builder: (context, cart, child) {
+          if (cart.isEmpty) return const SizedBox.shrink();
+          return _buildCheckoutSection(cart);
+        },
+      ),
     );
   }
 
@@ -142,7 +97,11 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildCartContent() {
+  Widget _buildCartContent(CartProvider cart) {
+    final subtotal = cart.totalPrice;
+    final tax = subtotal * taxRate;
+    final total = subtotal + shipping + tax;
+
     return Column(
       children: [
         // Cart header
@@ -157,7 +116,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                '${cartItems.length} item${cartItems.length != 1 ? 's' : ''} in cart',
+                '${cart.items.length} item${cart.items.length != 1 ? 's' : ''} in cart',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -169,30 +128,54 @@ class _CartScreenState extends State<CartScreen> {
         // Cart items
         Expanded(
           child: ListView.builder(
-            itemCount: cartItems.length,
+            itemCount: cart.items.length,
             itemBuilder: (context, index) {
-              final item = cartItems[index];
+              final item = cart.items[index];
+              final variant = item.selectedVariant != null 
+                  ? item.product.variants.firstWhere(
+                      (v) => v.id == item.selectedVariant,
+                      orElse: () => item.product.variants.first,
+                    )
+                  : null;
+              
               return CartItemWidget(
-                imageUrl: item['imageUrl'],
-                name: item['name'],
-                brand: item['brand'],
-                price: item['price'],
-                quantity: item['quantity'],
-                onIncrement: () => _incrementQuantity(item['id']),
-                onDecrement: () => _decrementQuantity(item['id']),
-                onRemove: () => _removeItem(item['id']),
+                imageUrl: 'image_placeholder.jpg', // Use a placeholder since we don't have real images
+                name: item.product.name,
+                brand: item.product.brand,
+                price: item.product.getCurrentPrice(),
+                quantity: item.quantity,
+                variant: variant?.name,
+                onIncrement: () {
+                  cart.updateItemQuantity(item.id, item.quantity + 1);
+                },
+                onDecrement: () {
+                  if (item.quantity > 1) {
+                    cart.updateItemQuantity(item.id, item.quantity - 1);
+                  }
+                },
+                onRemove: () {
+                  cart.removeItem(item.id);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Item removed from cart'),
+                      backgroundColor: AppConstants.errorColor,
+                      duration: const Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
               );
             },
           ),
         ),
         
         // Order summary
-        _buildOrderSummary(),
+        _buildOrderSummary(subtotal, tax, total),
       ],
     );
   }
 
-  Widget _buildOrderSummary() {
+  Widget _buildOrderSummary(double subtotal, double tax, double total) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -258,7 +241,11 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildCheckoutSection() {
+  Widget _buildCheckoutSection(CartProvider cart) {
+    final subtotal = cart.totalPrice;
+    final tax = subtotal * taxRate;
+    final total = subtotal + shipping + tax;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

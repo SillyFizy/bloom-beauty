@@ -2,8 +2,8 @@ import 'package:intl/intl.dart';
 
 class Formatters {
   static String formatPrice(double price) {
-    final formatter = NumberFormat.currency(symbol: r'$', decimalDigits: 2);
-    return formatter.format(price);
+    final formatter = NumberFormat('#,###');
+    return '${formatter.format(price)} IQD';
   }
   
   static String formatDate(DateTime date) {

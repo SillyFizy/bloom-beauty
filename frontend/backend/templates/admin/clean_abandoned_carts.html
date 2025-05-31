@@ -1,0 +1,135 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .cart-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background-color: #f5f5f5;
+        border-radius: 4px;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #417690;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .form-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .form-row {
+        margin-bottom: 15px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .form-select {
+        width: 100%;
+        max-width: 300px;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .submit-button {
+        background-color: #417690;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .warning-text {
+        color: #721c24;
+        background-color: #f8d7da;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+
+    .breadcrumbs {
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a> &rsaquo; Clean Abandoned Carts
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Clean Abandoned Carts</h1>
+
+    <div class="cart-stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ one_day }}</div>
+            <div class="stat-label">Abandoned for > 1 day</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ three_days }}</div>
+            <div class="stat-label">Abandoned for > 3 days</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ seven_days }}</div>
+            <div class="stat-label">Abandoned for > 7 days</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ thirty_days }}</div>
+            <div class="stat-label">Abandoned for > 30 days</div>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="warning-text">
+                <strong>Warning:</strong> This action will permanently delete abandoned carts. This cannot be undone.
+            </div>
+
+            <div class="form-row">
+                <label class="form-label" for="days_old">Remove carts older than:</label>
+                <select class="form-select" name="days_old" id="days_old">
+                    <option value="1">1 day</option>
+                    <option value="3">3 days</option>
+                    <option value="7" selected>7 days</option>
+                    <option value="14">14 days</option>
+                    <option value="30">30 days</option>
+                </select>
+            </div>
+
+            <button type="submit" class="submit-button">Clean Abandoned Carts</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

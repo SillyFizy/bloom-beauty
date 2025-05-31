@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Order Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: #f9f9f9;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #eee;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .footer {
+            background-color: #f9f9f9;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            border-top: 2px solid #eee;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .address {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        .total-row {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Joulina Beauty</h1>
+        <h2>Order Confirmation</h2>
+    </div>
+
+    <div class="content">
+        <p>Dear {{ user.full_name }},</p>
+
+        <p>Thank you for shopping with Joulina Beauty! Your order has been received and is now being processed.</p>
+
+        <h3>Order Details</h3>
+        <p><strong>Order Number:</strong> #{{ order.id }}</p>
+        <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y" }}</p>
+        <p><strong>Payment Method:</strong> Cash On Delivery</p>
+
+        <h3>Order Summary</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.unit_price }}</td>
+                    <td>${{ item.subtotal }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="3" align="right"><strong>Subtotal:</strong></td>
+                    <td>${{ order.subtotal }}</td>
+                </tr>
+                <tr>
+                    <td colspan="3" align="right"><strong>Shipping:</strong></td>
+                    <td>${{ order.shipping_fee }}</td>
+                </tr>
+                {% if order.discount > 0 %}
+                <tr>
+                    <td colspan="3" align="right"><strong>Discount:</strong></td>
+                    <td>-${{ order.discount }}</td>
+                </tr>
+                {% endif %}
+                <tr class="total-row">
+                    <td colspan="3" align="right"><strong>Total:</strong></td>
+                    <td>${{ order.total_amount }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        {% if points_earned > 0 %}
+        <div style="background-color: #f5f5dc; padding: 10px; border: 1px solid #daa520; margin-bottom: 20px;">
+            <h3 style="color: #8b4513; margin-top: 0;">Loyalty Points</h3>
+            <p>You earned <strong>{{ points_earned }} points</strong> from this purchase!</p>
+            <p>Your new total is <strong>{{ user.points }} points</strong>.</p>
+            {% if user.tier != 'normal' %}
+            <p>Your current tier: <strong>{{ user.get_tier_display }}</strong></p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <h3>Shipping Information</h3>
+        <div class="address">
+            <p><strong>{{ shipping_address.full_name }}</strong><br>
+                {{ shipping_address.address_line1 }}<br>
+                {% if shipping_address.address_line2 %}
+                {{ shipping_address.address_line2 }}<br>
+                {% endif %}
+                {{ shipping_address.city }}, {{ shipping_address.state }} {{ shipping_address.postal_code }}<br>
+                {{ shipping_address.country }}<br>
+                Phone: {{ shipping_address.phone_number }}</p>
+        </div>
+
+        <p>We will notify you when your order has been shipped. If you have any questions, please contact our customer
+            service team.</p>
+
+        <p>Thank you for choosing Joulina Beauty!</p>
+
+        <p>Best regards,<br>
+            The Joulina Team</p>
+    </div>
+
+    <div class="footer">
+        <p>&copy; {% now "Y" %} Joulina Beauty. All rights reserved.</p>
+        <p>This email was sent to {{ user.email }}</p>
+    </div>
+</body>
+
+</html>
