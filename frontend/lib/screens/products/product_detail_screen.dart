@@ -27,12 +27,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   
   // Track quantities for each variant (starting from 0)
   Map<String, int> _variantQuantities = {};
-  int get _currentQuantity => _variantQuantities[_selectedVariant?.id ?? 'default'] ?? 0;
-  
-  // Get total quantity across all variants
-  int get _totalQuantity {
-    return _variantQuantities.values.fold(0, (sum, quantity) => sum + quantity);
-  }
 
   @override
   void initState() {
@@ -69,27 +63,45 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     return widget.product.getCurrentImages(_selectedVariant);
   }
 
-  void _updateQuantity(int newQuantity) {
+  void _updateVariantQuantity(String variantId, int newQuantity) {
     if (newQuantity >= 0 && newQuantity <= 99) {
       setState(() {
-        final currentVariantId = _selectedVariant?.id ?? 'default';
-        _variantQuantities[currentVariantId] = newQuantity;
+        _variantQuantities[variantId] = newQuantity;
+        // Update selected variant to the one being modified
+        if (newQuantity > 0) {
+          _selectedVariant = widget.product.variants.firstWhere((v) => v.id == variantId);
+          _currentImageIndex = 0;
+          _imagePageController.animateToPage(
+            0,
+            duration: AppConstants.shortAnimation,
+            curve: Curves.easeInOut,
+          );
+        }
       });
     }
   }
 
-  void _incrementQuantity() {
-    final newQuantity = _currentQuantity + 1;
-    if (newQuantity <= 99) {
-      _updateQuantity(newQuantity);
+  // Calculate total price for all selected variants
+  double get _totalPrice {
+    double total = 0;
+    for (var entry in _variantQuantities.entries) {
+      final variantId = entry.key;
+      final quantity = entry.value;
+      if (quantity > 0) {
+        if (variantId == 'default') {
+          total += widget.product.price * quantity;
+        } else {
+          final variant = widget.product.variants.firstWhere((v) => v.id == variantId);
+          total += widget.product.getCurrentPrice(variant) * quantity;
+        }
+      }
     }
+    return total;
   }
 
-  void _decrementQuantity() {
-    final newQuantity = _currentQuantity - 1;
-    if (newQuantity >= 0) {
-      _updateQuantity(newQuantity);
-    }
+  // Get total quantity across all variants
+  int get _totalQuantity {
+    return _variantQuantities.values.fold(0, (sum, quantity) => sum + quantity);
   }
 
   void _addToCart() {
@@ -182,94 +194,73 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         final isSmallScreen = constraints.maxWidth < 600;
         final isMediumScreen = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
         
-        final screenHeight = MediaQuery.of(context).size.height;
-        final imageHeight = isSmallScreen 
-            ? screenHeight * 0.35 
-            : (isMediumScreen ? screenHeight * 0.38 : screenHeight * 0.4);
-        
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
-          body: Column(
-            children: [
-              // Fixed Image Section at Top
-              Container(
-                height: imageHeight,
-                child: Stack(
-                  children: [
-                    _buildImageSection(isSmallScreen),
-                    _buildAppBarOverlay(isSmallScreen),
-                  ],
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // App bar
+              SliverAppBar(
+                backgroundColor: AppConstants.backgroundColor,
+                elevation: 0,
+                pinned: false,
+                floating: true,
+                leading: _buildActionButton(
+                  icon: Icons.arrow_back_ios,
+                  onPressed: () => Navigator.pop(context),
+                  isSmallScreen: isSmallScreen,
                 ),
+                actions: [
+                  _buildActionButton(
+                    icon: Icons.favorite_border,
+                    onPressed: () {},
+                    isSmallScreen: isSmallScreen,
+                  ),
+                  SizedBox(width: isSmallScreen ? 8 : 12),
+                  _buildActionButton(
+                    icon: Icons.share,
+                    onPressed: () {},
+                    isSmallScreen: isSmallScreen,
+                  ),
+                  SizedBox(width: isSmallScreen ? 16 : 20),
+                ],
               ),
               
-              // Scrollable Content Below
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: AppConstants.surfaceColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(32),
-                        topRight: Radius.circular(32),
-                      ),
+              // Scrollable image section
+              SliverToBoxAdapter(
+                child: _buildImageSection(isSmallScreen),
+              ),
+              
+              // Content section
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: AppConstants.surfaceColor,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      topRight: Radius.circular(32),
                     ),
-                    child: Column(
-                      children: [
-                        SizedBox(height: isSmallScreen ? 20 : 24),
-                        _buildProductInfo(isSmallScreen),
-                        if (widget.product.celebrityEndorsement != null)
-                          _buildCelebrityEndorsement(isSmallScreen),
-                        SizedBox(height: isSmallScreen ? 12 : 16),
-                        _buildVariantSelector(isSmallScreen),
-                        SizedBox(height: isSmallScreen ? 6 : 8),
-                        _buildQuantitySelector(isSmallScreen),
-                        SizedBox(height: isSmallScreen ? 20 : 24),
-                        _buildTabSection(isSmallScreen),
-                        SizedBox(height: isSmallScreen ? 80 : 100), // Space for bottom bar
-                      ],
-                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      SizedBox(height: isSmallScreen ? 12 : 16),
+                      _buildProductInfo(isSmallScreen),
+                      SizedBox(height: isSmallScreen ? 12 : 16),
+                      _buildVariantSelector(isSmallScreen),
+                      if (widget.product.celebrityEndorsement != null)
+                        _buildCelebrityEndorsement(isSmallScreen),
+                      SizedBox(height: isSmallScreen ? 20 : 24),
+                      _buildTabSection(isSmallScreen),
+                      SizedBox(height: isSmallScreen ? 80 : 100), // Space for bottom bar
+                    ],
                   ),
                 ),
               ),
             ],
           ),
-          bottomNavigationBar: _buildBottomBar(isSmallScreen),
+          bottomNavigationBar: _totalQuantity > 0 ? _buildBottomBar(isSmallScreen) : null,
         );
       },
-    );
-  }
-
-  Widget _buildAppBarOverlay(bool isSmallScreen) {
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.all(isSmallScreen ? 16.0 : 20.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildActionButton(
-              icon: Icons.arrow_back_ios,
-              onPressed: () => Navigator.pop(context),
-              isSmallScreen: isSmallScreen,
-            ),
-            Row(
-              children: [
-                _buildActionButton(
-                  icon: Icons.favorite_border,
-                  onPressed: () {},
-                  isSmallScreen: isSmallScreen,
-                ),
-                SizedBox(width: isSmallScreen ? 8 : 12),
-                _buildActionButton(
-                  icon: Icons.share,
-                  onPressed: () {},
-                  isSmallScreen: isSmallScreen,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -308,7 +299,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Widget _buildImageSection(bool isSmallScreen) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final imageHeight = isSmallScreen ? screenHeight * 0.4 : screenHeight * 0.45;
+    
     return Container(
+      height: imageHeight,
       width: double.infinity,
       decoration: const BoxDecoration(
         color: AppConstants.backgroundColor,
@@ -333,7 +328,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 return Container(
                   margin: EdgeInsets.fromLTRB(
                     isSmallScreen ? 20 : 30, 
-                    isSmallScreen ? 60 : 80, 
+                    isSmallScreen ? 20 : 30, 
                     isSmallScreen ? 20 : 30, 
                     isSmallScreen ? 16 : 20
                   ),
@@ -630,6 +625,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             children: widget.product.variants.asMap().entries.map((entry) {
               final ProductVariant variant = entry.value;
               final bool isSelected = _selectedVariant?.id == variant.id;
+              final int variantQuantity = _variantQuantities[variant.id] ?? 0;
               
               return GestureDetector(
                 onTap: () {
@@ -646,247 +642,176 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     curve: Curves.easeInOut,
                   );
                 },
-                child: AnimatedContainer(
-                  duration: AppConstants.mediumAnimation,
-                  curve: Curves.easeInOut,
-                  constraints: BoxConstraints(
-                    minWidth: isSmallScreen ? 100 : 120,
-                    minHeight: isSmallScreen ? 60 : 70,
-                  ),
-                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppConstants.accentColor
-                        : AppConstants.backgroundColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppConstants.accentColor
-                          : AppConstants.borderColor,
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
+                child: Stack(
+                  children: [
+                    AnimatedContainer(
+                      duration: AppConstants.mediumAnimation,
+                      curve: Curves.easeInOut,
+                      constraints: BoxConstraints(
+                        minWidth: isSmallScreen ? 140 : 160,
+                        minHeight: isSmallScreen ? 80 : 90,
+                      ),
+                      padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+                      decoration: BoxDecoration(
                         color: isSelected
-                            ? AppConstants.accentColor.withOpacity(0.3)
-                            : AppConstants.textSecondary.withOpacity(0.05),
-                        blurRadius: isSelected ? 12 : 4,
-                        offset: isSelected ? const Offset(0, 4) : const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        variant.name,
-                        style: TextStyle(
+                            ? AppConstants.accentColor
+                            : AppConstants.backgroundColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
                           color: isSelected
-                              ? AppConstants.surfaceColor
-                              : AppConstants.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: isSmallScreen ? 12 : 14,
+                              ? AppConstants.accentColor
+                              : AppConstants.borderColor,
+                          width: isSelected ? 2 : 1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (variant.color != 'Standard') ...[
-                        SizedBox(height: isSmallScreen ? 4 : 6),
-                        Text(
-                          variant.color,
-                          style: TextStyle(
-                            fontSize: isSmallScreen ? 10 : 12,
+                        boxShadow: [
+                          BoxShadow(
                             color: isSelected
-                                ? AppConstants.surfaceColor.withOpacity(0.9)
-                                : AppConstants.textSecondary,
-                            fontWeight: FontWeight.w500,
+                                ? AppConstants.accentColor.withOpacity(0.3)
+                                : AppConstants.textSecondary.withOpacity(0.05),
+                            blurRadius: isSelected ? 12 : 4,
+                            offset: isSelected ? const Offset(0, 4) : const Offset(0, 2),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
-                  ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            variant.name,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? AppConstants.surfaceColor
+                                  : AppConstants.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: isSmallScreen ? 12 : 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (variant.color != 'Standard') ...[
+                            SizedBox(height: isSmallScreen ? 4 : 6),
+                            Text(
+                              variant.color,
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 10 : 12,
+                                color: isSelected
+                                    ? AppConstants.surfaceColor.withOpacity(0.9)
+                                    : AppConstants.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    
+                    // Small plus/counter at top right
+                    Positioned(
+                      top: -8,
+                      right: -8,
+                      child: variantQuantity == 0
+                          ? GestureDetector(
+                              onTap: () => _updateVariantQuantity(variant.id, 1),
+                              child: Container(
+                                width: isSmallScreen ? 36 : 40,
+                                height: isSmallScreen ? 36 : 40,
+                                decoration: BoxDecoration(
+                                  color: AppConstants.accentColor,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppConstants.accentColor.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  color: AppConstants.surfaceColor,
+                                  size: isSmallScreen ? 20 : 22,
+                                ),
+                              ),
+                            )
+                          : Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isSmallScreen ? 8 : 10,
+                                vertical: isSmallScreen ? 6 : 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppConstants.accentColor,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppConstants.accentColor.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () => _updateVariantQuantity(variant.id, variantQuantity - 1),
+                                    child: Container(
+                                      width: isSmallScreen ? 22 : 24,
+                                      height: isSmallScreen ? 22 : 24,
+                                      decoration: BoxDecoration(
+                                        color: AppConstants.surfaceColor.withOpacity(0.2),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.remove,
+                                        color: AppConstants.surfaceColor,
+                                        size: isSmallScreen ? 14 : 16,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: isSmallScreen ? 10 : 12),
+                                  Text(
+                                    variantQuantity.toString(),
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 14 : 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppConstants.surfaceColor,
+                                    ),
+                                  ),
+                                  SizedBox(width: isSmallScreen ? 10 : 12),
+                                  GestureDetector(
+                                    onTap: variantQuantity < 99 
+                                        ? () => _updateVariantQuantity(variant.id, variantQuantity + 1) 
+                                        : null,
+                                    child: Container(
+                                      width: isSmallScreen ? 22 : 24,
+                                      height: isSmallScreen ? 22 : 24,
+                                      decoration: BoxDecoration(
+                                        color: variantQuantity < 99 
+                                            ? AppConstants.surfaceColor.withOpacity(0.2) 
+                                            : AppConstants.surfaceColor.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.add,
+                                        color: variantQuantity < 99 
+                                            ? AppConstants.surfaceColor 
+                                            : AppConstants.surfaceColor.withOpacity(0.5),
+                                        size: isSmallScreen ? 14 : 16,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ],
                 ),
               );
             }).toList(),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildQuantitySelector(bool isSmallScreen) {
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 20 : 30, 
-        vertical: isSmallScreen ? 12 : 16
-      ),
-      padding: EdgeInsets.all(isSmallScreen ? 20 : 24),
-      decoration: BoxDecoration(
-        color: AppConstants.backgroundColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppConstants.borderColor,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.tune,
-                color: AppConstants.accentColor,
-                size: isSmallScreen ? 16 : 20,
-              ),
-              SizedBox(width: isSmallScreen ? 6 : 8),
-              Expanded(
-                child: Text(
-                  'Quantity: ${_selectedVariant?.name ?? 'Product'}',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 14 : 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          SizedBox(height: isSmallScreen ? 16 : 20),
-          
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildQuantityButton(
-                Icons.remove,
-                _currentQuantity > 0 ? _decrementQuantity : null,
-                _currentQuantity <= 0,
-                isSmallScreen,
-              ),
-              Container(
-                width: isSmallScreen ? 70 : 80,
-                height: isSmallScreen ? 45 : 50,
-                margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 16 : 20),
-                decoration: BoxDecoration(
-                  color: AppConstants.surfaceColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _currentQuantity > 0 ? AppConstants.accentColor : AppConstants.borderColor,
-                    width: _currentQuantity > 0 ? 2 : 1,
-                  ),
-                  boxShadow: _currentQuantity > 0 ? [
-                    BoxShadow(
-                      color: AppConstants.accentColor.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ] : null,
-                ),
-                child: Center(
-                  child: Text(
-                    _currentQuantity.toString(),
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 18 : 22,
-                      fontWeight: FontWeight.bold,
-                      color: _currentQuantity > 0 ? AppConstants.accentColor : AppConstants.textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-              _buildQuantityButton(
-                Icons.add,
-                _currentQuantity < 99 ? _incrementQuantity : null,
-                _currentQuantity >= 99,
-                isSmallScreen,
-              ),
-            ],
-          ),
-          
-          SizedBox(height: isSmallScreen ? 16 : 20),
-          
-          // Show current price with variant adjustment
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isSmallScreen ? 16 : 20, 
-              vertical: isSmallScreen ? 12 : 16
-            ),
-            decoration: BoxDecoration(
-              color: AppConstants.surfaceColor,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppConstants.accentColor.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Price:',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 14 : 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppConstants.textSecondary,
-                  ),
-                ),
-                Text(
-                  _formatPrice(widget.product.getCurrentPrice(_selectedVariant)),
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 18 : 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.accentColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuantityButton(IconData icon, VoidCallback? onPressed, bool isDisabled, bool isSmallScreen) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: AnimatedContainer(
-        duration: AppConstants.shortAnimation,
-        width: isSmallScreen ? 45 : 50,
-        height: isSmallScreen ? 45 : 50,
-        decoration: BoxDecoration(
-          color: isDisabled
-              ? AppConstants.backgroundColor
-              : AppConstants.accentColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isDisabled
-                ? AppConstants.borderColor
-                : AppConstants.accentColor,
-            width: 1,
-          ),
-          boxShadow: isDisabled ? null : [
-            BoxShadow(
-              color: AppConstants.accentColor.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(
-          icon,
-          color: isDisabled
-              ? AppConstants.textSecondary
-              : AppConstants.surfaceColor,
-          size: isSmallScreen ? 18 : 20,
-        ),
       ),
     );
   }
@@ -955,7 +880,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           
           // Tab Content
           SizedBox(
-            height: isSmallScreen ? 200 : 250,
+            height: isSmallScreen ? 300 : 350,
             child: TabBarView(
               controller: _tabController,
               children: [
@@ -972,6 +897,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
   Widget _buildDescriptionTab(bool isSmallScreen) {
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1010,8 +936,47 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               _buildBenefitItem('Gentle on skin', isSmallScreen),
               _buildBenefitItem('Professional results', isSmallScreen),
               _buildBenefitItem('Dermatologist tested', isSmallScreen),
+              _buildBenefitItem('Cruelty-free and vegan', isSmallScreen),
+              _buildBenefitItem('Suitable for sensitive skin', isSmallScreen),
             ],
           ),
+          SizedBox(height: isSmallScreen ? 16 : 20),
+          Text(
+            'How to Use',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 14 : 16,
+              fontWeight: FontWeight.bold,
+              color: AppConstants.textPrimary,
+            ),
+          ),
+          SizedBox(height: isSmallScreen ? 8 : 12),
+          Text(
+            'Apply evenly to clean, dry skin. For best results, use twice daily. Allow to absorb completely before applying other products. Always use sunscreen during the day when using this product.',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 13 : 15,
+              color: AppConstants.textSecondary,
+              height: 1.6,
+            ),
+          ),
+          SizedBox(height: isSmallScreen ? 16 : 20),
+          Text(
+            'Cautions',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 14 : 16,
+              fontWeight: FontWeight.bold,
+              color: AppConstants.textPrimary,
+            ),
+          ),
+          SizedBox(height: isSmallScreen ? 8 : 12),
+          Text(
+            'For external use only. Avoid contact with eyes. If irritation occurs, discontinue use. Keep out of reach of children.',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 13 : 15,
+              color: AppConstants.textSecondary,
+              height: 1.6,
+            ),
+          ),
+          SizedBox(height: isSmallScreen ? 20 : 24), // Extra bottom padding for better scrolling
         ],
       ),
     );
@@ -1043,7 +1008,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Widget _buildIngredientsTab(bool isSmallScreen) {
+    // Extended ingredients list for demonstration
+    final List<String> displayIngredients = widget.product.ingredients.isNotEmpty 
+        ? widget.product.ingredients 
+        : [
+            'Aqua (Water)',
+            'Glycerin',
+            'Sodium Hyaluronate',
+            'Niacinamide',
+            'Retinol',
+            'Vitamin E (Tocopheryl Acetate)',
+            'Aloe Barbadensis Leaf Extract',
+            'Chamomilla Recutita (Matricaria) Flower Extract',
+            'Panthenol (Pro-Vitamin B5)',
+            'Ceramide NP',
+            'Peptide Complex',
+            'Argan Oil',
+            'Jojoba Oil',
+            'Green Tea Extract',
+            'Vitamin C (Ascorbic Acid)',
+            'Collagen',
+            'Elastin',
+            'Shea Butter',
+            'Cocoa Butter',
+            'Rosehip Oil'
+          ];
+
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1057,41 +1049,69 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ),
           ),
           SizedBox(height: isSmallScreen ? 12 : 16),
-          if (widget.product.ingredients.isNotEmpty)
-            ...widget.product.ingredients.map((ingredient) => Padding(
-              padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 4 : 6),
-              child: Row(
-                children: [
-                  Container(
-                    width: isSmallScreen ? 6 : 8,
-                    height: isSmallScreen ? 6 : 8,
-                    decoration: BoxDecoration(
-                      color: AppConstants.accentColor,
-                      shape: BoxShape.circle,
+          ...displayIngredients.map((ingredient) => Padding(
+            padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 6 : 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: isSmallScreen ? 6 : 8,
+                  height: isSmallScreen ? 6 : 8,
+                  margin: EdgeInsets.only(top: isSmallScreen ? 6 : 8),
+                  decoration: BoxDecoration(
+                    color: AppConstants.accentColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                SizedBox(width: isSmallScreen ? 12 : 16),
+                Expanded(
+                  child: Text(
+                    ingredient,
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 13 : 14,
+                      color: AppConstants.textSecondary,
+                      height: 1.4,
                     ),
                   ),
-                  SizedBox(width: isSmallScreen ? 8 : 12),
-                  Expanded(
-                    child: Text(
-                      ingredient,
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 13 : 14,
-                        color: AppConstants.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )).toList()
-          else
-            Text(
-              'No ingredients listed',
-              style: TextStyle(
-                fontSize: isSmallScreen ? 13 : 14,
-                color: AppConstants.textSecondary,
-                fontStyle: FontStyle.italic,
+                ),
+              ],
+            ),
+          )).toList(),
+          SizedBox(height: isSmallScreen ? 16 : 20),
+          Container(
+            padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+            decoration: BoxDecoration(
+              color: AppConstants.backgroundColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppConstants.borderColor,
+                width: 1,
               ),
             ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ingredient Safety',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 14 : 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppConstants.textPrimary,
+                  ),
+                ),
+                SizedBox(height: isSmallScreen ? 8 : 10),
+                Text(
+                  'All ingredients are carefully selected and tested for safety. This product is free from parabens, sulfates, and artificial fragrances.',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 12 : 13,
+                    color: AppConstants.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: isSmallScreen ? 20 : 24), // Extra bottom padding for better scrolling
         ],
       ),
     );
@@ -1099,41 +1119,66 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
   Widget _buildReviewsTab(bool isSmallScreen) {
     if (widget.product.reviews.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.rate_review_outlined,
-                size: isSmallScreen ? 48 : 64,
-                color: AppConstants.textSecondary,
-              ),
-              SizedBox(height: isSmallScreen ? 12 : 16),
-              Text(
-                'No reviews yet',
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 16 : 18,
-                  fontWeight: FontWeight.w600,
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.rate_review_outlined,
+                  size: isSmallScreen ? 48 : 64,
                   color: AppConstants.textSecondary,
                 ),
-              ),
-              SizedBox(height: isSmallScreen ? 6 : 8),
-              Text(
-                'Be the first to review this product',
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 12 : 14,
-                  color: AppConstants.textSecondary,
+                SizedBox(height: isSmallScreen ? 12 : 16),
+                Text(
+                  'No reviews yet',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 16 : 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppConstants.textSecondary,
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(height: isSmallScreen ? 6 : 8),
+                Text(
+                  'Be the first to review this product',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 12 : 14,
+                    color: AppConstants.textSecondary,
+                  ),
+                ),
+                SizedBox(height: isSmallScreen ? 16 : 20),
+                Container(
+                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                  decoration: BoxDecoration(
+                    color: AppConstants.backgroundColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppConstants.borderColor,
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    'Reviews help other customers make informed decisions. Share your experience with this product!',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 12 : 13,
+                      color: AppConstants.textSecondary,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
       itemCount: widget.product.reviews.length,
       itemBuilder: (context, index) {
@@ -1215,10 +1260,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   Widget _buildBottomBar(bool isSmallScreen) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-        isSmallScreen ? 20 : 30, 
         isSmallScreen ? 16 : 20, 
-        isSmallScreen ? 20 : 30, 
-        isSmallScreen ? 16 : 20
+        isSmallScreen ? 12 : 16, 
+        isSmallScreen ? 16 : 20, 
+        isSmallScreen ? 12 : 16
       ),
       decoration: BoxDecoration(
         color: AppConstants.surfaceColor,
@@ -1237,44 +1282,67 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         ],
       ),
       child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _totalQuantity > 0 ? _addToCart : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _totalQuantity > 0 
-                      ? AppConstants.accentColor 
-                      : AppConstants.backgroundColor,
-                  foregroundColor: AppConstants.surfaceColor,
-                  elevation: _totalQuantity > 0 ? 8 : 0,
-                  shadowColor: AppConstants.accentColor.withOpacity(0.3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: _totalQuantity > 0 
-                          ? AppConstants.accentColor 
-                          : AppConstants.borderColor,
-                      width: 1,
-                    ),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 16 : 20),
+        child: ElevatedButton(
+          onPressed: _totalQuantity > 0 ? _addToCart : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppConstants.accentColor,
+            foregroundColor: AppConstants.surfaceColor,
+            elevation: 8,
+            shadowColor: AppConstants.accentColor.withOpacity(0.3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 16 : 20,
+              vertical: isSmallScreen ? 12 : 16,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Quantity on left
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 8 : 10,
+                  vertical: isSmallScreen ? 4 : 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppConstants.surfaceColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  _totalQuantity > 0 
-                      ? 'Add to Cart ($_totalQuantity)'
-                      : 'Select Quantity',
+                  '$_totalQuantity',
                   style: TextStyle(
-                    fontSize: isSmallScreen ? 16 : 18,
+                    fontSize: isSmallScreen ? 14 : 16,
                     fontWeight: FontWeight.bold,
-                    color: _totalQuantity > 0 
-                        ? AppConstants.surfaceColor 
-                        : AppConstants.textSecondary,
+                    color: AppConstants.surfaceColor,
                   ),
                 ),
               ),
-            ),
-          ],
+              
+              // "Add to Cart" text in middle
+              Expanded(
+                child: Text(
+                  'Add to Cart',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 16 : 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppConstants.surfaceColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              
+              // Total price on right
+              Text(
+                _formatPrice(_totalPrice),
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 14 : 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppConstants.surfaceColor,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

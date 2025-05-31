@@ -1240,50 +1240,46 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(
+                    Expanded(
                       child: Text(
                         product.name,
                         style: TextStyle(
-                          fontSize: isSmallScreen ? 11 : 13,
+                          fontSize: isSmallScreen ? 13 : 15,
                           fontWeight: FontWeight.w600,
                           color: AppConstants.textPrimary,
-                          height: 1.2,
+                          height: 1.1,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    SizedBox(height: isSmallScreen ? 4 : 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           _formatPrice(product.price),
                           style: TextStyle(
-                            fontSize: isSmallScreen ? 11 : 13,
+                            fontSize: isSmallScreen ? 13 : 15,
                             fontWeight: FontWeight.bold,
                             color: AppConstants.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.star,
-                              size: isSmallScreen ? 10 : 12,
+                              size: isSmallScreen ? 12 : 14,
                               color: AppConstants.accentColor,
                             ),
                             const SizedBox(width: 2),
-                            Flexible(
-                              child: Text(
-                                product.rating.toString(),
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 9 : 11,
-                                  color: AppConstants.textSecondary,
-                                ),
+                            Text(
+                              product.rating.toString(),
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 11 : 13,
+                                color: AppConstants.textSecondary,
                               ),
                             ),
                           ],
@@ -1385,7 +1381,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
       child: Container(
-        width: isSmallScreen ? 120 : 140,
+        width: isSmallScreen ? 140 : 160,
         margin: EdgeInsets.only(right: isSmallScreen ? 8 : 12),
         decoration: BoxDecoration(
           color: AppConstants.surfaceColor,
@@ -1403,7 +1399,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Image with favorite button
             Expanded(
-              flex: 3,
+              flex: 2,
               child: Stack(
                 children: [
                   Container(
@@ -1453,32 +1449,30 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
+                padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(
+                    Expanded(
                       child: Text(
                         product.name,
                         style: TextStyle(
-                          fontSize: isSmallScreen ? 10 : 11,
+                          fontSize: isSmallScreen ? 12 : 13,
                           fontWeight: FontWeight.w600,
                           color: AppConstants.textPrimary,
-                          height: 1.2,
+                          height: 1.1,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    SizedBox(height: isSmallScreen ? 2 : 4),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           _formatPrice(product.price),
                           style: TextStyle(
-                            fontSize: isSmallScreen ? 9 : 10,
+                            fontSize: isSmallScreen ? 11 : 12,
                             fontWeight: FontWeight.bold,
                             color: AppConstants.textPrimary,
                           ),
@@ -1489,17 +1483,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Icon(
                               Icons.star,
-                              size: isSmallScreen ? 8 : 10,
+                              size: isSmallScreen ? 10 : 12,
                               color: AppConstants.accentColor,
                             ),
                             const SizedBox(width: 2),
-                            Flexible(
-                              child: Text(
-                                product.rating.toString(),
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 8 : 9,
-                                  color: AppConstants.textSecondary,
-                                ),
+                            Text(
+                              product.rating.toString(),
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 10 : 11,
+                                color: AppConstants.textSecondary,
                               ),
                             ),
                           ],
