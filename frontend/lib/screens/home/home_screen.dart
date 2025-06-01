@@ -845,7 +845,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: [
         Container(
-          height: isSmallScreen ? 160 : 200,
+          height: isSmallScreen ? 220 : 280,
           margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
@@ -881,15 +881,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Icon(
                             Icons.spa_outlined,
-                            size: isSmallScreen ? 45 : 60,
+                            size: isSmallScreen ? 60 : 80,
                             color: Colors.white,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           Text(
                             _bannerImages[index],
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: isSmallScreen ? 16 : 18,
+                              fontSize: isSmallScreen ? 18 : 22,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1318,7 +1318,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         SizedBox(
-          height: isSmallScreen ? 160 : 180,
+          height: isSmallScreen ? 240 : 260,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
@@ -1355,7 +1355,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         SizedBox(
-          height: isSmallScreen ? 160 : 180,
+          height: isSmallScreen ? 240 : 260,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
@@ -1381,8 +1381,8 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
       child: Container(
-        width: isSmallScreen ? 140 : 160,
-        margin: EdgeInsets.only(right: isSmallScreen ? 8 : 12),
+        width: isSmallScreen ? 160 : 180,
+        margin: EdgeInsets.only(right: isSmallScreen ? 12 : 16),
         decoration: BoxDecoration(
           color: AppConstants.surfaceColor,
           borderRadius: BorderRadius.circular(12),
@@ -1399,7 +1399,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Image with favorite button
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Stack(
                 children: [
                   Container(
@@ -1413,17 +1413,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Center(
                       child: Icon(
                         Icons.spa_outlined,
-                        size: isSmallScreen ? 28 : 35,
+                        size: isSmallScreen ? 32 : 40,
                         color: AppConstants.accentColor.withOpacity(0.5),
                       ),
                     ),
                   ),
                   Positioned(
-                    top: isSmallScreen ? 4 : 6,
-                    right: isSmallScreen ? 4 : 6,
+                    top: isSmallScreen ? 6 : 8,
+                    right: isSmallScreen ? 6 : 8,
                     child: Container(
-                      width: isSmallScreen ? 24 : 28,
-                      height: isSmallScreen ? 24 : 28,
+                      width: isSmallScreen ? 28 : 32,
+                      height: isSmallScreen ? 28 : 32,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
@@ -1437,7 +1437,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Icon(
                         Icons.favorite_border,
-                        size: isSmallScreen ? 12 : 14,
+                        size: isSmallScreen ? 14 : 18,
                         color: AppConstants.favoriteColor,
                       ),
                     ),
@@ -1449,7 +1449,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
+                padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1457,7 +1457,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         product.name,
                         style: TextStyle(
-                          fontSize: isSmallScreen ? 12 : 13,
+                          fontSize: isSmallScreen ? 13 : 15,
                           fontWeight: FontWeight.w600,
                           color: AppConstants.textPrimary,
                           height: 1.1,
@@ -1472,7 +1472,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           _formatPrice(product.price),
                           style: TextStyle(
-                            fontSize: isSmallScreen ? 11 : 12,
+                            fontSize: isSmallScreen ? 13 : 15,
                             fontWeight: FontWeight.bold,
                             color: AppConstants.textPrimary,
                           ),
@@ -1483,14 +1483,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Icon(
                               Icons.star,
-                              size: isSmallScreen ? 10 : 12,
+                              size: isSmallScreen ? 12 : 14,
                               color: AppConstants.accentColor,
                             ),
                             const SizedBox(width: 2),
                             Text(
                               product.rating.toString(),
                               style: TextStyle(
-                                fontSize: isSmallScreen ? 10 : 11,
+                                fontSize: isSmallScreen ? 11 : 13,
                                 color: AppConstants.textSecondary,
                               ),
                             ),
