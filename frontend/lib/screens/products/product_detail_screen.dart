@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/cart_provider.dart';
+import '../../services/data_service.dart';
 import '../celebrity/celebrity_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -129,61 +130,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     });
   }
 
-  // Helper method to get celebrity data including social media links
+  // Helper method to get celebrity data using DataService
   Map<String, dynamic> _getCelebrityData(String celebrityName) {
-    // Celebrity data with social media links (only show these in celebrity screen)
-    final Map<String, Map<String, dynamic>> celebrityData = {
-      'Emma Stone': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/emmastone',
-          'facebook': 'https://facebook.com/EmmaStoneOfficial',
-        },
-        'recommendedProducts': <Product>[], // Will be populated with real products
-      },
-      'Rihanna': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/badgalriri',
-          'facebook': 'https://facebook.com/rihanna',
-          'snapchat': 'https://snapchat.com/add/rihanna',
-        },
-        'recommendedProducts': <Product>[], 
-      },
-      'Zendaya': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/zendaya',
-          'snapchat': 'https://snapchat.com/add/zendayaa',
-        },
-        'recommendedProducts': <Product>[], 
-      },
-      'Selena Gomez': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/selenagomez',
-          'facebook': 'https://facebook.com/Selena',
-          'snapchat': 'https://snapchat.com/add/selenagomez',
-        },
-        'recommendedProducts': <Product>[], 
-      },
-      'Kim Kardashian': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/kimkardashian',
-          'facebook': 'https://facebook.com/KimKardashian',
-          'snapchat': 'https://snapchat.com/add/kimkardashian',
-        },
-        'recommendedProducts': <Product>[], 
-      },
-      'Taylor Swift': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/taylorswift',
-          'facebook': 'https://facebook.com/TaylorSwift',
-        },
-        'recommendedProducts': <Product>[], 
-      },
-    };
-
-    return celebrityData[celebrityName] ?? {
-      'socialMediaLinks': <String, String>{},
-      'recommendedProducts': <Product>[],
-    };
+    return DataService().getCelebrityDataForProduct(celebrityName);
   }
 
   @override
@@ -504,6 +453,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               testimonial: endorsement.testimonial,
               socialMediaLinks: celebrityData['socialMediaLinks'] as Map<String, String>,
               recommendedProducts: celebrityData['recommendedProducts'] as List<Product>,
+              morningRoutineProducts: celebrityData['morningRoutineProducts'] as List<Product>,
+              eveningRoutineProducts: celebrityData['eveningRoutineProducts'] as List<Product>,
             ),
           ),
         );
