@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../models/product_model.dart';
+import '../../providers/product_provider.dart';
+import '../../providers/app_providers.dart';
 import '../products/product_detail_screen.dart';
 
 class CelebrityScreen extends StatelessWidget {
@@ -92,13 +95,79 @@ class CelebrityScreen extends StatelessWidget {
     );
   }
 
-  void _navigateToProduct(BuildContext context, Product product) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProductDetailScreen(product: product),
-      ),
-    );
+  Future<void> _navigateToProduct(BuildContext context, Product product) async {
+    try {
+      // Get the latest product data from the service to ensure accuracy
+      final productProvider = context.read<ProductProvider>();
+      final freshProduct = await productProvider.getProductById(product.id);
+      
+      if (freshProduct != null) {
+        // Create an updated product with correct celebrity endorsement if needed
+        Product productToNavigate = freshProduct;
+        
+        // If the product doesn't have celebrity endorsement but should have it,
+        // create a copy with the correct endorsement
+        if (freshProduct.celebrityEndorsement == null || 
+            freshProduct.celebrityEndorsement!.celebrityName != celebrityName) {
+          productToNavigate = Product(
+            id: freshProduct.id,
+            name: freshProduct.name,
+            description: freshProduct.description,
+            price: freshProduct.price,
+            discountPrice: freshProduct.discountPrice,
+            images: freshProduct.images,
+            categoryId: freshProduct.categoryId,
+            brand: freshProduct.brand,
+            rating: freshProduct.rating,
+            reviewCount: freshProduct.reviewCount,
+            isInStock: freshProduct.isInStock,
+            ingredients: freshProduct.ingredients,
+            beautyPoints: freshProduct.beautyPoints,
+            variants: freshProduct.variants,
+            reviews: freshProduct.reviews,
+            celebrityEndorsement: CelebrityEndorsement(
+              celebrityName: celebrityName,
+              celebrityImage: celebrityImage,
+              testimonial: testimonial,
+            ),
+          );
+        }
+        
+        // Add to recently viewed
+        await productProvider.addToRecentlyViewed(productToNavigate);
+        
+        // Navigate to product detail
+        if (context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductDetailScreen(product: productToNavigate),
+            ),
+          );
+        }
+      } else {
+        // Fallback to original product if service fails
+        if (context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductDetailScreen(product: product),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Error handling - fallback to original product
+      debugPrint('Error fetching fresh product data: $e');
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(product: product),
+          ),
+        );
+      }
+    }
   }
 
   @override

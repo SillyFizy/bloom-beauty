@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/cart_provider.dart';
-import '../../services/data_service.dart';
+import '../../providers/celebrity_provider.dart';
+import '../../providers/app_providers.dart';
 import '../celebrity/celebrity_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -68,8 +69,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     if (newQuantity >= 0 && newQuantity <= 99) {
       setState(() {
         _variantQuantities[variantId] = newQuantity;
-        // Update selected variant to the one being modified
-        if (newQuantity > 0) {
+        // Only update selected variant if the product has variants and it's not the default case
+        if (newQuantity > 0 && variantId != 'default' && widget.product.variants.isNotEmpty) {
           _selectedVariant = widget.product.variants.firstWhere((v) => v.id == variantId);
           _currentImageIndex = 0;
           _imagePageController.animateToPage(
@@ -130,9 +131,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     });
   }
 
-  // Helper method to get celebrity data using DataService
-  Map<String, dynamic> _getCelebrityData(String celebrityName) {
-    return DataService().getCelebrityDataForProduct(celebrityName);
+  // Helper method to get celebrity data using CelebrityProvider
+  Future<Map<String, dynamic>> _getCelebrityData(String celebrityName) async {
+    final celebrityProvider = context.read<CelebrityProvider>();
+    return await celebrityProvider.getCelebrityDataForProduct(celebrityName);
   }
 
   @override
@@ -207,7 +209,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               ),
             ],
           ),
-          bottomNavigationBar: _totalQuantity > 0 ? _buildBottomBar(isSmallScreen) : null,
+          bottomNavigationBar: (widget.product.variants.isEmpty || _totalQuantity > 0) 
+              ? _buildBottomBar(isSmallScreen) 
+              : null,
         );
       },
     );
@@ -440,10 +444,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
   Widget _buildCelebrityEndorsement(bool isSmallScreen) {
     final endorsement = widget.product.celebrityEndorsement!;
-    final celebrityData = _getCelebrityData(endorsement.celebrityName);
     
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        final celebrityData = await _getCelebrityData(endorsement.celebrityName);
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1307,6 +1311,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Widget _buildBottomBar(bool isSmallScreen) {
+    // Check if product has variants
+    final hasVariants = widget.product.variants.isNotEmpty;
+    
     return Container(
       padding: EdgeInsets.fromLTRB(
         isSmallScreen ? 16 : 20, 
@@ -1331,68 +1338,220 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         ],
       ),
       child: SafeArea(
-        child: ElevatedButton(
-          onPressed: _totalQuantity > 0 ? _addToCart : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppConstants.accentColor,
-            foregroundColor: AppConstants.surfaceColor,
-            elevation: 8,
-            shadowColor: AppConstants.accentColor.withOpacity(0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: isSmallScreen ? 16 : 20,
-              vertical: isSmallScreen ? 12 : 16,
-            ),
-          ),
-          child: Row(
-            children: [
-              // Quantity on left
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 8 : 10,
-                  vertical: isSmallScreen ? 4 : 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppConstants.surfaceColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '$_totalQuantity',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 14 : 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.surfaceColor,
-                  ),
-                ),
-              ),
-              
-              // "Add to Cart" text in middle
-              Expanded(
-                child: Text(
-                  'Add to Cart',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.surfaceColor,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              
-              // Total price on right
-              Text(
-                _formatPrice(_totalPrice),
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 14 : 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppConstants.surfaceColor,
-                ),
-              ),
-            ],
-          ),
+        child: hasVariants 
+            ? _buildVariantCartButton(isSmallScreen)
+            : _buildNoVariantCartButton(isSmallScreen),
+      ),
+    );
+  }
+
+  // For products with variants (existing behavior)
+  Widget _buildVariantCartButton(bool isSmallScreen) {
+    return ElevatedButton(
+      onPressed: _totalQuantity > 0 ? _addToCart : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppConstants.accentColor,
+        foregroundColor: AppConstants.surfaceColor,
+        elevation: 8,
+        shadowColor: AppConstants.accentColor.withOpacity(0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 16 : 20,
+          vertical: isSmallScreen ? 12 : 16,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Quantity on left
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 8 : 10,
+              vertical: isSmallScreen ? 4 : 6,
+            ),
+            decoration: BoxDecoration(
+              color: AppConstants.surfaceColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$_totalQuantity',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 14 : 16,
+                fontWeight: FontWeight.bold,
+                color: AppConstants.surfaceColor,
+              ),
+            ),
+          ),
+          
+          // "Add to Cart" text in middle
+          Expanded(
+            child: Text(
+              'Add to Cart',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 16 : 18,
+                fontWeight: FontWeight.bold,
+                color: AppConstants.surfaceColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          
+          // Total price on right
+          Text(
+            _formatPrice(_totalPrice),
+            style: TextStyle(
+              fontSize: isSmallScreen ? 14 : 16,
+              fontWeight: FontWeight.bold,
+              color: AppConstants.surfaceColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // For products without variants (with integrated quantity controls)
+  Widget _buildNoVariantCartButton(bool isSmallScreen) {
+    final currentQuantity = _variantQuantities['default'] ?? 0;
+    
+    return Container(
+      height: isSmallScreen ? 48 : 56,
+      decoration: BoxDecoration(
+        color: AppConstants.accentColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppConstants.accentColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Quantity controls on the left
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 8 : 12,
+              vertical: isSmallScreen ? 6 : 8,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Decrease button
+                InkWell(
+                  onTap: currentQuantity > 0 
+                      ? () => _updateVariantQuantity('default', currentQuantity - 1)
+                      : null,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: isSmallScreen ? 28 : 32,
+                    height: isSmallScreen ? 28 : 32,
+                    decoration: BoxDecoration(
+                      color: currentQuantity > 0 
+                          ? AppConstants.surfaceColor.withOpacity(0.2)
+                          : AppConstants.surfaceColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.remove,
+                      size: isSmallScreen ? 16 : 18,
+                      color: currentQuantity > 0 
+                          ? AppConstants.surfaceColor
+                          : AppConstants.surfaceColor.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+                
+                // Quantity display
+                Container(
+                  width: isSmallScreen ? 36 : 40,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 8 : 10,
+                    vertical: isSmallScreen ? 4 : 6,
+                  ),
+                  child: Text(
+                    '$currentQuantity',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 14 : 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppConstants.surfaceColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                
+                // Increase button
+                InkWell(
+                  onTap: currentQuantity < 99 
+                      ? () => _updateVariantQuantity('default', currentQuantity + 1)
+                      : null,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: isSmallScreen ? 28 : 32,
+                    height: isSmallScreen ? 28 : 32,
+                    decoration: BoxDecoration(
+                      color: currentQuantity < 99 
+                          ? AppConstants.surfaceColor.withOpacity(0.2)
+                          : AppConstants.surfaceColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.add,
+                      size: isSmallScreen ? 16 : 18,
+                      color: currentQuantity < 99 
+                          ? AppConstants.surfaceColor
+                          : AppConstants.surfaceColor.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // "Add to Cart" button in the middle
+          Expanded(
+            child: InkWell(
+              onTap: currentQuantity > 0 ? _addToCart : null,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                height: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 12 : 16,
+                ),
+                child: Center(
+                  child: Text(
+                    currentQuantity > 0 ? 'Add to Cart' : 'Select Quantity',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 16 : 18,
+                      fontWeight: FontWeight.bold,
+                      color: currentQuantity > 0 
+                          ? AppConstants.surfaceColor
+                          : AppConstants.surfaceColor.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          // Total price on the right
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 12 : 16,
+              vertical: isSmallScreen ? 6 : 8,
+            ),
+            child: Text(
+              _formatPrice(widget.product.price * currentQuantity),
+              style: TextStyle(
+                fontSize: isSmallScreen ? 14 : 16,
+                fontWeight: FontWeight.bold,
+                color: AppConstants.surfaceColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

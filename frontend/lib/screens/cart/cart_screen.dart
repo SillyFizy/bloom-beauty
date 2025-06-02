@@ -258,24 +258,39 @@ class _CartScreenState extends State<CartScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isTotal ? (isSmallScreen ? 15 : 16) : (isSmallScreen ? 13 : 14),
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-              color: isTotal 
-                  ? Theme.of(context).colorScheme.onSurface
-                  : AppConstants.textSecondary,
+          Flexible(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: isTotal ? (isSmallScreen ? 15 : 16) : (isSmallScreen ? 13 : 14),
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                color: isTotal 
+                    ? Theme.of(context).colorScheme.onSurface
+                    : AppConstants.textSecondary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isTotal ? (isSmallScreen ? 15 : 16) : (isSmallScreen ? 13 : 14),
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-              color: isTotal 
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurface,
+          SizedBox(width: isSmallScreen ? 8 : 12),
+          Flexible(
+            flex: 3,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: isTotal ? (isSmallScreen ? 15 : 16) : (isSmallScreen ? 13 : 14),
+                  fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+                  color: isTotal 
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+                maxLines: 1,
+                textAlign: TextAlign.right,
+              ),
             ),
           ),
         ],
@@ -307,19 +322,34 @@ class _CartScreenState extends State<CartScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Total:',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 16 : 18,
-                    fontWeight: FontWeight.bold,
+                Flexible(
+                  flex: 2,
+                  child: Text(
+                    'Total:',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 16 : 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Text(
-                  Formatters.formatPrice(total),
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 18 : 20,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+                SizedBox(width: isSmallScreen ? 8 : 12),
+                Flexible(
+                  flex: 3,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      Formatters.formatPrice(total),
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 18 : 20,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      maxLines: 1,
+                      textAlign: TextAlign.right,
+                    ),
                   ),
                 ),
               ],
