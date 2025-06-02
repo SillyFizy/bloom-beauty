@@ -42,6 +42,56 @@ class CelebrityScreen extends StatelessWidget {
     }
   }
 
+  Widget _buildActionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isSmallScreen,
+  }) {
+    return Container(
+      width: isSmallScreen ? 44 : 52,
+      height: isSmallScreen ? 44 : 52,
+      decoration: BoxDecoration(
+        color: AppConstants.surfaceColor,
+        borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+        border: Border.all(
+          color: AppConstants.borderColor.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppConstants.textSecondary.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: AppConstants.surfaceColor,
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                color: AppConstants.textPrimary,
+                size: isSmallScreen ? 20 : 24,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _navigateToProduct(BuildContext context, Product product) {
     Navigator.push(
       context,
@@ -61,58 +111,71 @@ class CelebrityScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
-          body: CustomScrollView(
-            slivers: [
-              // Responsive App Bar
-              _buildResponsiveSliverAppBar(isSmallScreen),
-              
-              // Celebrity content
-              SliverToBoxAdapter(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppConstants.surfaceColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(32),
-                      topRight: Radius.circular(32),
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppConstants.backgroundColor,
+                  AppConstants.surfaceColor,
+                ],
+                stops: const [0.0, 0.3],
+              ),
+            ),
+            child: CustomScrollView(
+              slivers: [
+                // Responsive App Bar
+                _buildResponsiveSliverAppBar(isSmallScreen),
+                
+                // Celebrity content
+                SliverToBoxAdapter(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppConstants.surfaceColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(32),
+                        topRight: Radius.circular(32),
+                      ),
                     ),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSmallScreen ? 12 : (isMediumScreen ? 20 : 32),
-                    ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 30),
-                        
-                        // Celebrity header
-                        _buildCelebrityHeader(isSmallScreen),
-                        
-                        // Testimonial section
-                        if (testimonial != null && testimonial!.isNotEmpty)
-                          _buildTestimonial(isSmallScreen),
-                        
-                        // Morning and Evening routine - FIRST
-                        if (morningRoutineProducts.isNotEmpty || eveningRoutineProducts.isNotEmpty)
-                          _buildResponsiveRoutineSection(context, isSmallScreen, isMediumScreen),
-                        
-                        // Recommended products - SECOND  
-                        if (recommendedProducts.isNotEmpty)
-                          _buildResponsiveRecommendedProducts(context, isSmallScreen, isMediumScreen),
-                        
-                        // Beauty secrets video - THIRD
-                        _buildBeautySecrets(isSmallScreen),
-                        
-                        // Social media - LAST
-                        if (socialMediaLinks.isNotEmpty)
-                          _buildResponsiveSocialMedia(isSmallScreen),
-                        
-                        const SizedBox(height: 40),
-                      ],
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isSmallScreen ? 12 : (isMediumScreen ? 20 : 32),
+                      ),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 30),
+                          
+                          // Celebrity header
+                          _buildCelebrityHeader(isSmallScreen),
+                          
+                          // Testimonial section
+                          if (testimonial != null && testimonial!.isNotEmpty)
+                            _buildTestimonial(isSmallScreen),
+                          
+                          // Morning and Evening routine - FIRST
+                          if (morningRoutineProducts.isNotEmpty || eveningRoutineProducts.isNotEmpty)
+                            _buildResponsiveRoutineSection(context, isSmallScreen, isMediumScreen),
+                          
+                          // Recommended products - SECOND  
+                          if (recommendedProducts.isNotEmpty)
+                            _buildResponsiveRecommendedProducts(context, isSmallScreen, isMediumScreen),
+                          
+                          // Beauty secrets video - THIRD
+                          _buildBeautySecrets(isSmallScreen),
+                          
+                          // Social media - LAST
+                          if (socialMediaLinks.isNotEmpty)
+                            _buildResponsiveSocialMedia(isSmallScreen),
+                          
+                          const SizedBox(height: 40),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -125,85 +188,119 @@ class CelebrityScreen extends StatelessWidget {
       pinned: true,
       backgroundColor: AppConstants.surfaceColor,
       elevation: 0,
-      leading: Container(
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppConstants.surfaceColor.withOpacity(0.95),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: AppConstants.borderColor,
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Builder(
-          builder: (context) => IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: AppConstants.textPrimary,
-              size: 20,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+      leading: Builder(
+        builder: (context) => _buildActionButton(
+          icon: Icons.arrow_back_ios,
+          onPressed: () => Navigator.pop(context),
+          isSmallScreen: isSmallScreen,
         ),
       ),
       flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppConstants.favoriteColor.withOpacity(0.1),
-                AppConstants.backgroundColor,
-              ],
-            ),
-          ),
-          child: SafeArea(
-            child: Center(
-              child: Container(
-                width: isSmallScreen ? 180 : 220,
-                height: isSmallScreen ? 180 : 220,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppConstants.favoriteColor,
-                    width: 4,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppConstants.favoriteColor.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
+        background: Stack(
+          children: [
+            // Background gradient
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppConstants.favoriteColor.withOpacity(0.15),
+                    AppConstants.favoriteColor.withOpacity(0.08),
+                    AppConstants.accentColor.withOpacity(0.05),
+                    AppConstants.surfaceColor,
                   ],
-                ),
-                child: ClipOval(
-                  child: celebrityImage.isNotEmpty
-                      ? Image.network(
-                          celebrityImage,
-                          fit: BoxFit.cover,
-                          width: isSmallScreen ? 172 : 212,
-                          height: isSmallScreen ? 172 : 212,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildFallbackImage(isSmallScreen);
-                          },
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return _buildLoadingImage(isSmallScreen, loadingProgress);
-                          },
-                        )
-                      : _buildFallbackImage(isSmallScreen),
+                  stops: const [0.0, 0.3, 0.7, 1.0],
                 ),
               ),
             ),
-          ),
+            
+            // Decorative background elements
+            Positioned(
+              top: -50,
+              right: -50,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppConstants.favoriteColor.withOpacity(0.1),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 20,
+              left: -30,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppConstants.accentColor.withOpacity(0.08),
+                ),
+              ),
+            ),
+            
+            // Celebrity image container
+            SafeArea(
+              child: Center(
+                child: Container(
+                  width: isSmallScreen ? 180 : 220,
+                  height: isSmallScreen ? 180 : 220,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        AppConstants.favoriteColor.withOpacity(0.3),
+                        AppConstants.favoriteColor.withOpacity(0.1),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.7, 0.9, 1.0],
+                    ),
+                  ),
+                  child: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppConstants.favoriteColor,
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppConstants.favoriteColor.withOpacity(0.4),
+                          blurRadius: 25,
+                          offset: const Offset(0, 8),
+                        ),
+                        BoxShadow(
+                          color: AppConstants.favoriteColor.withOpacity(0.2),
+                          blurRadius: 15,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: celebrityImage.isNotEmpty
+                          ? Image.network(
+                              celebrityImage,
+                              fit: BoxFit.cover,
+                              width: isSmallScreen ? 164 : 204,
+                              height: isSmallScreen ? 164 : 204,
+                              errorBuilder: (context, error, stackTrace) {
+                                return _buildFallbackImage(isSmallScreen);
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return _buildLoadingImage(isSmallScreen, loadingProgress);
+                              },
+                            )
+                          : _buildFallbackImage(isSmallScreen),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -211,29 +308,78 @@ class CelebrityScreen extends StatelessWidget {
 
   Widget _buildFallbackImage(bool isSmallScreen) {
     return Container(
-      width: isSmallScreen ? 172 : 212,
-      height: isSmallScreen ? 172 : 212,
-      color: AppConstants.surfaceColor,
-      child: Icon(
-        Icons.star_rounded,
-        color: AppConstants.favoriteColor,
-        size: isSmallScreen ? 60 : 80,
+      width: isSmallScreen ? 164 : 204,
+      height: isSmallScreen ? 164 : 204,
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          colors: [
+            AppConstants.favoriteColor.withOpacity(0.2),
+            AppConstants.favoriteColor.withOpacity(0.1),
+            AppConstants.surfaceColor,
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.star_rounded,
+              color: AppConstants.favoriteColor,
+              size: isSmallScreen ? 50 : 70,
+            ),
+            SizedBox(height: isSmallScreen ? 8 : 12),
+            Text(
+              'Celebrity',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 12 : 14,
+                fontWeight: FontWeight.w600,
+                color: AppConstants.favoriteColor,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildLoadingImage(bool isSmallScreen, ImageChunkEvent loadingProgress) {
     return Container(
-      width: isSmallScreen ? 172 : 212,
-      height: isSmallScreen ? 172 : 212,
-      color: AppConstants.surfaceColor,
+      width: isSmallScreen ? 164 : 204,
+      height: isSmallScreen ? 164 : 204,
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          colors: [
+            AppConstants.favoriteColor.withOpacity(0.1),
+            AppConstants.surfaceColor,
+          ],
+          stops: const [0.0, 1.0],
+        ),
+      ),
       child: Center(
-        child: CircularProgressIndicator(
-          value: loadingProgress.expectedTotalBytes != null
-              ? loadingProgress.cumulativeBytesLoaded /
-                  (loadingProgress.expectedTotalBytes ?? 1)
-              : null,
-          color: AppConstants.favoriteColor,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      (loadingProgress.expectedTotalBytes ?? 1)
+                  : null,
+              color: AppConstants.favoriteColor,
+              strokeWidth: 3,
+            ),
+            SizedBox(height: isSmallScreen ? 12 : 16),
+            Text(
+              'Loading...',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 12 : 14,
+                color: AppConstants.favoriteColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

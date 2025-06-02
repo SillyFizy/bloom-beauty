@@ -1,2 +1,0 @@
-C:/Users/msi/Desktop/x/bloom-beauty/frontend/android/app/.cxx/Debug/6f1i2x70/x86/CMakeFiles/edit_cache.dir
-C:/Users/msi/Desktop/x/bloom-beauty/frontend/android/app/.cxx/Debug/6f1i2x70/x86/CMakeFiles/rebuild_cache.dir

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/cart_provider.dart';
+import '../../services/data_service.dart';
 import '../celebrity/celebrity_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -129,61 +130,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     });
   }
 
-  // Helper method to get celebrity data including social media links
+  // Helper method to get celebrity data using DataService
   Map<String, dynamic> _getCelebrityData(String celebrityName) {
-    // Celebrity data with social media links (only show these in celebrity screen)
-    final Map<String, Map<String, dynamic>> celebrityData = {
-      'Emma Stone': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/emmastone',
-          'facebook': 'https://facebook.com/EmmaStoneOfficial',
-        },
-        'recommendedProducts': <Product>[], // Will be populated with real products
-      },
-      'Rihanna': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/badgalriri',
-          'facebook': 'https://facebook.com/rihanna',
-          'snapchat': 'https://snapchat.com/add/rihanna',
-        },
-        'recommendedProducts': <Product>[], 
-      },
-      'Zendaya': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/zendaya',
-          'snapchat': 'https://snapchat.com/add/zendayaa',
-        },
-        'recommendedProducts': <Product>[], 
-      },
-      'Selena Gomez': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/selenagomez',
-          'facebook': 'https://facebook.com/Selena',
-          'snapchat': 'https://snapchat.com/add/selenagomez',
-        },
-        'recommendedProducts': <Product>[], 
-      },
-      'Kim Kardashian': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/kimkardashian',
-          'facebook': 'https://facebook.com/KimKardashian',
-          'snapchat': 'https://snapchat.com/add/kimkardashian',
-        },
-        'recommendedProducts': <Product>[], 
-      },
-      'Taylor Swift': {
-        'socialMediaLinks': {
-          'instagram': 'https://instagram.com/taylorswift',
-          'facebook': 'https://facebook.com/TaylorSwift',
-        },
-        'recommendedProducts': <Product>[], 
-      },
-    };
-
-    return celebrityData[celebrityName] ?? {
-      'socialMediaLinks': <String, String>{},
-      'recommendedProducts': <Product>[],
-    };
+    return DataService().getCelebrityDataForProduct(celebrityName);
   }
 
   @override
@@ -270,30 +219,46 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     required bool isSmallScreen,
   }) {
     return Container(
-      width: isSmallScreen ? 40 : 48,
-      height: isSmallScreen ? 40 : 48,
+      width: isSmallScreen ? 44 : 52,
+      height: isSmallScreen ? 44 : 52,
       decoration: BoxDecoration(
         color: AppConstants.surfaceColor,
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
         border: Border.all(
-          color: AppConstants.borderColor,
+          color: AppConstants.borderColor.withOpacity(0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
+            color: AppConstants.textSecondary.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: AppConstants.surfaceColor,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
-      child: IconButton(
-        icon: Icon(
-          icon,
-          color: AppConstants.textPrimary,
-          size: isSmallScreen ? 16 : 20,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                color: AppConstants.textPrimary,
+                size: isSmallScreen ? 20 : 24,
+              ),
+            ),
+          ),
         ),
-        onPressed: onPressed,
       ),
     );
   }
@@ -488,6 +453,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               testimonial: endorsement.testimonial,
               socialMediaLinks: celebrityData['socialMediaLinks'] as Map<String, String>,
               recommendedProducts: celebrityData['recommendedProducts'] as List<Product>,
+              morningRoutineProducts: celebrityData['morningRoutineProducts'] as List<Product>,
+              eveningRoutineProducts: celebrityData['eveningRoutineProducts'] as List<Product>,
             ),
           ),
         );
@@ -643,15 +610,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   );
                 },
                 child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     AnimatedContainer(
                       duration: AppConstants.mediumAnimation,
                       curve: Curves.easeInOut,
                       constraints: BoxConstraints(
                         minWidth: isSmallScreen ? 140 : 160,
-                        minHeight: isSmallScreen ? 80 : 90,
+                        minHeight: isSmallScreen ? 100 : 110,
                       ),
-                      padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+                      padding: EdgeInsets.fromLTRB(
+                        isSmallScreen ? 16 : 20,
+                        isSmallScreen ? 16 : 20,
+                        isSmallScreen ? 16 : 20,
+                        isSmallScreen ? 40 : 45, // Extra bottom padding for quantity controls
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppConstants.accentColor
@@ -675,6 +648,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             variant.name,
@@ -683,9 +657,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                   ? AppConstants.surfaceColor
                                   : AppConstants.textPrimary,
                               fontWeight: FontWeight.bold,
-                              fontSize: isSmallScreen ? 12 : 14,
+                              fontSize: isSmallScreen ? 13 : 15,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (variant.color != 'Standard') ...[
@@ -693,7 +667,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                             Text(
                               variant.color,
                               style: TextStyle(
-                                fontSize: isSmallScreen ? 10 : 12,
+                                fontSize: isSmallScreen ? 11 : 13,
                                 color: isSelected
                                     ? AppConstants.surfaceColor.withOpacity(0.9)
                                     : AppConstants.textSecondary,
@@ -707,19 +681,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                       ),
                     ),
                     
-                    // Small plus/counter at top right
+                    // Quantity controls positioned at bottom right
                     Positioned(
-                      top: -8,
-                      right: -8,
+                      bottom: isSmallScreen ? 8 : 10,
+                      right: isSmallScreen ? 8 : 10,
                       child: variantQuantity == 0
                           ? GestureDetector(
                               onTap: () => _updateVariantQuantity(variant.id, 1),
                               child: Container(
-                                width: isSmallScreen ? 36 : 40,
-                                height: isSmallScreen ? 36 : 40,
+                                width: isSmallScreen ? 40 : 44,
+                                height: isSmallScreen ? 40 : 44,
                                 decoration: BoxDecoration(
                                   color: AppConstants.accentColor,
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
                                       color: AppConstants.accentColor.withOpacity(0.3),
@@ -731,14 +705,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 child: Icon(
                                   Icons.add,
                                   color: AppConstants.surfaceColor,
-                                  size: isSmallScreen ? 20 : 22,
+                                  size: isSmallScreen ? 24 : 28,
                                 ),
                               ),
                             )
                           : Container(
+                              constraints: BoxConstraints(
+                                minWidth: isSmallScreen ? 90 : 100,
+                              ),
                               padding: EdgeInsets.symmetric(
                                 horizontal: isSmallScreen ? 8 : 10,
-                                vertical: isSmallScreen ? 6 : 7,
+                                vertical: isSmallScreen ? 6 : 8,
                               ),
                               decoration: BoxDecoration(
                                 color: AppConstants.accentColor,
@@ -753,52 +730,54 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   GestureDetector(
                                     onTap: () => _updateVariantQuantity(variant.id, variantQuantity - 1),
                                     child: Container(
-                                      width: isSmallScreen ? 22 : 24,
-                                      height: isSmallScreen ? 22 : 24,
+                                      width: isSmallScreen ? 24 : 28,
+                                      height: isSmallScreen ? 24 : 28,
                                       decoration: BoxDecoration(
                                         color: AppConstants.surfaceColor.withOpacity(0.2),
-                                        shape: BoxShape.circle,
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Icon(
                                         Icons.remove,
                                         color: AppConstants.surfaceColor,
-                                        size: isSmallScreen ? 14 : 16,
+                                        size: isSmallScreen ? 16 : 18,
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: isSmallScreen ? 10 : 12),
-                                  Text(
-                                    variantQuantity.toString(),
-                                    style: TextStyle(
-                                      fontSize: isSmallScreen ? 14 : 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppConstants.surfaceColor,
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 10),
+                                    child: Text(
+                                      variantQuantity.toString(),
+                                      style: TextStyle(
+                                        fontSize: isSmallScreen ? 16 : 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppConstants.surfaceColor,
+                                      ),
                                     ),
                                   ),
-                                  SizedBox(width: isSmallScreen ? 10 : 12),
                                   GestureDetector(
                                     onTap: variantQuantity < 99 
                                         ? () => _updateVariantQuantity(variant.id, variantQuantity + 1) 
                                         : null,
                                     child: Container(
-                                      width: isSmallScreen ? 22 : 24,
-                                      height: isSmallScreen ? 22 : 24,
+                                      width: isSmallScreen ? 24 : 28,
+                                      height: isSmallScreen ? 24 : 28,
                                       decoration: BoxDecoration(
                                         color: variantQuantity < 99 
                                             ? AppConstants.surfaceColor.withOpacity(0.2) 
                                             : AppConstants.surfaceColor.withOpacity(0.1),
-                                        shape: BoxShape.circle,
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Icon(
                                         Icons.add,
                                         color: variantQuantity < 99 
                                             ? AppConstants.surfaceColor 
                                             : AppConstants.surfaceColor.withOpacity(0.5),
-                                        size: isSmallScreen ? 14 : 16,
+                                        size: isSmallScreen ? 16 : 18,
                                       ),
                                     ),
                                   ),
@@ -817,95 +796,84 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Widget _buildTabSection(bool isSmallScreen) {
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 20 : 30, 
-        vertical: isSmallScreen ? 16 : 20
-      ),
-      decoration: BoxDecoration(
-        color: AppConstants.backgroundColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppConstants.borderColor,
-          width: 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Tab Bar - now integrated with main content
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 20 : 30),
+          decoration: BoxDecoration(
+            color: AppConstants.surfaceColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppConstants.borderColor.withOpacity(0.3),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppConstants.textSecondary.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TabBar(
+            controller: _tabController,
+            dividerColor: Colors.transparent,
+            indicatorColor: AppConstants.accentColor,
+            indicatorWeight: 3,
+            indicatorPadding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 12),
+            labelColor: AppConstants.accentColor,
+            unselectedLabelColor: AppConstants.textSecondary,
+            labelStyle: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: isSmallScreen ? 13 : 15,
+            ),
+            unselectedLabelStyle: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: isSmallScreen ? 13 : 15,
+            ),
+            tabs: const [
+              Tab(text: 'Description'),
+              Tab(text: 'Ingredients'),
+              Tab(text: 'Reviews'),
+            ],
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Tab Bar
-          Container(
-            height: isSmallScreen ? 50 : 60,
-            decoration: BoxDecoration(
-              color: AppConstants.surfaceColor,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppConstants.borderColor,
-                  width: 1,
-                ),
-              ),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              dividerColor: Colors.transparent,
-              indicatorColor: AppConstants.accentColor,
-              indicatorWeight: 3,
-              labelColor: AppConstants.accentColor,
-              unselectedLabelColor: AppConstants.textSecondary,
-              labelStyle: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: isSmallScreen ? 12 : 14,
-              ),
-              unselectedLabelStyle: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: isSmallScreen ? 12 : 14,
-              ),
-              tabs: const [
-                Tab(text: 'Description'),
-                Tab(text: 'Ingredients'),
-                Tab(text: 'Reviews'),
-              ],
-            ),
-          ),
-          
-          // Tab Content
-          SizedBox(
-            height: isSmallScreen ? 300 : 350,
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildDescriptionTab(isSmallScreen),
-                _buildIngredientsTab(isSmallScreen),
-                _buildReviewsTab(isSmallScreen),
-              ],
-            ),
-          ),
-        ],
-      ),
+        
+        SizedBox(height: isSmallScreen ? 16 : 20),
+        
+        // Tab Content - now part of main screen without container
+        AnimatedBuilder(
+          animation: _tabController,
+          builder: (context, child) {
+            switch (_tabController.index) {
+              case 0:
+                return _buildDescriptionContent(isSmallScreen);
+              case 1:
+                return _buildIngredientsContent(isSmallScreen);
+              case 2:
+                return _buildReviewsContent(isSmallScreen);
+              default:
+                return _buildDescriptionContent(isSmallScreen);
+            }
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildDescriptionTab(bool isSmallScreen) {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
+  Widget _buildDescriptionContent(bool isSmallScreen) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 20 : 30),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Description',
+            'Product Description',
             style: TextStyle(
-              fontSize: isSmallScreen ? 16 : 18,
+              fontSize: isSmallScreen ? 18 : 20,
               fontWeight: FontWeight.bold,
               color: AppConstants.textPrimary,
             ),
@@ -914,100 +882,112 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           Text(
             widget.product.description,
             style: TextStyle(
-              fontSize: isSmallScreen ? 13 : 15,
+              fontSize: isSmallScreen ? 14 : 16,
               color: AppConstants.textSecondary,
               height: 1.6,
             ),
           ),
-          SizedBox(height: isSmallScreen ? 16 : 20),
+          SizedBox(height: isSmallScreen ? 20 : 24),
+          
           Text(
-            'Benefits',
+            'Key Benefits',
             style: TextStyle(
-              fontSize: isSmallScreen ? 14 : 16,
+              fontSize: isSmallScreen ? 16 : 18,
               fontWeight: FontWeight.bold,
               color: AppConstants.textPrimary,
             ),
           ),
-          SizedBox(height: isSmallScreen ? 8 : 12),
+          SizedBox(height: isSmallScreen ? 12 : 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildBenefitItem('Long-lasting formula', isSmallScreen),
-              _buildBenefitItem('Gentle on skin', isSmallScreen),
-              _buildBenefitItem('Professional results', isSmallScreen),
-              _buildBenefitItem('Dermatologist tested', isSmallScreen),
-              _buildBenefitItem('Cruelty-free and vegan', isSmallScreen),
-              _buildBenefitItem('Suitable for sensitive skin', isSmallScreen),
+              _buildBenefitItem('Gentle on sensitive skin', isSmallScreen),
+              _buildBenefitItem('Professional-grade results', isSmallScreen),
+              _buildBenefitItem('Dermatologist tested & approved', isSmallScreen),
+              _buildBenefitItem('Cruelty-free and vegan formula', isSmallScreen),
+              _buildBenefitItem('Suitable for all skin types', isSmallScreen),
             ],
           ),
-          SizedBox(height: isSmallScreen ? 16 : 20),
+          SizedBox(height: isSmallScreen ? 20 : 24),
+          
           Text(
             'How to Use',
             style: TextStyle(
-              fontSize: isSmallScreen ? 14 : 16,
+              fontSize: isSmallScreen ? 16 : 18,
               fontWeight: FontWeight.bold,
               color: AppConstants.textPrimary,
             ),
           ),
-          SizedBox(height: isSmallScreen ? 8 : 12),
-          Text(
-            'Apply evenly to clean, dry skin. For best results, use twice daily. Allow to absorb completely before applying other products. Always use sunscreen during the day when using this product.',
-            style: TextStyle(
-              fontSize: isSmallScreen ? 13 : 15,
-              color: AppConstants.textSecondary,
-              height: 1.6,
+          SizedBox(height: isSmallScreen ? 12 : 16),
+          Container(
+            padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+            decoration: BoxDecoration(
+              color: AppConstants.backgroundColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppConstants.borderColor.withOpacity(0.3),
+                width: 1,
+              ),
             ),
-          ),
-          SizedBox(height: isSmallScreen ? 16 : 20),
-          Text(
-            'Cautions',
-            style: TextStyle(
-              fontSize: isSmallScreen ? 14 : 16,
-              fontWeight: FontWeight.bold,
-              color: AppConstants.textPrimary,
-            ),
-          ),
-          SizedBox(height: isSmallScreen ? 8 : 12),
-          Text(
-            'For external use only. Avoid contact with eyes. If irritation occurs, discontinue use. Keep out of reach of children.',
-            style: TextStyle(
-              fontSize: isSmallScreen ? 13 : 15,
-              color: AppConstants.textSecondary,
-              height: 1.6,
-            ),
-          ),
-          SizedBox(height: isSmallScreen ? 20 : 24), // Extra bottom padding for better scrolling
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBenefitItem(String benefit, bool isSmallScreen) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 4 : 6),
-      child: Row(
-        children: [
-          Icon(
-            Icons.check_circle,
-            color: AppConstants.successColor,
-            size: isSmallScreen ? 16 : 18,
-          ),
-          SizedBox(width: isSmallScreen ? 8 : 12),
-          Expanded(
             child: Text(
-              benefit,
+              'Apply evenly to clean, dry skin. For best results, use twice daily - morning and evening. Allow to absorb completely before applying other products. Always use sunscreen during the day when using this product.',
               style: TextStyle(
-                fontSize: isSmallScreen ? 13 : 14,
+                fontSize: isSmallScreen ? 14 : 16,
                 color: AppConstants.textSecondary,
+                height: 1.6,
               ),
             ),
           ),
+          SizedBox(height: isSmallScreen ? 20 : 24),
+          
+          Text(
+            'Important Cautions',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 16 : 18,
+              fontWeight: FontWeight.bold,
+              color: AppConstants.textPrimary,
+            ),
+          ),
+          SizedBox(height: isSmallScreen ? 12 : 16),
+          Container(
+            padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.orange.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange,
+                  size: isSmallScreen ? 20 : 24,
+                ),
+                SizedBox(width: isSmallScreen ? 12 : 16),
+                Expanded(
+                  child: Text(
+                    'For external use only. Avoid contact with eyes. If irritation occurs, discontinue use immediately. Keep out of reach of children. Store in a cool, dry place.',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 14 : 16,
+                      color: AppConstants.textSecondary,
+                      height: 1.6,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildIngredientsTab(bool isSmallScreen) {
+  Widget _buildIngredientsContent(bool isSmallScreen) {
     // Extended ingredients list for demonstration
     final List<String> displayIngredients = widget.product.ingredients.isNotEmpty 
         ? widget.product.ingredients 
@@ -1034,226 +1014,295 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             'Rosehip Oil'
           ];
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 20 : 30),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Key Ingredients',
+            'Full Ingredients List',
             style: TextStyle(
-              fontSize: isSmallScreen ? 16 : 18,
+              fontSize: isSmallScreen ? 18 : 20,
               fontWeight: FontWeight.bold,
               color: AppConstants.textPrimary,
             ),
           ),
           SizedBox(height: isSmallScreen ? 12 : 16),
-          ...displayIngredients.map((ingredient) => Padding(
-            padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 6 : 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: isSmallScreen ? 6 : 8,
-                  height: isSmallScreen ? 6 : 8,
-                  margin: EdgeInsets.only(top: isSmallScreen ? 6 : 8),
-                  decoration: BoxDecoration(
-                    color: AppConstants.accentColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                SizedBox(width: isSmallScreen ? 12 : 16),
-                Expanded(
-                  child: Text(
-                    ingredient,
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 13 : 14,
-                      color: AppConstants.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
+          
+          // Ingredients grid
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: isSmallScreen ? 1 : 2,
+              crossAxisSpacing: isSmallScreen ? 8 : 12,
+              mainAxisSpacing: isSmallScreen ? 8 : 12,
+              childAspectRatio: isSmallScreen ? 8 : 6,
             ),
-          )).toList(),
-          SizedBox(height: isSmallScreen ? 16 : 20),
+            itemCount: displayIngredients.length,
+            itemBuilder: (context, index) {
+              final ingredient = displayIngredients[index];
+              return Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 12 : 16,
+                  vertical: isSmallScreen ? 8 : 12,
+                ),
+                decoration: BoxDecoration(
+                  color: AppConstants.backgroundColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppConstants.borderColor.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: isSmallScreen ? 6 : 8,
+                      height: isSmallScreen ? 6 : 8,
+                      decoration: BoxDecoration(
+                        color: AppConstants.accentColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: isSmallScreen ? 8 : 12),
+                    Expanded(
+                      child: Text(
+                        ingredient,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 13 : 15,
+                          color: AppConstants.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          
+          SizedBox(height: isSmallScreen ? 20 : 24),
+          
           Container(
-            padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+            padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
             decoration: BoxDecoration(
-              color: AppConstants.backgroundColor,
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.green.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppConstants.borderColor,
+                color: Colors.green.withOpacity(0.2),
                 width: 1,
               ),
             ),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Ingredient Safety',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 14 : 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.textPrimary,
-                  ),
+                Icon(
+                  Icons.verified_rounded,
+                  color: Colors.green,
+                  size: isSmallScreen ? 20 : 24,
                 ),
-                SizedBox(height: isSmallScreen ? 8 : 10),
-                Text(
-                  'All ingredients are carefully selected and tested for safety. This product is free from parabens, sulfates, and artificial fragrances.',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 12 : 13,
-                    color: AppConstants.textSecondary,
-                    height: 1.4,
+                SizedBox(width: isSmallScreen ? 12 : 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ingredient Safety',
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 16 : 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppConstants.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: isSmallScreen ? 8 : 10),
+                      Text(
+                        'All ingredients are carefully selected and tested for safety. This product is free from parabens, sulfates, and artificial fragrances. Suitable for sensitive skin.',
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 14 : 16,
+                          color: AppConstants.textSecondary,
+                          height: 1.6,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: isSmallScreen ? 20 : 24), // Extra bottom padding for better scrolling
         ],
       ),
     );
   }
 
-  Widget _buildReviewsTab(bool isSmallScreen) {
+  Widget _buildReviewsContent(bool isSmallScreen) {
     if (widget.product.reviews.isEmpty) {
-      return SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.rate_review_outlined,
-                  size: isSmallScreen ? 48 : 64,
-                  color: AppConstants.textSecondary,
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 20 : 30),
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.all(isSmallScreen ? 32 : 40),
+              decoration: BoxDecoration(
+                color: AppConstants.backgroundColor,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppConstants.borderColor.withOpacity(0.3),
+                  width: 1,
                 ),
-                SizedBox(height: isSmallScreen ? 12 : 16),
-                Text(
-                  'No reviews yet',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 16 : 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppConstants.textSecondary,
-                  ),
-                ),
-                SizedBox(height: isSmallScreen ? 6 : 8),
-                Text(
-                  'Be the first to review this product',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 12 : 14,
-                    color: AppConstants.textSecondary,
-                  ),
-                ),
-                SizedBox(height: isSmallScreen ? 16 : 20),
-                Container(
-                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-                  decoration: BoxDecoration(
-                    color: AppConstants.backgroundColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppConstants.borderColor,
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    'Reviews help other customers make informed decisions. Share your experience with this product!',
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 12 : 13,
-                      color: AppConstants.textSecondary,
-                      height: 1.4,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
-      itemCount: widget.product.reviews.length,
-      itemBuilder: (context, index) {
-        final review = widget.product.reviews[index];
-        return Container(
-          margin: EdgeInsets.only(bottom: isSmallScreen ? 12 : 16),
-          padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-          decoration: BoxDecoration(
-            color: AppConstants.backgroundColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppConstants.borderColor,
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+              ),
+              child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: isSmallScreen ? 16 : 20,
-                    backgroundColor: AppConstants.accentColor,
-                    child: Text(
-                      review.userName.isNotEmpty ? review.userName[0].toUpperCase() : 'U',
-                      style: TextStyle(
-                        color: AppConstants.surfaceColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: isSmallScreen ? 12 : 14,
+                  Icon(
+                    Icons.rate_review_outlined,
+                    size: isSmallScreen ? 48 : 64,
+                    color: AppConstants.textSecondary,
+                  ),
+                  SizedBox(height: isSmallScreen ? 16 : 20),
+                  Text(
+                    'No Reviews Yet',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 18 : 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppConstants.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: isSmallScreen ? 8 : 12),
+                  Text(
+                    'Be the first to share your experience with this product',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 14 : 16,
+                      color: AppConstants.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: isSmallScreen ? 20 : 24),
+                  Container(
+                    padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+                    decoration: BoxDecoration(
+                      color: AppConstants.accentColor.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppConstants.accentColor.withOpacity(0.2),
+                        width: 1,
                       ),
                     ),
-                  ),
-                  SizedBox(width: isSmallScreen ? 8 : 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          review.userName,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: isSmallScreen ? 13 : 14,
-                            color: AppConstants.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: isSmallScreen ? 2 : 4),
-                        Row(
-                          children: List.generate(5, (starIndex) {
-                            return Icon(
-                              starIndex < review.rating.floor()
-                                  ? Icons.star
-                                  : Icons.star_border,
-                              size: isSmallScreen ? 12 : 14,
-                              color: AppConstants.accentColor,
-                            );
-                          }),
-                        ),
-                      ],
+                    child: Text(
+                      'Reviews help other customers make informed decisions. Your feedback matters and helps us improve our products.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 13 : 15,
+                        color: AppConstants.textSecondary,
+                        height: 1.6,
+                      ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: isSmallScreen ? 8 : 12),
-              Text(
-                review.comment,
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 12 : 14,
-                  color: AppConstants.textSecondary,
-                  height: 1.4,
-                ),
-              ),
-            ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 20 : 30),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Customer Reviews',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 18 : 20,
+              fontWeight: FontWeight.bold,
+              color: AppConstants.textPrimary,
+            ),
           ),
-        );
-      },
+          SizedBox(height: isSmallScreen ? 16 : 20),
+          
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: widget.product.reviews.length,
+            separatorBuilder: (context, index) => SizedBox(height: isSmallScreen ? 12 : 16),
+            itemBuilder: (context, index) {
+              final review = widget.product.reviews[index];
+              return Container(
+                padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+                decoration: BoxDecoration(
+                  color: AppConstants.backgroundColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppConstants.borderColor.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: isSmallScreen ? 20 : 24,
+                          backgroundColor: AppConstants.accentColor,
+                          child: Text(
+                            review.userName.isNotEmpty ? review.userName[0].toUpperCase() : 'U',
+                            style: TextStyle(
+                              color: AppConstants.surfaceColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: isSmallScreen ? 14 : 16,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: isSmallScreen ? 12 : 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                review.userName,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: isSmallScreen ? 15 : 17,
+                                  color: AppConstants.textPrimary,
+                                ),
+                              ),
+                              SizedBox(height: isSmallScreen ? 4 : 6),
+                              Row(
+                                children: List.generate(5, (starIndex) {
+                                  return Icon(
+                                    starIndex < review.rating.floor()
+                                        ? Icons.star_rounded
+                                        : Icons.star_border_rounded,
+                                    size: isSmallScreen ? 16 : 18,
+                                    color: AppConstants.accentColor,
+                                  );
+                                }),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: isSmallScreen ? 12 : 16),
+                    Text(
+                      review.comment,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 14 : 16,
+                        color: AppConstants.textSecondary,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -1344,6 +1393,41 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBenefitItem(String benefit, bool isSmallScreen) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: isSmallScreen ? 4 : 6),
+      padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+      decoration: BoxDecoration(
+        color: AppConstants.backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppConstants.borderColor.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle_rounded,
+            color: AppConstants.successColor,
+            size: isSmallScreen ? 18 : 20,
+          ),
+          SizedBox(width: isSmallScreen ? 12 : 16),
+          Expanded(
+            child: Text(
+              benefit,
+              style: TextStyle(
+                fontSize: isSmallScreen ? 14 : 16,
+                color: AppConstants.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
