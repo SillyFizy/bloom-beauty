@@ -23,8 +23,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late PageController _imagePageController;
+  late ScrollController _scrollController;
+  late AnimationController _headerAnimationController;
+  late Animation<double> _headerAnimation;
   ProductVariant? _selectedVariant;
   int _currentImageIndex = 0;
+  bool _showStickyHeader = false;
   
   // Track quantities for each variant (starting from 0)
   Map<String, int> _variantQuantities = {};
@@ -34,6 +38,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _imagePageController = PageController();
+    _scrollController = ScrollController();
+    
+    // Initialize header animation controller
+    _headerAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _headerAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _headerAnimationController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Add scroll listener for sticky header
+    _scrollController.addListener(_onScroll);
     
     // Initialize variant quantities properly
     if (widget.product.variants.isNotEmpty) {
@@ -52,7 +73,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   void dispose() {
     _tabController.dispose();
     _imagePageController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _headerAnimationController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    // Calculate scroll threshold based on screen height
+    final screenHeight = MediaQuery.of(context).size.height;
+    final threshold = screenHeight * 0.3; // Show sticky header after scrolling past 30% of screen
+    
+    final shouldShow = _scrollController.hasClients && _scrollController.offset > threshold;
+    
+    if (shouldShow != _showStickyHeader) {
+      setState(() {
+        _showStickyHeader = shouldShow;
+      });
+      
+      if (shouldShow) {
+        _headerAnimationController.forward();
+      } else {
+        _headerAnimationController.reverse();
+      }
+    }
   }
 
   String _formatPrice(double price) {
@@ -146,66 +190,110 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
-          body: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // App bar
-              SliverAppBar(
-                backgroundColor: AppConstants.backgroundColor,
-                elevation: 0,
-                pinned: false,
-                floating: true,
-                leading: _buildActionButton(
-                  icon: Icons.arrow_back_ios,
-                  onPressed: () => Navigator.pop(context),
-                  isSmallScreen: isSmallScreen,
-                ),
-                actions: [
-                  _buildActionButton(
-                    icon: Icons.favorite_border,
-                    onPressed: () {},
-                    isSmallScreen: isSmallScreen,
+          body: Stack(
+            children: [
+              // Main content
+              CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Transparent app bar
+                  SliverAppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    pinned: false,
+                    floating: false,
+                    automaticallyImplyLeading: false,
+                    toolbarHeight: 0, // Hide the default toolbar
                   ),
-                  SizedBox(width: isSmallScreen ? 8 : 12),
-                  _buildActionButton(
-                    icon: Icons.share,
-                    onPressed: () {},
-                    isSmallScreen: isSmallScreen,
+                  
+                  // Image section with floating buttons
+                  SliverToBoxAdapter(
+                    child: Stack(
+                      children: [
+                        _buildImageSection(isSmallScreen),
+                        // Floating action buttons
+                        Positioned(
+                          top: MediaQuery.of(context).padding.top + 8,
+                          left: 16,
+                          right: 16,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildTransparentActionButton(
+                                icon: Icons.arrow_back_ios,
+                                onPressed: () => Navigator.pop(context),
+                                isSmallScreen: isSmallScreen,
+                              ),
+                              Row(
+                                children: [
+                                  _buildTransparentActionButton(
+                                    icon: Icons.favorite_border,
+                                    onPressed: () {},
+                                    isSmallScreen: isSmallScreen,
+                                  ),
+                                  SizedBox(width: isSmallScreen ? 8 : 12),
+                                  _buildTransparentActionButton(
+                                    icon: Icons.share,
+                                    onPressed: () {},
+                                    isSmallScreen: isSmallScreen,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(width: isSmallScreen ? 16 : 20),
+                  
+                  // Content section
+                  SliverToBoxAdapter(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: AppConstants.surfaceColor,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(32),
+                          topRight: Radius.circular(32),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          SizedBox(height: isSmallScreen ? 12 : 16),
+                          _buildProductInfo(isSmallScreen),
+                          SizedBox(height: isSmallScreen ? 12 : 16),
+                          _buildVariantSelector(isSmallScreen),
+                          if (widget.product.celebrityEndorsement != null)
+                            _buildCelebrityEndorsement(isSmallScreen),
+                          SizedBox(height: isSmallScreen ? 20 : 24),
+                          _buildTabSection(isSmallScreen),
+                          SizedBox(height: isSmallScreen ? 80 : 100), // Space for bottom bar
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
               
-              // Scrollable image section
-              SliverToBoxAdapter(
-                child: _buildImageSection(isSmallScreen),
-              ),
-              
-              // Content section
-              SliverToBoxAdapter(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppConstants.surfaceColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(32),
-                      topRight: Radius.circular(32),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      SizedBox(height: isSmallScreen ? 12 : 16),
-                      _buildProductInfo(isSmallScreen),
-                      SizedBox(height: isSmallScreen ? 12 : 16),
-                      _buildVariantSelector(isSmallScreen),
-                      if (widget.product.celebrityEndorsement != null)
-                        _buildCelebrityEndorsement(isSmallScreen),
-                      SizedBox(height: isSmallScreen ? 20 : 24),
-                      _buildTabSection(isSmallScreen),
-                      SizedBox(height: isSmallScreen ? 80 : 100), // Space for bottom bar
-                    ],
+              // Sticky header
+              if (_showStickyHeader)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: AnimatedBuilder(
+                    animation: _headerAnimation,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(0, -60 * (1 - _headerAnimation.value)),
+                        child: Opacity(
+                          opacity: _headerAnimation.value,
+                          child: _buildStickyHeader(isSmallScreen),
+                        ),
+                      );
+                    },
                   ),
                 ),
-              ),
             ],
           ),
           bottomNavigationBar: (widget.product.variants.isEmpty || _totalQuantity > 0) 
@@ -216,7 +304,118 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     );
   }
 
-  Widget _buildActionButton({
+  Widget _buildTransparentActionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isSmallScreen,
+  }) {
+    return Container(
+      width: isSmallScreen ? 44 : 52,
+      height: isSmallScreen ? 44 : 52,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                color: AppConstants.textPrimary,
+                size: isSmallScreen ? 20 : 24,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStickyHeader(bool isSmallScreen) {
+    return Container(
+      height: MediaQuery.of(context).padding.top + (isSmallScreen ? 56 : 64),
+      decoration: BoxDecoration(
+        color: AppConstants.surfaceColor.withValues(alpha: 0.95),
+        boxShadow: [
+          BoxShadow(
+            color: AppConstants.textSecondary.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Backdrop filter effect
+          Container(
+            decoration: BoxDecoration(
+              color: AppConstants.surfaceColor.withValues(alpha: 0.85),
+            ),
+          ),
+          
+          // Header content
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildStickyActionButton(
+                  icon: Icons.arrow_back_ios,
+                  onPressed: () => Navigator.pop(context),
+                  isSmallScreen: isSmallScreen,
+                ),
+                
+                // Product name in center
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      widget.product.name,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 16 : 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppConstants.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                
+                Row(
+                  children: [
+                    _buildStickyActionButton(
+                      icon: Icons.favorite_border,
+                      onPressed: () {},
+                      isSmallScreen: isSmallScreen,
+                    ),
+                    SizedBox(width: isSmallScreen ? 8 : 12),
+                    _buildStickyActionButton(
+                      icon: Icons.share,
+                      onPressed: () {},
+                      isSmallScreen: isSmallScreen,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStickyActionButton({
     required IconData icon,
     required VoidCallback onPressed,
     required bool isSmallScreen,
@@ -228,19 +427,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         color: AppConstants.surfaceColor,
         borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
         border: Border.all(
-          color: AppConstants.borderColor.withOpacity(0.5),
+          color: AppConstants.borderColor.withValues(alpha: 0.3),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: AppConstants.surfaceColor,
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            color: AppConstants.textSecondary.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -269,6 +463,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   Widget _buildImageSection(bool isSmallScreen) {
     final screenHeight = MediaQuery.of(context).size.height;
     final imageHeight = isSmallScreen ? screenHeight * 0.4 : screenHeight * 0.45;
+    final topPadding = MediaQuery.of(context).padding.top + (isSmallScreen ? 64 : 72);
     
     return Container(
       height: imageHeight,
@@ -282,6 +477,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       ),
       child: Column(
         children: [
+          // Add top spacing for floating buttons
+          SizedBox(height: topPadding),
+          
           // Main Image with PageView
           Expanded(
             child: PageView.builder(
@@ -296,7 +494,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 return Container(
                   margin: EdgeInsets.fromLTRB(
                     isSmallScreen ? 20 : 30, 
-                    isSmallScreen ? 20 : 30, 
+                    isSmallScreen ? 10 : 15, 
                     isSmallScreen ? 20 : 30, 
                     isSmallScreen ? 16 : 20
                   ),
@@ -309,7 +507,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppConstants.textSecondary.withOpacity(0.15),
+                        color: AppConstants.textSecondary.withValues(alpha: 0.15),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -367,7 +565,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                       shape: BoxShape.circle,
                       color: _currentImageIndex == index
                           ? AppConstants.accentColor
-                          : AppConstants.textSecondary.withOpacity(0.3),
+                          : AppConstants.textSecondary.withValues(alpha: 0.3),
                     ),
                   ),
                 ),
