@@ -6,6 +6,24 @@ class Formatters {
     return '${formatter.format(price)} IQD';
   }
   
+  static String formatPriceCompact(double price) {
+    final formatter = NumberFormat('#,###');
+    
+    // For very large numbers, use abbreviated format in tight spaces
+    if (price >= 1000000000) {
+      final billions = price / 1000000000;
+      return '${billions.toStringAsFixed(1)}B IQD';
+    } else if (price >= 1000000) {
+      final millions = price / 1000000;
+      return '${millions.toStringAsFixed(1)}M IQD';
+    } else if (price >= 100000) {
+      final thousands = price / 1000;
+      return '${thousands.toStringAsFixed(0)}K IQD';
+    } else {
+      return '${formatter.format(price)} IQD';
+    }
+  }
+  
   static String formatDate(DateTime date) {
     final formatter = DateFormat('MMM dd, yyyy');
     return formatter.format(date);

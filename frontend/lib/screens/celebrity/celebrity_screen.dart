@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../constants/app_constants.dart';
 import '../../models/product_model.dart';
+import '../../constants/app_constants.dart';
+import '../../providers/product_provider.dart';
 import '../products/product_detail_screen.dart';
 
-class CelebrityScreen extends StatelessWidget {
+class CelebrityScreen extends StatefulWidget {
   final String celebrityName;
   final String celebrityImage;
   final String? testimonial;
@@ -27,6 +29,64 @@ class CelebrityScreen extends StatelessWidget {
     this.eveningRoutineProducts = const [], // New parameter
   });
 
+  @override
+  State<CelebrityScreen> createState() => _CelebrityScreenState();
+}
+
+class _CelebrityScreenState extends State<CelebrityScreen>
+    with TickerProviderStateMixin {
+  late ScrollController _scrollController;
+  late AnimationController _titleAnimationController;
+  late Animation<double> _titleAnimation;
+  bool _showTitle = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    
+    // Initialize title animation controller
+    _titleAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 250),
+      vsync: this,
+    );
+    _titleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _titleAnimationController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Add scroll listener for title appearance
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _titleAnimationController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Show title when scrolled past the celebrity image (approximately 200px)
+    final shouldShow = _scrollController.hasClients && _scrollController.offset > 200;
+    
+    if (shouldShow != _showTitle) {
+      setState(() {
+        _showTitle = shouldShow;
+      });
+      
+      if (shouldShow) {
+        _titleAnimationController.forward();
+      } else {
+        _titleAnimationController.reverse();
+      }
+    }
+  }
+
   Future<void> _launchSocialMedia(String url) async {
     if (url.isNotEmpty) {
       try {
@@ -42,7 +102,7 @@ class CelebrityScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildActionButton({
+  Widget _buildTransparentActionButton({
     required IconData icon,
     required VoidCallback onPressed,
     required bool isSmallScreen,
@@ -51,24 +111,8 @@ class CelebrityScreen extends StatelessWidget {
       width: isSmallScreen ? 44 : 52,
       height: isSmallScreen ? 44 : 52,
       decoration: BoxDecoration(
-        color: AppConstants.surfaceColor,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
-        border: Border.all(
-          color: AppConstants.borderColor.withOpacity(0.5),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: AppConstants.surfaceColor,
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -92,13 +136,79 @@ class CelebrityScreen extends StatelessWidget {
     );
   }
 
-  void _navigateToProduct(BuildContext context, Product product) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProductDetailScreen(product: product),
-      ),
-    );
+  Future<void> _navigateToProduct(BuildContext context, Product product) async {
+    try {
+      // Get the latest product data from the service to ensure accuracy
+      final productProvider = context.read<ProductProvider>();
+      final freshProduct = await productProvider.getProductById(product.id);
+      
+      if (freshProduct != null) {
+        // Create an updated product with correct celebrity endorsement if needed
+        Product productToNavigate = freshProduct;
+        
+        // If the product doesn't have celebrity endorsement but should have it,
+        // create a copy with the correct endorsement
+        if (freshProduct.celebrityEndorsement == null || 
+            freshProduct.celebrityEndorsement!.celebrityName != widget.celebrityName) {
+          productToNavigate = Product(
+            id: freshProduct.id,
+            name: freshProduct.name,
+            description: freshProduct.description,
+            price: freshProduct.price,
+            discountPrice: freshProduct.discountPrice,
+            images: freshProduct.images,
+            categoryId: freshProduct.categoryId,
+            brand: freshProduct.brand,
+            rating: freshProduct.rating,
+            reviewCount: freshProduct.reviewCount,
+            isInStock: freshProduct.isInStock,
+            ingredients: freshProduct.ingredients,
+            beautyPoints: freshProduct.beautyPoints,
+            variants: freshProduct.variants,
+            reviews: freshProduct.reviews,
+            celebrityEndorsement: CelebrityEndorsement(
+              celebrityName: widget.celebrityName,
+              celebrityImage: widget.celebrityImage,
+              testimonial: widget.testimonial,
+            ),
+          );
+        }
+        
+        // Add to recently viewed
+        await productProvider.addToRecentlyViewed(productToNavigate);
+        
+        // Navigate to product detail
+        if (context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductDetailScreen(product: productToNavigate),
+            ),
+          );
+        }
+      } else {
+        // Fallback to original product if service fails
+        if (context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductDetailScreen(product: product),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Error handling - fallback to original product
+      debugPrint('Error fetching fresh product data: $e');
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(product: product),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -124,8 +234,9 @@ class CelebrityScreen extends StatelessWidget {
               ),
             ),
             child: CustomScrollView(
+              controller: _scrollController,
               slivers: [
-                // Responsive App Bar
+                // Responsive App Bar with animated title
                 _buildResponsiveSliverAppBar(isSmallScreen),
                 
                 // Celebrity content
@@ -150,22 +261,22 @@ class CelebrityScreen extends StatelessWidget {
                           _buildCelebrityHeader(isSmallScreen),
                           
                           // Testimonial section
-                          if (testimonial != null && testimonial!.isNotEmpty)
+                          if (widget.testimonial != null && widget.testimonial!.isNotEmpty)
                             _buildTestimonial(isSmallScreen),
                           
                           // Morning and Evening routine - FIRST
-                          if (morningRoutineProducts.isNotEmpty || eveningRoutineProducts.isNotEmpty)
+                          if (widget.morningRoutineProducts.isNotEmpty || widget.eveningRoutineProducts.isNotEmpty)
                             _buildResponsiveRoutineSection(context, isSmallScreen, isMediumScreen),
                           
                           // Recommended products - SECOND  
-                          if (recommendedProducts.isNotEmpty)
+                          if (widget.recommendedProducts.isNotEmpty)
                             _buildResponsiveRecommendedProducts(context, isSmallScreen, isMediumScreen),
                           
                           // Beauty secrets video - THIRD
                           _buildBeautySecrets(isSmallScreen),
                           
                           // Social media - LAST
-                          if (socialMediaLinks.isNotEmpty)
+                          if (widget.socialMediaLinks.isNotEmpty)
                             _buildResponsiveSocialMedia(isSmallScreen),
                           
                           const SizedBox(height: 40),
@@ -189,12 +300,34 @@ class CelebrityScreen extends StatelessWidget {
       backgroundColor: AppConstants.surfaceColor,
       elevation: 0,
       leading: Builder(
-        builder: (context) => _buildActionButton(
+        builder: (context) => _buildTransparentActionButton(
           icon: Icons.arrow_back_ios,
           onPressed: () => Navigator.pop(context),
           isSmallScreen: isSmallScreen,
         ),
       ),
+      title: AnimatedBuilder(
+        animation: _titleAnimation,
+        builder: (context, child) {
+          return Opacity(
+            opacity: _titleAnimation.value,
+            child: Transform.translate(
+              offset: Offset(0, 20 * (1 - _titleAnimation.value)),
+              child: Text(
+                widget.celebrityName,
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 18 : 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppConstants.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          );
+        },
+      ),
+      centerTitle: true,
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           children: [
@@ -280,9 +413,9 @@ class CelebrityScreen extends StatelessWidget {
                       ],
                     ),
                     child: ClipOval(
-                      child: celebrityImage.isNotEmpty
+                      child: widget.celebrityImage.isNotEmpty
                           ? Image.network(
-                              celebrityImage,
+                              widget.celebrityImage,
                               fit: BoxFit.cover,
                               width: isSmallScreen ? 164 : 204,
                               height: isSmallScreen ? 164 : 204,
@@ -394,7 +527,7 @@ class CelebrityScreen extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            celebrityName,
+            widget.celebrityName,
             style: TextStyle(
               fontSize: isSmallScreen ? 28 : 32,
               fontWeight: FontWeight.bold,
@@ -431,7 +564,7 @@ class CelebrityScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Discover the secrets behind $celebrityName\'s radiant glow with their exclusive beauty philosophy and skincare routine.',
+            'Discover the secrets behind ${widget.celebrityName}\'s radiant glow with their exclusive beauty philosophy and skincare routine.',
             style: TextStyle(
               fontSize: isSmallScreen ? 15 : 16,
               color: AppConstants.textSecondary,
@@ -475,7 +608,7 @@ class CelebrityScreen extends StatelessWidget {
           ),
           SizedBox(height: isSmallScreen ? 12 : 16),
           Text(
-            testimonial!,
+            widget.testimonial!,
             style: TextStyle(
               fontSize: isSmallScreen ? 14 : 18,
               fontStyle: FontStyle.italic,
@@ -486,7 +619,7 @@ class CelebrityScreen extends StatelessWidget {
           ),
           SizedBox(height: isSmallScreen ? 12 : 16),
           Text(
-            '— $celebrityName',
+            '— ${widget.celebrityName}',
             style: TextStyle(
               fontSize: isSmallScreen ? 13 : 16,
               fontWeight: FontWeight.bold,
@@ -521,9 +654,9 @@ class CelebrityScreen extends StatelessWidget {
           if (isSmallScreen)
             Column(
               children: [
-                _buildRoutineSection(context, 'Morning', morningRoutineProducts, isSmallScreen),
+                _buildRoutineSection(context, 'Morning', widget.morningRoutineProducts, isSmallScreen),
                 const SizedBox(height: 20),
-                _buildRoutineSection(context, 'Evening', eveningRoutineProducts, isSmallScreen),
+                _buildRoutineSection(context, 'Evening', widget.eveningRoutineProducts, isSmallScreen),
               ],
             )
           else
@@ -532,11 +665,11 @@ class CelebrityScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: _buildRoutineSection(context, 'Morning', morningRoutineProducts, isSmallScreen),
+                    child: _buildRoutineSection(context, 'Morning', widget.morningRoutineProducts, isSmallScreen),
                   ),
                   const SizedBox(width: 20),
                   Expanded(
-                    child: _buildRoutineSection(context, 'Evening', eveningRoutineProducts, isSmallScreen),
+                    child: _buildRoutineSection(context, 'Evening', widget.eveningRoutineProducts, isSmallScreen),
                   ),
                 ],
               ),
@@ -802,9 +935,9 @@ class CelebrityScreen extends StatelessWidget {
                   crossAxisSpacing: spacing,
                   childAspectRatio: childAspectRatio,
                 ),
-                itemCount: recommendedProducts.length,
+                itemCount: widget.recommendedProducts.length,
                 itemBuilder: (context, index) {
-                  final product = recommendedProducts[index];
+                  final product = widget.recommendedProducts[index];
                   return _buildResponsiveProductCard(context, product, isSmallScreen);
                 },
               );
@@ -1020,7 +1153,7 @@ class CelebrityScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
-                      'Watch $celebrityName share their beauty tips and secrets.',
+                      'Watch ${widget.celebrityName} share their beauty tips and secrets.',
                       style: TextStyle(
                         fontSize: isSmallScreen ? 14 : 16,
                         color: AppConstants.textSecondary,
@@ -1041,33 +1174,33 @@ class CelebrityScreen extends StatelessWidget {
     final availableLinks = <String, Map<String, dynamic>>{};
     
     // Check which social media platforms are available
-    if (socialMediaLinks.containsKey('facebook')) {
+    if (widget.socialMediaLinks.containsKey('facebook')) {
       availableLinks['facebook'] = {
         'icon': FontAwesomeIcons.facebookF,
         'color': const Color(0xFF1877F2),
         'bgColor': const Color(0xFF1877F2),
         'label': 'Facebook',
-        'url': socialMediaLinks['facebook']!,
+        'url': widget.socialMediaLinks['facebook']!,
       };
     }
     
-    if (socialMediaLinks.containsKey('instagram')) {
+    if (widget.socialMediaLinks.containsKey('instagram')) {
       availableLinks['instagram'] = {
         'icon': FontAwesomeIcons.instagram,
         'color': const Color(0xFFE4405F),
         'bgColor': const Color(0xFFE4405F),
         'label': 'Instagram',
-        'url': socialMediaLinks['instagram']!,
+        'url': widget.socialMediaLinks['instagram']!,
       };
     }
     
-    if (socialMediaLinks.containsKey('snapchat')) {
+    if (widget.socialMediaLinks.containsKey('snapchat')) {
       availableLinks['snapchat'] = {
         'icon': FontAwesomeIcons.snapchat,
         'color': const Color(0xFF000000),
         'bgColor': const Color(0xFFFFFC00),
         'label': 'Snapchat',
-        'url': socialMediaLinks['snapchat']!,
+        'url': widget.socialMediaLinks['snapchat']!,
       };
     }
 
@@ -1108,7 +1241,7 @@ class CelebrityScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Connect with $celebrityName',
+                  'Connect with ${widget.celebrityName}',
                   style: TextStyle(
                     fontSize: isSmallScreen ? 18 : 20,
                     fontWeight: FontWeight.bold,

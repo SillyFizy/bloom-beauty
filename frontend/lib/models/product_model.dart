@@ -42,6 +42,10 @@ class ProductReview {
   final double rating;
   final String comment;
   final DateTime date;
+  final List<String> images;
+  final bool isVerifiedPurchase;
+  final int helpfulCount;
+  final int reportCount;
 
   ProductReview({
     required this.id,
@@ -51,6 +55,10 @@ class ProductReview {
     required this.rating,
     required this.comment,
     required this.date,
+    this.images = const [],
+    this.isVerifiedPurchase = false,
+    this.helpfulCount = 0,
+    this.reportCount = 0,
   });
 
   factory ProductReview.fromJson(Map<String, dynamic> json) {
@@ -62,6 +70,10 @@ class ProductReview {
       rating: json['rating'].toDouble(),
       comment: json['comment'],
       date: DateTime.parse(json['date']),
+      images: List<String>.from(json['images'] ?? []),
+      isVerifiedPurchase: json['is_verified_purchase'] ?? false,
+      helpfulCount: json['helpful_count'] ?? 0,
+      reportCount: json['report_count'] ?? 0,
     );
   }
 
@@ -74,6 +86,10 @@ class ProductReview {
       'rating': rating,
       'comment': comment,
       'date': date.toIso8601String(),
+      'images': images,
+      'is_verified_purchase': isVerifiedPurchase,
+      'helpful_count': helpfulCount,
+      'report_count': reportCount,
     };
   }
 }

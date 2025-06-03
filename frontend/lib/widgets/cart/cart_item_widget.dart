@@ -137,44 +137,56 @@ class CartItemWidget extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '${_formatPrice(price)} × $quantity',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppConstants.textSecondary,
-                                fontWeight: FontWeight.w500,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                '${_formatPrice(price)} × $quantity',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppConstants.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              _formatPrice(price * quantity),
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppConstants.accentColor,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _formatPrice(price * quantity),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppConstants.accentColor,
+                                ),
+                                maxLines: 1,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         )
                       else
-                        // For larger screens, show in row
+                        // For larger screens, show in row with proper overflow handling
                         Row(
                           children: [
-                            Text(
-                              _formatPrice(price),
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppConstants.textSecondary,
-                                fontWeight: FontWeight.w500,
+                            Flexible(
+                              flex: 2,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  _formatPrice(price),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppConstants.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                ),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 4),
                             Text(
                               '× $quantity',
                               style: TextStyle(
@@ -182,18 +194,24 @@ class CartItemWidget extends StatelessWidget {
                                 color: AppConstants.textSecondary,
                               ),
                               maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            const Spacer(),
-                            Text(
-                              _formatPrice(price * quantity),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppConstants.accentColor,
+                            const SizedBox(width: 8),
+                            Flexible(
+                              flex: 2,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  _formatPrice(price * quantity),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppConstants.accentColor,
+                                  ),
+                                  maxLines: 1,
+                                  textAlign: TextAlign.right,
+                                ),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),

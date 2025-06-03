@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants/app_constants.dart';
+import '../../providers/app_providers.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,6 +17,9 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _logoAnimation;
   late Animation<double> _textAnimation;
   late Animation<double> _fadeAnimation;
+  
+  bool _isInitializing = false;
+  String _loadingText = 'Loading...';
 
   @override
   void initState() {
@@ -65,9 +69,42 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 400));
     _textController.forward();
     
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (mounted) {
-      context.go('/home');
+    await Future.delayed(const Duration(milliseconds: 600));
+    
+    // Initialize providers after animations
+    await _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    if (_isInitializing) return;
+    
+    setState(() {
+      _isInitializing = true;
+      _loadingText = 'Loading products...';
+    });
+
+    try {
+      // Initialize all providers
+      await AppProviders.initializeProviders(context);
+      
+      setState(() {
+        _loadingText = 'Ready!';
+      });
+      
+      await Future.delayed(const Duration(milliseconds: 300));
+      
+      if (mounted) {
+        context.go('/home');
+      }
+    } catch (e) {
+      debugPrint('Error initializing app: $e');
+      setState(() {
+        _loadingText = 'Loading failed, retrying...';
+      });
+      
+      // Retry after a delay
+      await Future.delayed(const Duration(milliseconds: 1000));
+      await _initializeApp();
     }
   }
 
@@ -196,7 +233,7 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Loading...',
+                            _loadingText,
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.8),
                               fontSize: 14,

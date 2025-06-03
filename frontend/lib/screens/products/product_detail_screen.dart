@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/cart_provider.dart';
-import '../../services/data_service.dart';
+import '../../providers/celebrity_provider.dart';
 import '../celebrity/celebrity_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -23,8 +23,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late PageController _imagePageController;
+  late ScrollController _scrollController;
+  late AnimationController _headerAnimationController;
+  late Animation<double> _headerAnimation;
   ProductVariant? _selectedVariant;
   int _currentImageIndex = 0;
+  bool _showStickyHeader = false;
   
   // Track quantities for each variant (starting from 0)
   Map<String, int> _variantQuantities = {};
@@ -34,6 +38,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _imagePageController = PageController();
+    _scrollController = ScrollController();
+    
+    // Initialize header animation controller
+    _headerAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _headerAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _headerAnimationController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Add scroll listener for sticky header
+    _scrollController.addListener(_onScroll);
     
     // Initialize variant quantities properly
     if (widget.product.variants.isNotEmpty) {
@@ -52,7 +73,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   void dispose() {
     _tabController.dispose();
     _imagePageController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _headerAnimationController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    // Calculate scroll threshold based on screen height
+    final screenHeight = MediaQuery.of(context).size.height;
+    final threshold = screenHeight * 0.3; // Show sticky header after scrolling past 30% of screen
+    
+    final shouldShow = _scrollController.hasClients && _scrollController.offset > threshold;
+    
+    if (shouldShow != _showStickyHeader) {
+      setState(() {
+        _showStickyHeader = shouldShow;
+      });
+      
+      if (shouldShow) {
+        _headerAnimationController.forward();
+      } else {
+        _headerAnimationController.reverse();
+      }
+    }
   }
 
   String _formatPrice(double price) {
@@ -68,8 +112,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     if (newQuantity >= 0 && newQuantity <= 99) {
       setState(() {
         _variantQuantities[variantId] = newQuantity;
-        // Update selected variant to the one being modified
-        if (newQuantity > 0) {
+        // Only update selected variant if the product has variants and it's not the default case
+        if (newQuantity > 0 && variantId != 'default' && widget.product.variants.isNotEmpty) {
           _selectedVariant = widget.product.variants.firstWhere((v) => v.id == variantId);
           _currentImageIndex = 0;
           _imagePageController.animateToPage(
@@ -130,9 +174,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     });
   }
 
-  // Helper method to get celebrity data using DataService
-  Map<String, dynamic> _getCelebrityData(String celebrityName) {
-    return DataService().getCelebrityDataForProduct(celebrityName);
+  // Helper method to get celebrity data using CelebrityProvider
+  Future<Map<String, dynamic>> _getCelebrityData(String celebrityName) async {
+    final celebrityProvider = context.read<CelebrityProvider>();
+    return await celebrityProvider.getCelebrityDataForProduct(celebrityName);
   }
 
   @override
@@ -145,75 +190,232 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
-          body: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // App bar
-              SliverAppBar(
-                backgroundColor: AppConstants.backgroundColor,
-                elevation: 0,
-                pinned: false,
-                floating: true,
-                leading: _buildActionButton(
-                  icon: Icons.arrow_back_ios,
-                  onPressed: () => Navigator.pop(context),
-                  isSmallScreen: isSmallScreen,
-                ),
-                actions: [
-                  _buildActionButton(
-                    icon: Icons.favorite_border,
-                    onPressed: () {},
-                    isSmallScreen: isSmallScreen,
+          body: Stack(
+            children: [
+              // Main content
+              CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Transparent app bar
+                  SliverAppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    pinned: false,
+                    floating: false,
+                    automaticallyImplyLeading: false,
+                    toolbarHeight: 0, // Hide the default toolbar
                   ),
-                  SizedBox(width: isSmallScreen ? 8 : 12),
-                  _buildActionButton(
-                    icon: Icons.share,
-                    onPressed: () {},
-                    isSmallScreen: isSmallScreen,
+                  
+                  // Image section with floating buttons
+                  SliverToBoxAdapter(
+                    child: Stack(
+                      children: [
+                        _buildImageSection(isSmallScreen),
+                        // Floating action buttons
+                        Positioned(
+                          top: MediaQuery.of(context).padding.top + 8,
+                          left: 16,
+                          right: 16,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildTransparentActionButton(
+                                icon: Icons.arrow_back_ios,
+                                onPressed: () => Navigator.pop(context),
+                                isSmallScreen: isSmallScreen,
+                              ),
+                              Row(
+                                children: [
+                                  _buildTransparentActionButton(
+                                    icon: Icons.favorite_border,
+                                    onPressed: () {},
+                                    isSmallScreen: isSmallScreen,
+                                  ),
+                                  SizedBox(width: isSmallScreen ? 8 : 12),
+                                  _buildTransparentActionButton(
+                                    icon: Icons.share,
+                                    onPressed: () {},
+                                    isSmallScreen: isSmallScreen,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(width: isSmallScreen ? 16 : 20),
+                  
+                  // Content section
+                  SliverToBoxAdapter(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: AppConstants.surfaceColor,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(32),
+                          topRight: Radius.circular(32),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          SizedBox(height: isSmallScreen ? 12 : 16),
+                          _buildProductInfo(isSmallScreen),
+                          SizedBox(height: isSmallScreen ? 12 : 16),
+                          _buildVariantSelector(isSmallScreen),
+                          if (widget.product.celebrityEndorsement != null)
+                            _buildCelebrityEndorsement(isSmallScreen),
+                          SizedBox(height: isSmallScreen ? 20 : 24),
+                          _buildTabSection(isSmallScreen),
+                          SizedBox(height: isSmallScreen ? 80 : 100), // Space for bottom bar
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
               
-              // Scrollable image section
-              SliverToBoxAdapter(
-                child: _buildImageSection(isSmallScreen),
-              ),
-              
-              // Content section
-              SliverToBoxAdapter(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppConstants.surfaceColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(32),
-                      topRight: Radius.circular(32),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      SizedBox(height: isSmallScreen ? 12 : 16),
-                      _buildProductInfo(isSmallScreen),
-                      SizedBox(height: isSmallScreen ? 12 : 16),
-                      _buildVariantSelector(isSmallScreen),
-                      if (widget.product.celebrityEndorsement != null)
-                        _buildCelebrityEndorsement(isSmallScreen),
-                      SizedBox(height: isSmallScreen ? 20 : 24),
-                      _buildTabSection(isSmallScreen),
-                      SizedBox(height: isSmallScreen ? 80 : 100), // Space for bottom bar
-                    ],
+              // Sticky header
+              if (_showStickyHeader)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: AnimatedBuilder(
+                    animation: _headerAnimation,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(0, -60 * (1 - _headerAnimation.value)),
+                        child: Opacity(
+                          opacity: _headerAnimation.value,
+                          child: _buildStickyHeader(isSmallScreen),
+                        ),
+                      );
+                    },
                   ),
                 ),
-              ),
             ],
           ),
-          bottomNavigationBar: _totalQuantity > 0 ? _buildBottomBar(isSmallScreen) : null,
+          bottomNavigationBar: (widget.product.variants.isEmpty || _totalQuantity > 0) 
+              ? _buildBottomBar(isSmallScreen) 
+              : null,
         );
       },
     );
   }
 
-  Widget _buildActionButton({
+  Widget _buildTransparentActionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isSmallScreen,
+  }) {
+    return Container(
+      width: isSmallScreen ? 44 : 52,
+      height: isSmallScreen ? 44 : 52,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                color: AppConstants.textPrimary,
+                size: isSmallScreen ? 20 : 24,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStickyHeader(bool isSmallScreen) {
+    return Container(
+      height: MediaQuery.of(context).padding.top + (isSmallScreen ? 56 : 64),
+      decoration: BoxDecoration(
+        color: AppConstants.surfaceColor.withValues(alpha: 0.95),
+        boxShadow: [
+          BoxShadow(
+            color: AppConstants.textSecondary.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Backdrop filter effect
+          Container(
+            decoration: BoxDecoration(
+              color: AppConstants.surfaceColor.withValues(alpha: 0.85),
+            ),
+          ),
+          
+          // Header content
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildStickyActionButton(
+                  icon: Icons.arrow_back_ios,
+                  onPressed: () => Navigator.pop(context),
+                  isSmallScreen: isSmallScreen,
+                ),
+                
+                // Product name in center
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      widget.product.name,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 16 : 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppConstants.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                
+                Row(
+                  children: [
+                    _buildStickyActionButton(
+                      icon: Icons.favorite_border,
+                      onPressed: () {},
+                      isSmallScreen: isSmallScreen,
+                    ),
+                    SizedBox(width: isSmallScreen ? 8 : 12),
+                    _buildStickyActionButton(
+                      icon: Icons.share,
+                      onPressed: () {},
+                      isSmallScreen: isSmallScreen,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStickyActionButton({
     required IconData icon,
     required VoidCallback onPressed,
     required bool isSmallScreen,
@@ -225,19 +427,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         color: AppConstants.surfaceColor,
         borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
         border: Border.all(
-          color: AppConstants.borderColor.withOpacity(0.5),
+          color: AppConstants.borderColor.withValues(alpha: 0.3),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: AppConstants.surfaceColor,
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            color: AppConstants.textSecondary.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -266,6 +463,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   Widget _buildImageSection(bool isSmallScreen) {
     final screenHeight = MediaQuery.of(context).size.height;
     final imageHeight = isSmallScreen ? screenHeight * 0.4 : screenHeight * 0.45;
+    final topPadding = MediaQuery.of(context).padding.top + (isSmallScreen ? 64 : 72);
     
     return Container(
       height: imageHeight,
@@ -279,6 +477,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       ),
       child: Column(
         children: [
+          // Add top spacing for floating buttons
+          SizedBox(height: topPadding),
+          
           // Main Image with PageView
           Expanded(
             child: PageView.builder(
@@ -293,7 +494,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 return Container(
                   margin: EdgeInsets.fromLTRB(
                     isSmallScreen ? 20 : 30, 
-                    isSmallScreen ? 20 : 30, 
+                    isSmallScreen ? 10 : 15, 
                     isSmallScreen ? 20 : 30, 
                     isSmallScreen ? 16 : 20
                   ),
@@ -306,7 +507,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppConstants.textSecondary.withOpacity(0.15),
+                        color: AppConstants.textSecondary.withValues(alpha: 0.15),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -364,7 +565,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                       shape: BoxShape.circle,
                       color: _currentImageIndex == index
                           ? AppConstants.accentColor
-                          : AppConstants.textSecondary.withOpacity(0.3),
+                          : AppConstants.textSecondary.withValues(alpha: 0.3),
                     ),
                   ),
                 ),
@@ -440,24 +641,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
   Widget _buildCelebrityEndorsement(bool isSmallScreen) {
     final endorsement = widget.product.celebrityEndorsement!;
-    final celebrityData = _getCelebrityData(endorsement.celebrityName);
     
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CelebrityScreen(
-              celebrityName: endorsement.celebrityName,
-              celebrityImage: endorsement.celebrityImage,
-              testimonial: endorsement.testimonial,
-              socialMediaLinks: celebrityData['socialMediaLinks'] as Map<String, String>,
-              recommendedProducts: celebrityData['recommendedProducts'] as List<Product>,
-              morningRoutineProducts: celebrityData['morningRoutineProducts'] as List<Product>,
-              eveningRoutineProducts: celebrityData['eveningRoutineProducts'] as List<Product>,
+      onTap: () async {
+        final celebrityData = await _getCelebrityData(endorsement.celebrityName);
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CelebrityScreen(
+                celebrityName: endorsement.celebrityName,
+                celebrityImage: endorsement.celebrityImage,
+                testimonial: endorsement.testimonial,
+                socialMediaLinks: celebrityData['socialMediaLinks'] as Map<String, String>,
+                recommendedProducts: celebrityData['recommendedProducts'] as List<Product>,
+                morningRoutineProducts: celebrityData['morningRoutineProducts'] as List<Product>,
+                eveningRoutineProducts: celebrityData['eveningRoutineProducts'] as List<Product>,
+              ),
             ),
-          ),
-        );
+          );
+        }
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
@@ -1307,6 +1510,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Widget _buildBottomBar(bool isSmallScreen) {
+    // Check if product has variants
+    final hasVariants = widget.product.variants.isNotEmpty;
+    
     return Container(
       padding: EdgeInsets.fromLTRB(
         isSmallScreen ? 16 : 20, 
@@ -1331,68 +1537,220 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         ],
       ),
       child: SafeArea(
-        child: ElevatedButton(
-          onPressed: _totalQuantity > 0 ? _addToCart : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppConstants.accentColor,
-            foregroundColor: AppConstants.surfaceColor,
-            elevation: 8,
-            shadowColor: AppConstants.accentColor.withOpacity(0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: isSmallScreen ? 16 : 20,
-              vertical: isSmallScreen ? 12 : 16,
-            ),
-          ),
-          child: Row(
-            children: [
-              // Quantity on left
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 8 : 10,
-                  vertical: isSmallScreen ? 4 : 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppConstants.surfaceColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '$_totalQuantity',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 14 : 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.surfaceColor,
-                  ),
-                ),
-              ),
-              
-              // "Add to Cart" text in middle
-              Expanded(
-                child: Text(
-                  'Add to Cart',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.surfaceColor,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              
-              // Total price on right
-              Text(
-                _formatPrice(_totalPrice),
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 14 : 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppConstants.surfaceColor,
-                ),
-              ),
-            ],
-          ),
+        child: hasVariants 
+            ? _buildVariantCartButton(isSmallScreen)
+            : _buildNoVariantCartButton(isSmallScreen),
+      ),
+    );
+  }
+
+  // For products with variants (existing behavior)
+  Widget _buildVariantCartButton(bool isSmallScreen) {
+    return ElevatedButton(
+      onPressed: _totalQuantity > 0 ? _addToCart : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppConstants.accentColor,
+        foregroundColor: AppConstants.surfaceColor,
+        elevation: 8,
+        shadowColor: AppConstants.accentColor.withOpacity(0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 16 : 20,
+          vertical: isSmallScreen ? 12 : 16,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Quantity on left
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 8 : 10,
+              vertical: isSmallScreen ? 4 : 6,
+            ),
+            decoration: BoxDecoration(
+              color: AppConstants.surfaceColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$_totalQuantity',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 14 : 16,
+                fontWeight: FontWeight.bold,
+                color: AppConstants.surfaceColor,
+              ),
+            ),
+          ),
+          
+          // "Add to Cart" text in middle
+          Expanded(
+            child: Text(
+              'Add to Cart',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 16 : 18,
+                fontWeight: FontWeight.bold,
+                color: AppConstants.surfaceColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          
+          // Total price on right
+          Text(
+            _formatPrice(_totalPrice),
+            style: TextStyle(
+              fontSize: isSmallScreen ? 14 : 16,
+              fontWeight: FontWeight.bold,
+              color: AppConstants.surfaceColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // For products without variants (with integrated quantity controls)
+  Widget _buildNoVariantCartButton(bool isSmallScreen) {
+    final currentQuantity = _variantQuantities['default'] ?? 0;
+    
+    return Container(
+      height: isSmallScreen ? 48 : 56,
+      decoration: BoxDecoration(
+        color: AppConstants.accentColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppConstants.accentColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Quantity controls on the left
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 8 : 12,
+              vertical: isSmallScreen ? 6 : 8,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Decrease button
+                InkWell(
+                  onTap: currentQuantity > 0 
+                      ? () => _updateVariantQuantity('default', currentQuantity - 1)
+                      : null,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: isSmallScreen ? 28 : 32,
+                    height: isSmallScreen ? 28 : 32,
+                    decoration: BoxDecoration(
+                      color: currentQuantity > 0 
+                          ? AppConstants.surfaceColor.withOpacity(0.2)
+                          : AppConstants.surfaceColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.remove,
+                      size: isSmallScreen ? 16 : 18,
+                      color: currentQuantity > 0 
+                          ? AppConstants.surfaceColor
+                          : AppConstants.surfaceColor.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+                
+                // Quantity display
+                Container(
+                  width: isSmallScreen ? 36 : 40,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 8 : 10,
+                    vertical: isSmallScreen ? 4 : 6,
+                  ),
+                  child: Text(
+                    '$currentQuantity',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 14 : 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppConstants.surfaceColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                
+                // Increase button
+                InkWell(
+                  onTap: currentQuantity < 99 
+                      ? () => _updateVariantQuantity('default', currentQuantity + 1)
+                      : null,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: isSmallScreen ? 28 : 32,
+                    height: isSmallScreen ? 28 : 32,
+                    decoration: BoxDecoration(
+                      color: currentQuantity < 99 
+                          ? AppConstants.surfaceColor.withOpacity(0.2)
+                          : AppConstants.surfaceColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.add,
+                      size: isSmallScreen ? 16 : 18,
+                      color: currentQuantity < 99 
+                          ? AppConstants.surfaceColor
+                          : AppConstants.surfaceColor.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // "Add to Cart" button in the middle
+          Expanded(
+            child: InkWell(
+              onTap: currentQuantity > 0 ? _addToCart : null,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                height: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 12 : 16,
+                ),
+                child: Center(
+                  child: Text(
+                    currentQuantity > 0 ? 'Add to Cart' : 'Select Quantity',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 16 : 18,
+                      fontWeight: FontWeight.bold,
+                      color: currentQuantity > 0 
+                          ? AppConstants.surfaceColor
+                          : AppConstants.surfaceColor.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          // Total price on the right
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 12 : 16,
+              vertical: isSmallScreen ? 6 : 8,
+            ),
+            child: Text(
+              _formatPrice(widget.product.price * currentQuantity),
+              style: TextStyle(
+                fontSize: isSmallScreen ? 14 : 16,
+                fontWeight: FontWeight.bold,
+                color: AppConstants.surfaceColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

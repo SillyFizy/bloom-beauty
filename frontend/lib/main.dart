@@ -8,6 +8,7 @@ import 'screens/products/product_list_screen.dart';
 import 'screens/cart/cart_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'constants/app_constants.dart';
+import 'providers/app_providers.dart';
 import 'providers/cart_provider.dart';
 
 void main() async {
@@ -20,13 +21,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) {
-        final cartProvider = CartProvider();
-        // Load cart from storage when app starts
-        cartProvider.loadCartFromStorage();
-        return cartProvider;
-      },
+    return AppProviders.create(
       child: MaterialApp.router(
         title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
@@ -37,7 +32,7 @@ class MyApp extends StatelessWidget {
             primary: AppConstants.accentColor,
             secondary: AppConstants.favoriteColor,
             surface: AppConstants.surfaceColor,
-            background: AppConstants.backgroundColor,
+            onSurface: AppConstants.textPrimary,
             brightness: Brightness.light,
           ),
           appBarTheme: AppBarTheme(
@@ -309,42 +304,45 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
               // Special handling for cart icon to show badge
               if (index == 3) 
                 Consumer<CartProvider>(
-                  builder: (context, cart, child) => Stack(
-                    children: [
-                      Icon(
-                        isSelected ? activeIcon : icon,
-                        color: isSelected 
-                            ? AppConstants.accentColor
-                            : AppConstants.textSecondary,
-                        size: 22,
-                      ),
-                      if (cart.itemCount > 0)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: AppConstants.favoriteColor,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              cart.itemCount > 99 ? '99+' : cart.itemCount.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                  builder: (context, cart, child) {
+                    final itemCount = cart.itemCount;
+                    return Stack(
+                      children: [
+                        Icon(
+                          isSelected ? activeIcon : icon,
+                          color: isSelected 
+                              ? AppConstants.accentColor
+                              : AppConstants.textSecondary,
+                          size: 22,
+                        ),
+                        if (itemCount > 0)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: AppConstants.favoriteColor,
+                                shape: BoxShape.circle,
                               ),
-                              textAlign: TextAlign.center,
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                itemCount > 99 ? '99+' : itemCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
+                      ],
+                    );
+                  },
                 )
               else
                 Icon(
