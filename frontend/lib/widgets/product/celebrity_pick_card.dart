@@ -376,14 +376,6 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                         height: 32,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              AppConstants.accentColor,
-                                              AppConstants.favoriteColor,
-                                            ],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
                                           border: Border.all(
                                             color: Colors.white,
                                             width: 2,
@@ -396,15 +388,89 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                             ),
                                           ],
                                         ),
-                                        child: Center(
-                                          child: Text(
-                                            widget.celebrityName[0],
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
+                                        child: ClipOval(
+                                          child: widget.celebrityImage.isNotEmpty
+                                              ? Image.network(
+                                                  widget.celebrityImage,
+                                                  width: 28,
+                                                  height: 28,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error, stackTrace) {
+                                                    return Container(
+                                                      decoration: BoxDecoration(
+                                                        gradient: LinearGradient(
+                                                          colors: [
+                                                            AppConstants.accentColor,
+                                                            AppConstants.favoriteColor,
+                                                          ],
+                                                          begin: Alignment.topLeft,
+                                                          end: Alignment.bottomRight,
+                                                        ),
+                                                      ),
+                                                      child: Center(
+                                                        child: Text(
+                                                          widget.celebrityName[0],
+                                                          style: const TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  loadingBuilder: (context, child, loadingProgress) {
+                                                    if (loadingProgress == null) return child;
+                                                    return Container(
+                                                      decoration: BoxDecoration(
+                                                        gradient: LinearGradient(
+                                                          colors: [
+                                                            AppConstants.accentColor.withOpacity(0.5),
+                                                            AppConstants.favoriteColor.withOpacity(0.5),
+                                                          ],
+                                                          begin: Alignment.topLeft,
+                                                          end: Alignment.bottomRight,
+                                                        ),
+                                                      ),
+                                                      child: Center(
+                                                        child: SizedBox(
+                                                          width: 12,
+                                                          height: 12,
+                                                          child: CircularProgressIndicator(
+                                                            color: Colors.white,
+                                                            strokeWidth: 1.5,
+                                                            value: loadingProgress.expectedTotalBytes != null
+                                                                ? loadingProgress.cumulativeBytesLoaded /
+                                                                    (loadingProgress.expectedTotalBytes ?? 1)
+                                                                : null,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                )
+                                              : Container(
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      colors: [
+                                                        AppConstants.accentColor,
+                                                        AppConstants.favoriteColor,
+                                                      ],
+                                                      begin: Alignment.topLeft,
+                                                      end: Alignment.bottomRight,
+                                                    ),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      widget.celebrityName[0],
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
                                         ),
                                       ),
                                       
