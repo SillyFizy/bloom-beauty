@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'product_provider.dart';
 import 'celebrity_provider.dart';
+import 'celebrity_picks_provider.dart';
 import 'review_provider.dart';
 import 'cart_provider.dart';
 
@@ -23,6 +24,12 @@ class AppProviders {
         ChangeNotifierProvider<CelebrityProvider>(
           create: (_) => CelebrityProvider(),
           lazy: false, // Initialize immediately for home screen
+        ),
+
+        /// Celebrity Picks Provider - Manages celebrity picks screen functionality
+        ChangeNotifierProvider<CelebrityPicksProvider>(
+          create: (_) => CelebrityPicksProvider(),
+          lazy: true, // Load only when celebrity picks screen is opened
         ),
 
         /// Review Provider - Manages product reviews and ratings
@@ -128,6 +135,9 @@ class AppProviders {
   static CelebrityProvider getCelebrityProvider(BuildContext context) =>
       Provider.of<CelebrityProvider>(context, listen: false);
 
+  static CelebrityPicksProvider getCelebrityPicksProvider(BuildContext context) =>
+      Provider.of<CelebrityPicksProvider>(context, listen: false);
+
   static ReviewProvider getReviewProvider(BuildContext context) =>
       Provider.of<ReviewProvider>(context, listen: false);
 
@@ -146,6 +156,10 @@ extension ProviderExtension on BuildContext {
   CelebrityProvider get celebrityProvider => read<CelebrityProvider>();
   CelebrityProvider get watchCelebrityProvider => watch<CelebrityProvider>();
 
+  /// Celebrity Picks Provider getter
+  CelebrityPicksProvider get celebrityPicksProvider => read<CelebrityPicksProvider>();
+  CelebrityPicksProvider get watchCelebrityPicksProvider => watch<CelebrityPicksProvider>();
+
   /// Review Provider getter
   ReviewProvider get reviewProvider => read<ReviewProvider>();
   ReviewProvider get watchReviewProvider => watch<ReviewProvider>();
@@ -160,6 +174,9 @@ extension ProviderExtension on BuildContext {
 
   T selectCelebrity<T>(T Function(CelebrityProvider provider) selector) =>
       select<CelebrityProvider, T>(selector);
+
+  T selectCelebrityPicks<T>(T Function(CelebrityPicksProvider provider) selector) =>
+      select<CelebrityPicksProvider, T>(selector);
 
   T selectReview<T>(T Function(ReviewProvider provider) selector) =>
       select<ReviewProvider, T>(selector);
@@ -201,6 +218,25 @@ class CelebrityConsumer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<CelebrityProvider>(
+      builder: builder,
+      child: child,
+    );
+  }
+}
+
+class CelebrityPicksConsumer extends StatelessWidget {
+  final Widget Function(BuildContext context, CelebrityPicksProvider provider, Widget? child) builder;
+  final Widget? child;
+
+  const CelebrityPicksConsumer({
+    Key? key,
+    required this.builder,
+    this.child,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<CelebrityPicksProvider>(
       builder: builder,
       child: child,
     );
