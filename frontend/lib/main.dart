@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
             primary: AppConstants.accentColor,
             secondary: AppConstants.favoriteColor,
             surface: AppConstants.surfaceColor,
-            background: AppConstants.backgroundColor,
+            onSurface: AppConstants.textPrimary,
             brightness: Brightness.light,
           ),
           appBarTheme: AppBarTheme(
@@ -305,7 +305,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
               if (index == 3) 
                 Consumer<CartProvider>(
                   builder: (context, cart, child) {
-                    final itemCount = cart?.itemCount ?? 0;
+                    final itemCount = cart.itemCount;
                     return Stack(
                       children: [
                         Icon(

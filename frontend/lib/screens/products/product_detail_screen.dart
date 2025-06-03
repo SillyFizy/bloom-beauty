@@ -5,7 +5,6 @@ import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/celebrity_provider.dart';
-import '../../providers/app_providers.dart';
 import '../celebrity/celebrity_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -448,20 +447,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     return GestureDetector(
       onTap: () async {
         final celebrityData = await _getCelebrityData(endorsement.celebrityName);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CelebrityScreen(
-              celebrityName: endorsement.celebrityName,
-              celebrityImage: endorsement.celebrityImage,
-              testimonial: endorsement.testimonial,
-              socialMediaLinks: celebrityData['socialMediaLinks'] as Map<String, String>,
-              recommendedProducts: celebrityData['recommendedProducts'] as List<Product>,
-              morningRoutineProducts: celebrityData['morningRoutineProducts'] as List<Product>,
-              eveningRoutineProducts: celebrityData['eveningRoutineProducts'] as List<Product>,
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CelebrityScreen(
+                celebrityName: endorsement.celebrityName,
+                celebrityImage: endorsement.celebrityImage,
+                testimonial: endorsement.testimonial,
+                socialMediaLinks: celebrityData['socialMediaLinks'] as Map<String, String>,
+                recommendedProducts: celebrityData['recommendedProducts'] as List<Product>,
+                morningRoutineProducts: celebrityData['morningRoutineProducts'] as List<Product>,
+                eveningRoutineProducts: celebrityData['eveningRoutineProducts'] as List<Product>,
+              ),
             ),
-          ),
-        );
+          );
+        }
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),

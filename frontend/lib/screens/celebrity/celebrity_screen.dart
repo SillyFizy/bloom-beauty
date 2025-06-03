@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../constants/app_constants.dart';
 import '../../models/product_model.dart';
+import '../../constants/app_constants.dart';
 import '../../providers/product_provider.dart';
-import '../../providers/app_providers.dart';
 import '../products/product_detail_screen.dart';
 
 class CelebrityScreen extends StatelessWidget {

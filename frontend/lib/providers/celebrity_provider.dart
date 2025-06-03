@@ -54,15 +54,17 @@ class CelebrityProvider with ChangeNotifier {
   /// Load all celebrities
   Future<void> loadCelebrities({bool forceRefresh = false}) async {
     try {
+      debugPrint('Loading celebrities...');
       _setLoading(true);
       _clearError();
       
       _celebrities = await _celebrityService.getAllCelebrities(forceRefresh: forceRefresh);
       
-      _setLoading(false);
       notifyListeners();
     } catch (e) {
-      _setError('Failed to load celebrities: $e');
+      debugPrint('Error loading celebrities: $e');
+      _setError('Failed to load celebrities');
+    } finally {
       _setLoading(false);
     }
   }
@@ -70,13 +72,16 @@ class CelebrityProvider with ChangeNotifier {
   /// Load celebrity picks data
   Future<void> loadCelebrityPicks({bool forceRefresh = false}) async {
     try {
-      _clearError();
-      
-      _celebrityPicks = await _celebrityService.getCelebrityPicks(forceRefresh: forceRefresh);
-      
+      debugPrint('Loading celebrity picks...');
+      _setLoading(true);
+      final picks = await _celebrityService.getCelebrityPicks(forceRefresh: forceRefresh);
+      _celebrityPicks = picks;
       notifyListeners();
     } catch (e) {
-      _setError('Failed to load celebrity picks: $e');
+      debugPrint('Error loading celebrity picks: $e');
+      _setError('Failed to load celebrity picks');
+    } finally {
+      _setLoading(false);
     }
   }
 
@@ -264,9 +269,20 @@ class CelebrityProvider with ChangeNotifier {
   /// Get celebrity data for product endorsement
   Future<Map<String, dynamic>> getCelebrityDataForProduct(String celebrityName) async {
     try {
-      return await _celebrityService.getCelebrityDataForProduct(celebrityName);
+      final celebrity = _celebrities.firstWhere(
+        (celeb) => celeb.name == celebrityName,
+        orElse: () => throw Exception('Celebrity not found'),
+      );
+
+      // Use the celebrity data we already have
+      return {
+        'socialMediaLinks': celebrity.socialMediaLinks,
+        'recommendedProducts': celebrity.recommendedProducts,
+        'morningRoutineProducts': celebrity.morningRoutineProducts,
+        'eveningRoutineProducts': celebrity.eveningRoutineProducts,
+      };
     } catch (e) {
-      print('Failed to get celebrity data for product: $e');
+      debugPrint('Error getting celebrity data for product: $e');
       return {
         'socialMediaLinks': <String, String>{},
         'recommendedProducts': <Product>[],
@@ -366,11 +382,13 @@ class CelebrityProvider with ChangeNotifier {
   void _setLoading(bool loading) {
     _isLoading = loading;
     if (loading) _clearError();
+    notifyListeners();
   }
 
   void _setSearching(bool searching) {
     _isSearching = searching;
     if (searching) _clearError();
+    notifyListeners();
   }
 
   void _setError(String error) {
@@ -386,6 +404,7 @@ class CelebrityProvider with ChangeNotifier {
 
   /// Clear all cached data
   void clearCache() {
+    debugPrint('Clearing celebrity cache...');
     _celebrityService.clearCache();
     _celebrities = [];
     _celebrityPicks = [];
