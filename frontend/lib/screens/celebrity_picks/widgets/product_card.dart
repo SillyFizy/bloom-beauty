@@ -47,13 +47,13 @@ class CelebrityPicksProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product Image with Rating and Wishlist
+            // Product Image with Rating and Wishlist - More space for image
             Expanded(
-              flex: 4,
+              flex: 5,
               child: _buildImageSection(hasDiscount),
             ),
             
-            // Product Details
+            // Product Details - More space for content
             Expanded(
               flex: 3,
               child: _buildDetailsSection(currentPrice, hasDiscount),
@@ -150,8 +150,8 @@ class CelebrityPicksProductCard extends StatelessWidget {
     
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 6 : 8,
-        vertical: isSmallScreen ? 2 : 4,
+        horizontal: isSmallScreen ? 8 : 10,
+        vertical: isSmallScreen ? 4 : 6,
       ),
       decoration: BoxDecoration(
         color: AppConstants.errorColor,
@@ -160,7 +160,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
       child: Text(
         '-$discountPercent%',
         style: TextStyle(
-          fontSize: isSmallScreen ? 10 : 12,
+          fontSize: isSmallScreen ? 11 : 13,
           fontWeight: FontWeight.bold,
           color: AppConstants.surfaceColor,
         ),
@@ -171,8 +171,8 @@ class CelebrityPicksProductCard extends StatelessWidget {
   Widget _buildRatingBadge() {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 6 : 8,
-        vertical: isSmallScreen ? 2 : 4,
+        horizontal: isSmallScreen ? 8 : 10,
+        vertical: isSmallScreen ? 4 : 6,
       ),
       decoration: BoxDecoration(
         color: AppConstants.textPrimary.withValues(alpha: 0.8),
@@ -183,14 +183,14 @@ class CelebrityPicksProductCard extends StatelessWidget {
         children: [
           Icon(
             Icons.star_rounded,
-            size: isSmallScreen ? 12 : 14,
+            size: isSmallScreen ? 14 : 16,
             color: AppConstants.accentColor,
           ),
           const SizedBox(width: 2),
           Text(
             product.rating.toStringAsFixed(1),
             style: TextStyle(
-              fontSize: isSmallScreen ? 10 : 12,
+              fontSize: isSmallScreen ? 11 : 13,
               fontWeight: FontWeight.bold,
               color: AppConstants.surfaceColor,
             ),
@@ -204,7 +204,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
     return GestureDetector(
       onTap: onWishlistTap,
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: EdgeInsets.all(isSmallScreen ? 7 : 8),
         decoration: BoxDecoration(
           color: AppConstants.surfaceColor.withValues(alpha: 0.9),
           shape: BoxShape.circle,
@@ -218,7 +218,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
         ),
         child: Icon(
           Icons.favorite_border_rounded,
-          size: isSmallScreen ? 16 : 18,
+          size: isSmallScreen ? 18 : 20,
           color: AppConstants.favoriteColor,
         ),
       ),
@@ -227,7 +227,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
 
   Widget _buildDetailsSection(double currentPrice, bool hasDiscount) {
     return Padding(
-      padding: EdgeInsets.all(isSmallScreen ? 10 : 12),
+      padding: EdgeInsets.all(isSmallScreen ? 12 : 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -236,23 +236,23 @@ class CelebrityPicksProductCard extends StatelessWidget {
             child: Text(
               product.name,
               style: TextStyle(
-                fontSize: isSmallScreen ? 13 : 14,
+                fontSize: isSmallScreen ? 14 : 15,
                 fontWeight: FontWeight.w600,
                 color: AppConstants.textPrimary,
-                height: 1.2,
+                height: 1.3,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           
           // Celebrity Endorsement
           if (product.celebrityEndorsement != null)
             _buildCelebrityEndorsement(),
           
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           
           // Price Section - Aligned to the right
           Align(
@@ -272,20 +272,38 @@ class CelebrityPicksProductCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: isSmallScreen ? 22 : 24,
-            height: isSmallScreen ? 22 : 24,
+            width: isSmallScreen ? 28 : 32,
+            height: isSmallScreen ? 28 : 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
                 color: AppConstants.accentColor,
-                width: 1,
+                width: 1.5,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppConstants.accentColor.withValues(alpha: 0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: ClipOval(
-              child: Image.network(
-                endorsement.celebrityImage,
+              child: CachedNetworkImage(
+                imageUrl: endorsement.celebrityImage,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
+                memCacheWidth: isSmallScreen ? 56 : 64,
+                memCacheHeight: isSmallScreen ? 56 : 64,
+                placeholder: (context, url) => Shimmer.fromColors(
+                  baseColor: AppConstants.borderColor.withValues(alpha: 0.3),
+                  highlightColor: AppConstants.surfaceColor,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                ),
+                errorWidget: (context, error, stackTrace) {
                   return Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -301,7 +319,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
                             ? endorsement.celebrityName[0].toUpperCase() 
                             : 'C',
                         style: TextStyle(
-                          fontSize: isSmallScreen ? 11 : 13,
+                          fontSize: isSmallScreen ? 13 : 15,
                           fontWeight: FontWeight.bold,
                           color: AppConstants.surfaceColor,
                         ),
@@ -312,17 +330,31 @@ class CelebrityPicksProductCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              'Picked by ${endorsement.celebrityName}',
-              style: TextStyle(
-                fontSize: isSmallScreen ? 12 : 13,
-                color: AppConstants.accentColor,
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Picked by',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 10 : 11,
+                    color: AppConstants.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  endorsement.celebrityName,
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 13 : 14,
+                    color: AppConstants.accentColor,
+                    fontWeight: FontWeight.w600,
+                    height: 1.1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ],
@@ -337,7 +369,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
         Text(
           formatPrice(currentPrice),
           style: TextStyle(
-            fontSize: isSmallScreen ? 14 : 16,
+            fontSize: isSmallScreen ? 15 : 17,
             fontWeight: FontWeight.bold,
             color: AppConstants.textPrimary,
           ),
@@ -347,7 +379,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
           Text(
             formatPrice(product.price),
             style: TextStyle(
-              fontSize: isSmallScreen ? 11 : 13,
+              fontSize: isSmallScreen ? 12 : 14,
               color: AppConstants.textSecondary,
               decoration: TextDecoration.lineThrough,
               decorationColor: AppConstants.textSecondary,

@@ -1,0 +1,1 @@
+C:\PROJECTS\x\bloom-beauty\frontend\build\app\intermediates\cxx\RelWithDebInfo\3a3se60y\obj\arm64-v8a

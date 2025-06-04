@@ -45,74 +45,126 @@ class CelebritySelector extends StatelessWidget {
                     onSelected: (BrowseMode mode) {
                       provider.switchBrowseMode(mode);
                     },
+                    offset: const Offset(0, 8),
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppConstants.surfaceColor,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppConstants.borderColor.withValues(alpha: 0.3),
-                        ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isSmallScreen ? 8 : 10,
+                        vertical: isSmallScreen ? 6 : 8,
                       ),
-                      child: Icon(
-                        Icons.arrow_drop_down,
-                        color: AppConstants.textPrimary,
-                        size: isSmallScreen ? 28 : 32,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppConstants.accentColor.withValues(alpha: 0.1),
+                            AppConstants.accentColor.withValues(alpha: 0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppConstants.accentColor.withValues(alpha: 0.2),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppConstants.accentColor.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.tune_rounded,
+                            color: AppConstants.accentColor,
+                            size: isSmallScreen ? 18 : 20,
+                          ),
+                          SizedBox(width: isSmallScreen ? 4 : 6),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: AppConstants.accentColor,
+                            size: isSmallScreen ? 20 : 22,
+                          ),
+                        ],
                       ),
                     ),
                     itemBuilder: (BuildContext context) => [
                       PopupMenuItem<BrowseMode>(
                         value: BrowseMode.celebrity,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.star_rounded,
-                              color: provider.browseMode == BrowseMode.celebrity 
-                                  ? AppConstants.accentColor 
-                                  : AppConstants.textSecondary,
-                              size: isSmallScreen ? 18 : 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Browse by Celebrity',
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 14 : 16,
-                                fontWeight: provider.browseMode == BrowseMode.celebrity 
-                                    ? FontWeight.w600 
-                                    : FontWeight.w500,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: provider.browseMode == BrowseMode.celebrity 
+                                ? AppConstants.accentColor.withValues(alpha: 0.1)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.star_rounded,
                                 color: provider.browseMode == BrowseMode.celebrity 
                                     ? AppConstants.accentColor 
-                                    : AppConstants.textPrimary,
+                                    : AppConstants.textSecondary,
+                                size: isSmallScreen ? 18 : 20,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Text(
+                                'Browse by Celebrity',
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 14 : 16,
+                                  fontWeight: provider.browseMode == BrowseMode.celebrity 
+                                      ? FontWeight.w600 
+                                      : FontWeight.w500,
+                                  color: provider.browseMode == BrowseMode.celebrity 
+                                      ? AppConstants.accentColor 
+                                      : AppConstants.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       PopupMenuItem<BrowseMode>(
                         value: BrowseMode.category,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.category_rounded,
-                              color: provider.browseMode == BrowseMode.category 
-                                  ? AppConstants.accentColor 
-                                  : AppConstants.textSecondary,
-                              size: isSmallScreen ? 18 : 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Browse by Category',
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 14 : 16,
-                                fontWeight: provider.browseMode == BrowseMode.category 
-                                    ? FontWeight.w600 
-                                    : FontWeight.w500,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: provider.browseMode == BrowseMode.category 
+                                ? AppConstants.accentColor.withValues(alpha: 0.1)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.category_rounded,
                                 color: provider.browseMode == BrowseMode.category 
                                     ? AppConstants.accentColor 
-                                    : AppConstants.textPrimary,
+                                    : AppConstants.textSecondary,
+                                size: isSmallScreen ? 18 : 20,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Text(
+                                'Browse by Category',
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 14 : 16,
+                                  fontWeight: provider.browseMode == BrowseMode.category 
+                                      ? FontWeight.w600 
+                                      : FontWeight.w500,
+                                  color: provider.browseMode == BrowseMode.category 
+                                      ? AppConstants.accentColor 
+                                      : AppConstants.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

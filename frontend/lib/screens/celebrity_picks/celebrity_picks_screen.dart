@@ -229,6 +229,19 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
       );
     }
 
+    // Improved aspect ratios for better card sizing
+    double childAspectRatio;
+    if (crossAxisCount == 2) {
+      // Mobile: 2 columns - taller cards for better content display
+      childAspectRatio = isSmallScreen ? 0.65 : 0.7;
+    } else if (crossAxisCount == 3) {
+      // Tablet: 3 columns - balanced aspect ratio
+      childAspectRatio = 0.75;
+    } else {
+      // Desktop: 4 columns - slightly taller cards
+      childAspectRatio = 0.8;
+    }
+
     return SliverPadding(
       padding: EdgeInsets.symmetric(
         horizontal: isSmallScreen ? 16 : 20,
@@ -238,8 +251,8 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: isSmallScreen ? 12 : 16,
-          mainAxisSpacing: isSmallScreen ? 12 : 16,
-          childAspectRatio: isSmallScreen ? 0.75 : 0.8,
+          mainAxisSpacing: isSmallScreen ? 16 : 20,
+          childAspectRatio: childAspectRatio,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
@@ -259,6 +272,16 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
   }
 
   Widget _buildLoadingState(int crossAxisCount, bool isSmallScreen) {
+    // Use the same aspect ratio calculation as the main grid
+    double childAspectRatio;
+    if (crossAxisCount == 2) {
+      childAspectRatio = isSmallScreen ? 0.65 : 0.7;
+    } else if (crossAxisCount == 3) {
+      childAspectRatio = 0.75;
+    } else {
+      childAspectRatio = 0.8;
+    }
+
     return Padding(
       padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
       child: Column(
@@ -315,8 +338,8 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: crossAxisCount,
                 crossAxisSpacing: isSmallScreen ? 12 : 16,
-                mainAxisSpacing: isSmallScreen ? 12 : 16,
-                childAspectRatio: isSmallScreen ? 0.75 : 0.8,
+                mainAxisSpacing: isSmallScreen ? 16 : 20,
+                childAspectRatio: childAspectRatio,
               ),
               itemCount: 8,
               itemBuilder: (context, index) {
@@ -329,10 +352,9 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                     ),
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        flex: 3,
+                        flex: 5,
                         child: Container(
                           decoration: BoxDecoration(
                             color: AppConstants.borderColor.withValues(alpha: 0.3),
@@ -341,36 +363,42 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                         ),
                       ),
                       Expanded(
-                        flex: 2,
+                        flex: 3,
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
-                                  borderRadius: BorderRadius.circular(6),
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Container(
-                                height: 10,
-                                width: 80,
-                                decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                height: 14,
-                                width: 60,
-                                decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
-                                  borderRadius: BorderRadius.circular(7),
-                                ),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 28,
+                                    height: 28,
+                                    decoration: BoxDecoration(
+                                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Container(
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
