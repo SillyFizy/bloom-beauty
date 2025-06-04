@@ -183,7 +183,7 @@ class _CartScreenState extends State<CartScreen> {
                   brand: item.product.brand,
                   price: item.product.getCurrentPrice(),
                   quantity: item.quantity,
-                  variant: variant?.name,
+                  variant: variant?.name ?? (item.selectedVariant == null ? null : 'Unknown Variant'),
                   onIncrement: () {
                     cart.updateItemQuantity(item.id, item.quantity + 1);
                   },
@@ -193,15 +193,38 @@ class _CartScreenState extends State<CartScreen> {
                     }
                   },
                   onRemove: () {
+                    // Debug information
+                    debugPrint('Removing cart item - ID: ${item.id}, Product: ${item.product.name}, Variant: ${item.selectedVariant ?? 'default'}');
+                    
+                    // Show which specific variant is being removed
+                    final variantText = variant?.name ?? 'Default';
+                    final productName = item.product.name;
+                    
                     cart.removeItem(item.id);
+                    
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: const Text('Item removed from cart'),
+                        content: Text('Removed $productName${variant != null ? ' ($variantText)' : ''} from cart'),
                         backgroundColor: AppConstants.errorColor,
-                        duration: const Duration(seconds: 2),
+                        duration: const Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
+                        action: SnackBarAction(
+                          label: 'UNDO',
+                          textColor: AppConstants.surfaceColor,
+                          onPressed: () {
+                            // Re-add the item
+                            cart.addItem(
+                              item.product, 
+                              item.quantity, 
+                              variant: variant
+                            );
+                          },
+                        ),
                       ),
                     );
+                    
+                    // Debug: Print current cart state after removal
+                    cart.debugPrintCart();
                   },
                 ),
               );
