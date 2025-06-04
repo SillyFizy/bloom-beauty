@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../constants/app_constants.dart';
 import '../../../models/product_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 
 class CelebrityPicksProductCard extends StatelessWidget {
   final Product product;
@@ -107,48 +109,39 @@ class CelebrityPicksProductCard extends StatelessWidget {
         ? product.images.first 
         : 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop';
     
-    return Image.network(
-      imageUrl,
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
       fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppConstants.favoriteColor.withValues(alpha: 0.3),
-                AppConstants.favoriteColor.withValues(alpha: 0.1),
-              ],
-            ),
-          ),
-          child: Center(
-            child: Icon(
-              Icons.spa_outlined,
-              size: isSmallScreen ? 32 : 40,
-              color: AppConstants.textSecondary.withValues(alpha: 0.5),
-            ),
-          ),
-        );
-      },
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return Container(
+      memCacheWidth: isSmallScreen ? 300 : 400,
+      memCacheHeight: isSmallScreen ? 300 : 400,
+      placeholder: (context, url) => Shimmer.fromColors(
+        baseColor: AppConstants.borderColor.withValues(alpha: 0.3),
+        highlightColor: AppConstants.surfaceColor,
+        child: Container(
           decoration: BoxDecoration(
             color: AppConstants.borderColor.withValues(alpha: 0.3),
           ),
-          child: Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded /
-                      (loadingProgress.expectedTotalBytes ?? 1)
-                  : null,
-              color: AppConstants.accentColor,
-              strokeWidth: 2,
-            ),
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppConstants.favoriteColor.withValues(alpha: 0.3),
+              AppConstants.favoriteColor.withValues(alpha: 0.1),
+            ],
           ),
-        );
-      },
+        ),
+        child: Center(
+          child: Icon(
+            Icons.spa_outlined,
+            size: isSmallScreen ? 32 : 40,
+            color: AppConstants.textSecondary.withValues(alpha: 0.5),
+          ),
+        ),
+      ),
     );
   }
 

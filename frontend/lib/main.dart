@@ -303,9 +303,9 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
             children: [
               // Special handling for cart icon to show badge
               if (index == 3) 
-                Consumer<CartProvider>(
-                  builder: (context, cart, child) {
-                    final itemCount = cart.itemCount;
+                Selector<CartProvider, int>(
+                  selector: (context, cart) => cart.itemCount,
+                  builder: (context, itemCount, child) {
                     return Stack(
                       children: [
                         Icon(

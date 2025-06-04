@@ -5,6 +5,7 @@ import 'celebrity_provider.dart';
 import 'celebrity_picks_provider.dart';
 import 'review_provider.dart';
 import 'cart_provider.dart';
+import 'app_state_provider.dart';
 
 /// Centralized provider setup for the entire application
 /// This file manages all providers using MultiProvider pattern
@@ -14,6 +15,12 @@ class AppProviders {
   static Widget create({required Widget child}) {
     return MultiProvider(
       providers: [
+        /// App State Provider - Manages global app state
+        ChangeNotifierProvider<AppStateProvider>(
+          create: (_) => AppStateProvider(),
+          lazy: false, // Initialize immediately for global state
+        ),
+
         /// Product Provider - Manages product data and state
         ChangeNotifierProvider<ProductProvider>(
           create: (_) => ProductProvider(),

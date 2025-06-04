@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../constants/app_constants.dart';
 import '../../../providers/celebrity_picks_provider.dart';
 import '../../../models/celebrity_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 
 class CelebritySelector extends StatelessWidget {
   final bool isSmallScreen;
@@ -244,51 +246,42 @@ class CelebritySelector extends StatelessWidget {
   }
 
   Widget _buildCelebrityImage(String imageUrl, String name, bool isSmallScreen) {
-    return Image.network(
-      imageUrl,
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
       fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppConstants.favoriteColor.withValues(alpha: 0.6),
-                AppConstants.favoriteColor.withValues(alpha: 0.3),
-              ],
-            ),
-          ),
-          child: Center(
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : 'C',
-              style: TextStyle(
-                fontSize: isSmallScreen ? 24 : 30,
-                fontWeight: FontWeight.bold,
-                color: AppConstants.surfaceColor,
-              ),
-            ),
-          ),
-        );
-      },
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return Container(
+      memCacheWidth: isSmallScreen ? 130 : 150,
+      memCacheHeight: isSmallScreen ? 130 : 150,
+      placeholder: (context, url) => Shimmer.fromColors(
+        baseColor: AppConstants.borderColor.withValues(alpha: 0.3),
+        highlightColor: AppConstants.surfaceColor,
+        child: Container(
           decoration: BoxDecoration(
             color: AppConstants.borderColor.withValues(alpha: 0.3),
           ),
-          child: Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded /
-                      (loadingProgress.expectedTotalBytes ?? 1)
-                  : null,
-              color: AppConstants.accentColor,
-              strokeWidth: 2,
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppConstants.favoriteColor.withValues(alpha: 0.6),
+              AppConstants.favoriteColor.withValues(alpha: 0.3),
+            ],
+          ),
+        ),
+        child: Center(
+          child: Text(
+            name.isNotEmpty ? name[0].toUpperCase() : 'C',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 24 : 30,
+              fontWeight: FontWeight.bold,
+              color: AppConstants.surfaceColor,
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 } 
