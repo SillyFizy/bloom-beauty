@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../constants/app_constants.dart';
-import '../../../providers/celebrity_picks_provider.dart';
+import '../../constants/app_constants.dart';
+import '../../providers/category_provider.dart';
 
-class CelebrityPicksFilterSection extends StatelessWidget {
+class SortFilterBar extends StatelessWidget {
   final bool isSmallScreen;
 
-  const CelebrityPicksFilterSection({
+  const SortFilterBar({
     super.key,
     required this.isSmallScreen,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<CelebrityPicksProvider>(
+    return Consumer<CategoryProvider>(
       builder: (context, provider, child) {
         return Container(
           padding: EdgeInsets.symmetric(
@@ -44,10 +44,10 @@ class CelebrityPicksFilterSection extends StatelessWidget {
                         color: AppConstants.textPrimary,
                       ),
                     ),
-                    if (provider.selectedCelebrityId != null) ...[
+                    if (provider.selectedCategory != null) ...[
                       const SizedBox(height: 2),
                       Text(
-                        'by ${provider.selectedCelebrityId}',
+                        'in ${provider.selectedCategory!.name}',
                         style: TextStyle(
                           fontSize: isSmallScreen ? 11 : 12,
                           color: AppConstants.textSecondary,
@@ -72,7 +72,7 @@ class CelebrityPicksFilterSection extends StatelessWidget {
     );
   }
 
-  Widget _buildSortButton(BuildContext context, CelebrityPicksProvider provider) {
+  Widget _buildSortButton(BuildContext context, CategoryProvider provider) {
     return InkWell(
       onTap: () => _showSortOptions(context, provider),
       borderRadius: BorderRadius.circular(8),
@@ -111,10 +111,11 @@ class CelebrityPicksFilterSection extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterButton(BuildContext context, CelebrityPicksProvider provider) {
-    final hasActiveFilters = provider.minPriceFilter > provider.getMinPrice() ||
-                            provider.maxPriceFilter < provider.getMaxPrice() ||
-                            provider.minRatingFilter > 0;
+  Widget _buildFilterButton(BuildContext context, CategoryProvider provider) {
+    final hasActiveFilters = !provider.selectedFilters.contains(FilterOption.all) ||
+                            provider.minPrice > 0 ||
+                            provider.maxPrice < 1000000 ||
+                            provider.minRating > 0;
 
     return InkWell(
       onTap: () => _showFilterOptions(context, provider),
@@ -170,7 +171,7 @@ class CelebrityPicksFilterSection extends StatelessWidget {
     );
   }
 
-  void _showSortOptions(BuildContext context, CelebrityPicksProvider provider) {
+  void _showSortOptions(BuildContext context, CategoryProvider provider) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppConstants.surfaceColor,
@@ -193,7 +194,7 @@ class CelebrityPicksFilterSection extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             
-            ...CelebrityPicksSortOption.values.map((option) => _buildSortOption(
+            ...SortOption.values.map((option) => _buildSortOption(
               context,
               provider,
               option,
@@ -208,7 +209,7 @@ class CelebrityPicksFilterSection extends StatelessWidget {
     );
   }
 
-  void _showFilterOptions(BuildContext context, CelebrityPicksProvider provider) {
+  void _showFilterOptions(BuildContext context, CategoryProvider provider) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppConstants.surfaceColor,
@@ -257,6 +258,25 @@ class CelebrityPicksFilterSection extends StatelessWidget {
                 child: ListView(
                   controller: scrollController,
                   children: [
+                    // Filter options
+                    Text(
+                      'Product Type',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 14 : 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppConstants.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    ...FilterOption.values.map((option) => _buildFilterOption(
+                      provider,
+                      option,
+                      _getFilterOptionLabel(option),
+                    )),
+                    
+                    const SizedBox(height: 24),
+                    
                     // Price range
                     Text(
                       'Price Range',
@@ -294,12 +314,12 @@ class CelebrityPicksFilterSection extends StatelessWidget {
 
   Widget _buildSortOption(
     BuildContext context,
-    CelebrityPicksProvider provider,
-    CelebrityPicksSortOption option,
+    CategoryProvider provider,
+    SortOption option,
     String label,
     IconData icon,
   ) {
-    final isSelected = provider.sortOption == option;
+    final isSelected = provider.selectedSortOption == option;
     
     return ListTile(
       leading: Icon(
@@ -323,30 +343,49 @@ class CelebrityPicksFilterSection extends StatelessWidget {
             )
           : null,
       onTap: () {
-        provider.changeSortOption(option);
+        provider.updateSortOption(option);
         Navigator.pop(context);
       },
     );
   }
 
-  Widget _buildPriceRangeSlider(CelebrityPicksProvider provider) {
-    final minPrice = provider.getMinPrice();
-    final maxPrice = provider.getMaxPrice();
+  Widget _buildFilterOption(CategoryProvider provider, FilterOption option, String label) {
+    final isSelected = provider.selectedFilters.contains(option);
+    
+    return CheckboxListTile(
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: isSmallScreen ? 14 : 16,
+          color: AppConstants.textPrimary,
+        ),
+      ),
+      value: isSelected,
+      activeColor: AppConstants.accentColor,
+      onChanged: (value) => provider.toggleFilter(option),
+      dense: true,
+    );
+  }
+
+  Widget _buildPriceRangeSlider(CategoryProvider provider) {
+    final priceRange = provider.availablePriceRange;
+    final minPrice = priceRange['min'] ?? 0;
+    final maxPrice = priceRange['max'] ?? 1000000;
     
     return Column(
       children: [
         RangeSlider(
           values: RangeValues(
-            provider.minPriceFilter.clamp(minPrice, maxPrice),
-            provider.maxPriceFilter.clamp(minPrice, maxPrice),
+            provider.minPrice.clamp(minPrice, maxPrice),
+            provider.maxPrice.clamp(minPrice, maxPrice),
           ),
           min: minPrice,
           max: maxPrice,
           divisions: 20,
           activeColor: AppConstants.accentColor,
           inactiveColor: AppConstants.borderColor,
-          onChanged: (values) {
-            provider.applyPriceFilter(values.start, values.end);
+          onChanged: (RangeValues values) {
+            provider.updatePriceRange(values.start, values.end);
           },
         ),
         Padding(
@@ -355,14 +394,14 @@ class CelebrityPicksFilterSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${provider.minPriceFilter.toInt()} IQD',
+                '${provider.minPrice.toInt()} IQD',
                 style: TextStyle(
                   fontSize: isSmallScreen ? 12 : 14,
                   color: AppConstants.textSecondary,
                 ),
               ),
               Text(
-                '${provider.maxPriceFilter.toInt()} IQD',
+                '${provider.maxPrice.toInt()} IQD',
                 style: TextStyle(
                   fontSize: isSmallScreen ? 12 : 14,
                   color: AppConstants.textSecondary,
@@ -375,17 +414,17 @@ class CelebrityPicksFilterSection extends StatelessWidget {
     );
   }
 
-  Widget _buildRatingFilter(CelebrityPicksProvider provider) {
+  Widget _buildRatingFilter(CategoryProvider provider) {
     return Column(
       children: [
         Slider(
-          value: provider.minRatingFilter,
+          value: provider.minRating,
           min: 0,
           max: 5,
           divisions: 5,
           activeColor: AppConstants.accentColor,
           inactiveColor: AppConstants.borderColor,
-          onChanged: (value) => provider.applyRatingFilter(value),
+          onChanged: (value) => provider.updateRatingFilter(value),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -400,7 +439,7 @@ class CelebrityPicksFilterSection extends StatelessWidget {
                 ),
               ),
               Text(
-                '${provider.minRatingFilter.toStringAsFixed(1)} stars+',
+                '${provider.minRating.toStringAsFixed(1)} stars+',
                 style: TextStyle(
                   fontSize: isSmallScreen ? 12 : 14,
                   color: AppConstants.textSecondary,
@@ -420,33 +459,58 @@ class CelebrityPicksFilterSection extends StatelessWidget {
     );
   }
 
-  String _getSortOptionLabel(CelebrityPicksSortOption option) {
+  String _getSortOptionLabel(SortOption option) {
     switch (option) {
-      case CelebrityPicksSortOption.newest:
+      case SortOption.newest:
         return 'Newest First';
-      case CelebrityPicksSortOption.priceLowToHigh:
+      case SortOption.priceAscending:
         return 'Price: Low to High';
-      case CelebrityPicksSortOption.priceHighToLow:
+      case SortOption.priceDescending:
         return 'Price: High to Low';
-      case CelebrityPicksSortOption.highestRated:
+      case SortOption.rating:
         return 'Highest Rated';
-      case CelebrityPicksSortOption.mostPopular:
+      case SortOption.popularity:
         return 'Most Popular';
+      case SortOption.name:
+        return 'Name A-Z';
     }
   }
 
-  IconData _getSortOptionIcon(CelebrityPicksSortOption option) {
+  IconData _getSortOptionIcon(SortOption option) {
     switch (option) {
-      case CelebrityPicksSortOption.newest:
+      case SortOption.newest:
         return Icons.fiber_new_rounded;
-      case CelebrityPicksSortOption.priceLowToHigh:
+      case SortOption.priceAscending:
         return Icons.trending_up_rounded;
-      case CelebrityPicksSortOption.priceHighToLow:
+      case SortOption.priceDescending:
         return Icons.trending_down_rounded;
-      case CelebrityPicksSortOption.highestRated:
+      case SortOption.rating:
         return Icons.star_rounded;
-      case CelebrityPicksSortOption.mostPopular:
+      case SortOption.popularity:
         return Icons.local_fire_department_rounded;
+      case SortOption.name:
+        return Icons.sort_by_alpha_rounded;
+    }
+  }
+
+  String _getFilterOptionLabel(FilterOption option) {
+    switch (option) {
+      case FilterOption.all:
+        return 'All Products';
+      case FilterOption.inStock:
+        return 'In Stock';
+      case FilterOption.discounted:
+        return 'On Sale';
+      case FilterOption.celebrityPicks:
+        return 'Celebrity Picks';
+      case FilterOption.featured:
+        return 'Featured';
+      case FilterOption.newArrivals:
+        return 'New Arrivals';
+      case FilterOption.bestselling:
+        return 'Best Selling';
+      case FilterOption.trending:
+        return 'Trending';
     }
   }
 } 

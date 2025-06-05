@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/product_provider.dart';
+import '../../providers/celebrity_provider.dart';
 import '../products/product_detail_screen.dart';
 
 class CelebrityScreen extends StatefulWidget {
@@ -60,6 +61,11 @@ class _CelebrityScreenState extends State<CelebrityScreen>
     
     // Add scroll listener for title appearance
     _scrollController.addListener(_onScroll);
+
+    // Load celebrity data through provider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCelebrityData();
+    });
   }
 
   @override
@@ -211,6 +217,16 @@ class _CelebrityScreenState extends State<CelebrityScreen>
     }
   }
 
+  Future<void> _loadCelebrityData() async {
+    try {
+      final celebrityProvider = context.read<CelebrityProvider>();
+      await celebrityProvider.selectCelebrity(widget.celebrityName);
+    } catch (e) {
+      debugPrint('Error loading celebrity data: $e');
+      // Error handling is done in the provider
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -221,75 +237,206 @@ class _CelebrityScreenState extends State<CelebrityScreen>
 
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppConstants.backgroundColor,
-                  AppConstants.surfaceColor,
-                ],
-                stops: const [0.0, 0.3],
-              ),
-            ),
-            child: CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                // Responsive App Bar with animated title
-                _buildResponsiveSliverAppBar(isSmallScreen),
-                
-                // Celebrity content
-                SliverToBoxAdapter(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: AppConstants.surfaceColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(32),
-                        topRight: Radius.circular(32),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isSmallScreen ? 12 : (isMediumScreen ? 20 : 32),
-                      ),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 30),
-                          
-                          // Celebrity header
-                          _buildCelebrityHeader(isSmallScreen),
-                          
-                          // Testimonial section
-                          if (widget.testimonial != null && widget.testimonial!.isNotEmpty)
-                            _buildTestimonial(isSmallScreen),
-                          
-                          // Morning and Evening routine - FIRST
-                          if (widget.morningRoutineProducts.isNotEmpty || widget.eveningRoutineProducts.isNotEmpty)
-                            _buildResponsiveRoutineSection(context, isSmallScreen, isMediumScreen),
-                          
-                          // Recommended products - SECOND  
-                          if (widget.recommendedProducts.isNotEmpty)
-                            _buildResponsiveRecommendedProducts(context, isSmallScreen, isMediumScreen),
-                          
-                          // Beauty secrets video - THIRD
-                          _buildBeautySecrets(isSmallScreen),
-                          
-                          // Social media - LAST
-                          if (widget.socialMediaLinks.isNotEmpty)
-                            _buildResponsiveSocialMedia(isSmallScreen),
-                          
-                          const SizedBox(height: 40),
-                        ],
-                      ),
-                    ),
+          body: Consumer<CelebrityProvider>(
+            builder: (context, celebrityProvider, child) {
+              // Show loading state while celebrity data is being loaded
+              if (celebrityProvider.isLoading) {
+                return _buildLoadingState(isSmallScreen);
+              }
+
+              // Show error state if there's an error
+              if (celebrityProvider.hasError) {
+                return _buildErrorState(celebrityProvider.error!, isSmallScreen);
+              }
+
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppConstants.backgroundColor,
+                      AppConstants.surfaceColor,
+                    ],
+                    stops: const [0.0, 0.3],
                   ),
                 ),
-              ],
-            ),
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    // Responsive App Bar with animated title
+                    _buildResponsiveSliverAppBar(isSmallScreen),
+                    
+                    // Celebrity content
+                    SliverToBoxAdapter(
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: AppConstants.surfaceColor,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(32),
+                            topRight: Radius.circular(32),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 12 : (isMediumScreen ? 20 : 32),
+                          ),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 30),
+                              
+                              // Celebrity header
+                              _buildCelebrityHeader(isSmallScreen),
+                              
+                              // Testimonial section
+                              if (widget.testimonial != null && widget.testimonial!.isNotEmpty)
+                                _buildTestimonial(isSmallScreen),
+                              
+                              // Morning and Evening routine - FIRST
+                              if (widget.morningRoutineProducts.isNotEmpty || widget.eveningRoutineProducts.isNotEmpty)
+                                _buildResponsiveRoutineSection(context, isSmallScreen, isMediumScreen),
+                              
+                              // Recommended products - SECOND  
+                              if (widget.recommendedProducts.isNotEmpty)
+                                _buildResponsiveRecommendedProducts(context, isSmallScreen, isMediumScreen),
+                              
+                              // Beauty secrets video - THIRD
+                              _buildBeautySecrets(isSmallScreen),
+                              
+                              // Social media - LAST (Connect with Celebrity section)
+                              if (widget.socialMediaLinks.isNotEmpty)
+                                _buildResponsiveSocialMedia(isSmallScreen),
+                              
+                              const SizedBox(height: 40),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         );
       },
+    );
+  }
+
+  Widget _buildLoadingState(bool isSmallScreen) {
+    return Scaffold(
+      backgroundColor: AppConstants.backgroundColor,
+      appBar: AppBar(
+        backgroundColor: AppConstants.surfaceColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.celebrityName,
+          style: TextStyle(
+            fontSize: isSmallScreen ? 18 : 20,
+            fontWeight: FontWeight.w600,
+            color: AppConstants.textPrimary,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              color: AppConstants.accentColor,
+            ),
+            SizedBox(height: isSmallScreen ? 16 : 20),
+            Text(
+              'Loading celebrity profile...',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 14 : 16,
+                color: AppConstants.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error, bool isSmallScreen) {
+    return Scaffold(
+      backgroundColor: AppConstants.backgroundColor,
+      appBar: AppBar(
+        backgroundColor: AppConstants.surfaceColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.celebrityName,
+          style: TextStyle(
+            fontSize: isSmallScreen ? 18 : 20,
+            fontWeight: FontWeight.w600,
+            color: AppConstants.textPrimary,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(isSmallScreen ? 20 : 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: isSmallScreen ? 64 : 80,
+                color: AppConstants.errorColor,
+              ),
+              SizedBox(height: isSmallScreen ? 16 : 20),
+              Text(
+                'Failed to load celebrity profile',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 18 : 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppConstants.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: isSmallScreen ? 8 : 12),
+              Text(
+                error,
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 14 : 16,
+                  color: AppConstants.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: isSmallScreen ? 24 : 32),
+              ElevatedButton(
+                onPressed: _loadCelebrityData,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppConstants.accentColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 24 : 32,
+                    vertical: isSmallScreen ? 12 : 16,
+                  ),
+                ),
+                child: Text(
+                  'Try Again',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 14 : 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

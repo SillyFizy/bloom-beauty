@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import 'product_provider.dart';
 import 'celebrity_provider.dart';
 import 'celebrity_picks_provider.dart';
+import 'search_provider.dart';
 import 'review_provider.dart';
 import 'cart_provider.dart';
 import 'app_state_provider.dart';
+import 'category_provider.dart';
 
 /// Centralized provider setup for the entire application
 /// This file manages all providers using MultiProvider pattern
@@ -27,6 +29,12 @@ class AppProviders {
           lazy: false, // Initialize immediately for critical data
         ),
 
+        /// Category Provider - Manages category filtering and sorting
+        ChangeNotifierProvider<CategoryProvider>(
+          create: (_) => CategoryProvider(),
+          lazy: false, // Initialize immediately for categories screen
+        ),
+
         /// Celebrity Provider - Manages celebrity data and endorsements
         ChangeNotifierProvider<CelebrityProvider>(
           create: (_) => CelebrityProvider(),
@@ -37,6 +45,12 @@ class AppProviders {
         ChangeNotifierProvider<CelebrityPicksProvider>(
           create: (_) => CelebrityPicksProvider(),
           lazy: true, // Load only when celebrity picks screen is opened
+        ),
+
+        /// Search Provider - Manages search functionality
+        ChangeNotifierProvider<SearchProvider>(
+          create: (_) => SearchProvider(),
+          lazy: false, // Initialize immediately for search functionality
         ),
 
         /// Review Provider - Manages product reviews and ratings
@@ -67,7 +81,9 @@ class AppProviders {
       // Initialize providers in parallel for better performance
       await Future.wait([
         _initializeProductProvider(context),
+        _initializeCategoryProvider(context),
         _initializeCelebrityProvider(context),
+        _initializeSearchProvider(context),
         _initializeCartProvider(context),
         // Note: ReviewProvider is lazy-loaded when needed
       ]);
@@ -82,10 +98,22 @@ class AppProviders {
     await productProvider.initialize();
   }
 
+  /// Initialize Category Provider
+  static Future<void> _initializeCategoryProvider(BuildContext context) async {
+    final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    await categoryProvider.initialize();
+  }
+
   /// Initialize Celebrity Provider
   static Future<void> _initializeCelebrityProvider(BuildContext context) async {
     final celebrityProvider = Provider.of<CelebrityProvider>(context, listen: false);
     await celebrityProvider.initialize();
+  }
+
+  /// Initialize Search Provider
+  static Future<void> _initializeSearchProvider(BuildContext context) async {
+    final searchProvider = Provider.of<SearchProvider>(context, listen: false);
+    await searchProvider.initialize();
   }
 
   /// Initialize Cart Provider
@@ -105,7 +133,9 @@ class AppProviders {
     try {
       await Future.wait([
         Provider.of<ProductProvider>(context, listen: false).refresh(),
+        Provider.of<CategoryProvider>(context, listen: false).refresh(),
         Provider.of<CelebrityProvider>(context, listen: false).refresh(),
+        Provider.of<SearchProvider>(context, listen: false).refresh(),
         Provider.of<ReviewProvider>(context, listen: false).refresh(),
         // Cart doesn't need refresh as it's local storage based
       ]);
@@ -117,7 +147,9 @@ class AppProviders {
   /// Clear all cached data in providers
   static void clearAllCaches(BuildContext context) {
     Provider.of<ProductProvider>(context, listen: false).clearCache();
+    Provider.of<CategoryProvider>(context, listen: false).clearFilters();
     Provider.of<CelebrityProvider>(context, listen: false).clearCache();
+    Provider.of<SearchProvider>(context, listen: false).clearSearch();
     Provider.of<ReviewProvider>(context, listen: false).clearCache();
     // Cart cache clearing would log out user, so we don't include it here
   }
@@ -126,9 +158,11 @@ class AppProviders {
   static bool areProvidersInitialized(BuildContext context) {
     try {
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
       final celebrityProvider = Provider.of<CelebrityProvider>(context, listen: false);
       
       return productProvider.products.isNotEmpty &&
+             categoryProvider.categories.isNotEmpty &&
              celebrityProvider.celebrities.isNotEmpty;
     } catch (e) {
       return false;
@@ -139,11 +173,17 @@ class AppProviders {
   static ProductProvider getProductProvider(BuildContext context) =>
       Provider.of<ProductProvider>(context, listen: false);
 
+  static CategoryProvider getCategoryProvider(BuildContext context) =>
+      Provider.of<CategoryProvider>(context, listen: false);
+
   static CelebrityProvider getCelebrityProvider(BuildContext context) =>
       Provider.of<CelebrityProvider>(context, listen: false);
 
   static CelebrityPicksProvider getCelebrityPicksProvider(BuildContext context) =>
       Provider.of<CelebrityPicksProvider>(context, listen: false);
+
+  static SearchProvider getSearchProvider(BuildContext context) =>
+      Provider.of<SearchProvider>(context, listen: false);
 
   static ReviewProvider getReviewProvider(BuildContext context) =>
       Provider.of<ReviewProvider>(context, listen: false);
@@ -159,6 +199,10 @@ extension ProviderExtension on BuildContext {
   ProductProvider get productProvider => read<ProductProvider>();
   ProductProvider get watchProductProvider => watch<ProductProvider>();
 
+  /// Category Provider getter
+  CategoryProvider get categoryProvider => read<CategoryProvider>();
+  CategoryProvider get watchCategoryProvider => watch<CategoryProvider>();
+
   /// Celebrity Provider getter
   CelebrityProvider get celebrityProvider => read<CelebrityProvider>();
   CelebrityProvider get watchCelebrityProvider => watch<CelebrityProvider>();
@@ -166,6 +210,10 @@ extension ProviderExtension on BuildContext {
   /// Celebrity Picks Provider getter
   CelebrityPicksProvider get celebrityPicksProvider => read<CelebrityPicksProvider>();
   CelebrityPicksProvider get watchCelebrityPicksProvider => watch<CelebrityPicksProvider>();
+
+  /// Search Provider getter
+  SearchProvider get searchProvider => read<SearchProvider>();
+  SearchProvider get watchSearchProvider => watch<SearchProvider>();
 
   /// Review Provider getter
   ReviewProvider get reviewProvider => read<ReviewProvider>();
@@ -178,6 +226,9 @@ extension ProviderExtension on BuildContext {
   /// Select specific values for optimized rebuilds
   T selectProduct<T>(T Function(ProductProvider provider) selector) =>
       select<ProductProvider, T>(selector);
+
+  T selectCategory<T>(T Function(CategoryProvider provider) selector) =>
+      select<CategoryProvider, T>(selector);
 
   T selectCelebrity<T>(T Function(CelebrityProvider provider) selector) =>
       select<CelebrityProvider, T>(selector);
@@ -293,6 +344,7 @@ class MultiProviderConsumer extends StatelessWidget {
   final Widget Function(
     BuildContext context,
     ProductProvider productProvider,
+    CategoryProvider categoryProvider,
     CelebrityProvider celebrityProvider,
     CartProvider cartProvider,
     Widget? child,
@@ -307,9 +359,9 @@ class MultiProviderConsumer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer3<ProductProvider, CelebrityProvider, CartProvider>(
-      builder: (context, productProvider, celebrityProvider, cartProvider, child) {
-        return builder(context, productProvider, celebrityProvider, cartProvider, child);
+    return Consumer4<ProductProvider, CategoryProvider, CelebrityProvider, CartProvider>(
+      builder: (context, productProvider, categoryProvider, celebrityProvider, cartProvider, child) {
+        return builder(context, productProvider, categoryProvider, celebrityProvider, cartProvider, child);
       },
       child: child,
     );

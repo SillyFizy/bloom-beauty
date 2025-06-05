@@ -9,7 +9,6 @@ import '../../providers/product_provider.dart';
 import '../products/product_detail_screen.dart';
 import 'widgets/celebrity_selector.dart';
 import 'widgets/category_selector.dart';
-import 'widgets/filter_section.dart';
 import 'widgets/product_card.dart';
 import 'widgets/search_bar.dart';
 
@@ -145,6 +144,58 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
               ),
             ),
             centerTitle: false,
+            actions: [
+              Consumer<CelebrityPicksProvider>(
+                builder: (context, celebrityProvider, child) {
+                  final hasActiveFilters = celebrityProvider.minPriceFilter > celebrityProvider.getMinPrice() ||
+                                          celebrityProvider.maxPriceFilter < celebrityProvider.getMaxPrice() ||
+                                          celebrityProvider.minRatingFilter > 0;
+
+                  return Row(
+                    children: [
+                      // Sort button
+                      IconButton(
+                        onPressed: () => _showSortOptions(context, celebrityProvider, isSmallScreen),
+                        icon: Icon(
+                          Icons.sort_rounded,
+                          color: AppConstants.textPrimary,
+                          size: isSmallScreen ? 22 : 24,
+                        ),
+                        tooltip: 'Sort',
+                      ),
+                      
+                      // Filter button with indicator
+                      Stack(
+                        children: [
+                          IconButton(
+                            onPressed: () => _showFilterOptions(context, celebrityProvider, isSmallScreen),
+                            icon: Icon(
+                              hasActiveFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
+                              color: hasActiveFilters ? AppConstants.accentColor : AppConstants.textPrimary,
+                              size: isSmallScreen ? 22 : 24,
+                            ),
+                            tooltip: 'Filter',
+                          ),
+                          if (hasActiveFilters)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: AppConstants.accentColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
           body: Consumer<CelebrityPicksProvider>(
             builder: (context, provider, child) {
@@ -172,13 +223,6 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                           _searchController.clear();
                           provider.clearSearch();
                         },
-                      ),
-                    ),
-                    
-                    // Filter Section
-                    SliverToBoxAdapter(
-                      child: CelebrityPicksFilterSection(
-                        isSmallScreen: isSmallScreen,
                       ),
                     ),
                     
@@ -371,8 +415,8 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                             children: [
                               Expanded(
                                 child: Container(
-                                  decoration: BoxDecoration(
-                                    color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                decoration: BoxDecoration(
+                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                 ),
@@ -380,24 +424,24 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Container(
+                              Container(
                                     width: 28,
                                     height: 28,
-                                    decoration: BoxDecoration(
-                                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                decoration: BoxDecoration(
+                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
                                       shape: BoxShape.circle,
-                                    ),
-                                  ),
+                                ),
+                              ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Container(
                                       height: 12,
-                                      decoration: BoxDecoration(
-                                        color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                decoration: BoxDecoration(
+                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                     ),
-                                  ),
+                                ),
                                 ],
                               ),
                             ],
@@ -535,5 +579,468 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
         ],
       ),
     );
+  }
+
+  /// Show sort options (matching category screen implementation)
+  void _showSortOptions(BuildContext context, CelebrityPicksProvider provider, bool isSmallScreen) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppConstants.surfaceColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sort By',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 18 : 20,
+                fontWeight: FontWeight.w600,
+                color: AppConstants.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            ...CelebrityPicksSortOption.values.map((option) => _buildSortOption(
+              context,
+              provider,
+              option,
+              _getSortOptionLabel(option),
+              _getSortOptionIcon(option),
+              isSmallScreen,
+            )),
+            
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show filter options (matching category screen implementation exactly)
+  void _showFilterOptions(BuildContext context, CelebrityPicksProvider provider, bool isSmallScreen) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      builder: (context) => Consumer<CelebrityPicksProvider>(
+        builder: (context, celebrityProvider, child) => Container(
+          width: MediaQuery.of(context).size.width, // Full width from beginning of screen
+          height: MediaQuery.of(context).size.height * 0.7, // Increased height for better space
+          decoration: const BoxDecoration(
+            color: AppConstants.surfaceColor,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Header with drag handle
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppConstants.borderColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              
+              // Title and Clear All
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Filter Products',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 20 : 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppConstants.textPrimary,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        celebrityProvider.clearFilters();
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        backgroundColor: AppConstants.accentColor.withValues(alpha: 0.1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: Text(
+                        'Clear All',
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 14 : 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppConstants.accentColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const Divider(height: 1),
+              
+              // Scrollable Filter Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Price Range Filter
+                      _buildResponsivePriceFilter(celebrityProvider, isSmallScreen),
+                      
+                      SizedBox(height: isSmallScreen ? 20 : 24),
+                      
+                      // Rating Filter
+                      _buildResponsiveRatingFilter(celebrityProvider, isSmallScreen),
+                      
+                      SizedBox(height: isSmallScreen ? 16 : 20),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Fixed Apply Button at Bottom
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                  isSmallScreen ? 16 : 20,
+                  isSmallScreen ? 12 : 16,
+                  isSmallScreen ? 16 : 20,
+                  MediaQuery.of(context).padding.bottom + (isSmallScreen ? 12 : 16),
+                ),
+                decoration: BoxDecoration(
+                  color: AppConstants.surfaceColor,
+                  border: Border(
+                    top: BorderSide(
+                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppConstants.accentColor,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        vertical: isSmallScreen ? 16 : 18,
+                        horizontal: 24,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: Text(
+                      'Apply Filters (${celebrityProvider.filteredProducts.length} products)',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 16 : 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortOption(
+    BuildContext context,
+    CelebrityPicksProvider provider,
+    CelebrityPicksSortOption option,
+    String label,
+    IconData icon,
+    bool isSmallScreen,
+  ) {
+    final isSelected = provider.sortOption == option;
+    
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isSelected ? AppConstants.accentColor : AppConstants.textSecondary,
+        size: isSmallScreen ? 20 : 22,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: isSmallScreen ? 14 : 16,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          color: isSelected ? AppConstants.accentColor : AppConstants.textPrimary,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(
+              Icons.check_circle,
+              color: AppConstants.accentColor,
+              size: isSmallScreen ? 20 : 22,
+            )
+          : null,
+      onTap: () {
+        provider.changeSortOption(option);
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  /// Responsive Price Range Filter (matching category screen)
+  Widget _buildResponsivePriceFilter(CelebrityPicksProvider provider, bool isSmallScreen) {
+    final minPrice = provider.getMinPrice();
+    final maxPrice = provider.getMaxPrice();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.attach_money_rounded,
+              color: AppConstants.accentColor,
+              size: isSmallScreen ? 22 : 24,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Price Range',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 16 : 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppConstants.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: isSmallScreen ? 12 : 16),
+        
+        // Current selection display
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(
+            horizontal: isSmallScreen ? 12 : 16, 
+            vertical: isSmallScreen ? 10 : 12,
+          ),
+          decoration: BoxDecoration(
+            color: AppConstants.accentColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppConstants.accentColor.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  '${provider.minPriceFilter.toInt()} IQD',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 13 : 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppConstants.textPrimary,
+                  ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 8 : 12, 
+                  vertical: isSmallScreen ? 2 : 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppConstants.accentColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'to',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 11 : 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  '${provider.maxPriceFilter.toInt()} IQD',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 13 : 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppConstants.textPrimary,
+                  ),
+                  textAlign: TextAlign.end,
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        SizedBox(height: isSmallScreen ? 16 : 20),
+        
+        // Price Range Slider
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 16),
+          child: Column(
+            children: [
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: isSmallScreen ? 4 : 6,
+                  thumbShape: RoundSliderThumbShape(
+                    enabledThumbRadius: isSmallScreen ? 10 : 12,
+                  ),
+                  overlayShape: RoundSliderOverlayShape(
+                    overlayRadius: isSmallScreen ? 18 : 22,
+                  ),
+                  activeTrackColor: AppConstants.accentColor,
+                  inactiveTrackColor: AppConstants.borderColor.withValues(alpha: 0.3),
+                  thumbColor: AppConstants.accentColor,
+                  overlayColor: AppConstants.accentColor.withValues(alpha: 0.2),
+                ),
+                child: RangeSlider(
+                  values: RangeValues(
+                    provider.minPriceFilter.clamp(minPrice, maxPrice),
+                    provider.maxPriceFilter.clamp(minPrice, maxPrice),
+                  ),
+                  min: minPrice,
+                  max: maxPrice,
+                  divisions: 20,
+                  onChanged: (values) {
+                    provider.applyPriceFilter(values.start, values.end);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Responsive Rating Filter (matching category screen)
+  Widget _buildResponsiveRatingFilter(CelebrityPicksProvider provider, bool isSmallScreen) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.star_rounded,
+              color: AppConstants.accentColor,
+              size: isSmallScreen ? 22 : 24,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Minimum Rating',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 16 : 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppConstants.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: isSmallScreen ? 12 : 16),
+        
+        // Rating Buttons (exactly like category screen)
+        Wrap(
+          spacing: isSmallScreen ? 8 : 12,
+          runSpacing: isSmallScreen ? 8 : 12,
+          children: [
+            _buildRatingButton(provider, 0, 'All', isSmallScreen),
+            _buildRatingButton(provider, 1, '1+ ⭐', isSmallScreen),
+            _buildRatingButton(provider, 2, '2+ ⭐', isSmallScreen),
+            _buildRatingButton(provider, 3, '3+ ⭐', isSmallScreen),
+            _buildRatingButton(provider, 4, '4+ ⭐', isSmallScreen),
+            _buildRatingButton(provider, 5, '5 ⭐', isSmallScreen),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRatingButton(CelebrityPicksProvider provider, double rating, String label, bool isSmallScreen) {
+    final isSelected = provider.minRatingFilter == rating;
+    
+    return GestureDetector(
+      onTap: () => provider.applyRatingFilter(rating),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 12 : 16,
+          vertical: isSmallScreen ? 8 : 10,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? AppConstants.accentColor 
+              : AppConstants.accentColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 24),
+          border: Border.all(
+            color: AppConstants.accentColor.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: isSmallScreen ? 13 : 15,
+            fontWeight: FontWeight.w600,
+            color: isSelected 
+                ? Colors.white 
+                : AppConstants.accentColor,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getSortOptionLabel(CelebrityPicksSortOption option) {
+    switch (option) {
+      case CelebrityPicksSortOption.newest:
+        return 'Newest First';
+      case CelebrityPicksSortOption.priceLowToHigh:
+        return 'Price: Low to High';
+      case CelebrityPicksSortOption.priceHighToLow:
+        return 'Price: High to Low';
+      case CelebrityPicksSortOption.highestRated:
+        return 'Highest Rated';
+      case CelebrityPicksSortOption.mostPopular:
+        return 'Most Popular';
+    }
+  }
+
+  IconData _getSortOptionIcon(CelebrityPicksSortOption option) {
+    switch (option) {
+      case CelebrityPicksSortOption.newest:
+        return Icons.fiber_new_rounded;
+      case CelebrityPicksSortOption.priceLowToHigh:
+        return Icons.trending_up_rounded;
+      case CelebrityPicksSortOption.priceHighToLow:
+        return Icons.trending_down_rounded;
+      case CelebrityPicksSortOption.highestRated:
+        return Icons.star_rounded;
+      case CelebrityPicksSortOption.mostPopular:
+        return Icons.local_fire_department_rounded;
+    }
   }
 } 

@@ -124,23 +124,23 @@ class CelebrityPicksProductCard extends StatelessWidget {
         ),
       ),
       errorWidget: (context, url, error) => Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppConstants.favoriteColor.withValues(alpha: 0.3),
-              AppConstants.favoriteColor.withValues(alpha: 0.1),
-            ],
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppConstants.favoriteColor.withValues(alpha: 0.3),
+                AppConstants.favoriteColor.withValues(alpha: 0.1),
+              ],
+            ),
           ),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.spa_outlined,
-            size: isSmallScreen ? 32 : 40,
-            color: AppConstants.textSecondary.withValues(alpha: 0.5),
+          child: Center(
+            child: Icon(
+              Icons.spa_outlined,
+              size: isSmallScreen ? 32 : 40,
+              color: AppConstants.textSecondary.withValues(alpha: 0.5),
+            ),
           ),
-        ),
       ),
     );
   }
@@ -285,7 +285,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
                   color: AppConstants.accentColor.withValues(alpha: 0.2),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
-                ),
+              ),
               ],
             ),
             child: ClipOval(
@@ -345,14 +345,14 @@ class CelebrityPicksProductCard extends StatelessWidget {
                 ),
                 Text(
                   endorsement.celebrityName,
-                  style: TextStyle(
+              style: TextStyle(
                     fontSize: isSmallScreen ? 13 : 14,
-                    color: AppConstants.accentColor,
-                    fontWeight: FontWeight.w600,
+                color: AppConstants.accentColor,
+                fontWeight: FontWeight.w600,
                     height: 1.1,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

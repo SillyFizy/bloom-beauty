@@ -57,6 +57,7 @@ class CelebrityPicksProvider with ChangeNotifier {
 
   // Getters
   List<Product> get displayProducts => List.unmodifiable(_displayProducts);
+  List<Product> get filteredProducts => List.unmodifiable(_filteredProducts);
   List<Celebrity> get celebrities => List.unmodifiable(_celebrities);
   List<category_model.Category> get categories => List.unmodifiable(_categories);
   bool get isLoading => _isLoading;
@@ -371,6 +372,23 @@ class CelebrityPicksProvider with ChangeNotifier {
     return _allCelebrityProducts
         .map((p) => p.discountPrice ?? p.price)
         .reduce((a, b) => a < b ? a : b);
+  }
+
+  /// Clear all filters
+  void clearFilters() {
+    _searchQuery = '';
+    _selectedCelebrityId = null;
+    _selectedCategoryId = null;
+    _sortOption = CelebrityPicksSortOption.newest;
+    _minPriceFilter = getMinPrice();
+    _maxPriceFilter = getMaxPrice();
+    _minRatingFilter = 0;
+    _currentPage = 0;
+    _hasMoreProducts = true;
+    _displayProducts.clear();
+    _applyFiltersAndSort();
+    _loadDisplayProducts();
+    notifyListeners();
   }
 
   /// Refresh all data

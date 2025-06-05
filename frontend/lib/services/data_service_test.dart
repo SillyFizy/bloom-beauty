@@ -1,6 +1,4 @@
 import 'data_service.dart';
-import '../models/product_model.dart';
-import '../models/celebrity_model.dart';
 
 void main() {
   final dataService = DataService();

@@ -150,12 +150,7 @@ class CelebrityProvider with ChangeNotifier {
       _celebrityProducts[celebrityName] = futures[0] as List<Product>;
       _celebritySocialMedia[celebrityName] = futures[1] as Map<String, String>;
       
-      // Store routine products separately if needed
-      final recommendedProducts = futures[2] as List<Product>;
-      final morningProducts = futures[3] as List<Product>;
-      final eveningProducts = futures[4] as List<Product>;
-      
-      // You could store these in separate maps if needed
+      // Additional products are available if needed for specific functionality
     } catch (e) {
       print('Failed to load celebrity details: $e');
     }
@@ -417,6 +412,41 @@ class CelebrityProvider with ChangeNotifier {
     _celebritySocialMedia = {};
     _clearError();
     notifyListeners();
+  }
+
+  /// Get complete celebrity data for navigation (called from product cards)
+  Future<Map<String, dynamic>> getCelebrityDataForNavigation(String celebrityName) async {
+    try {
+      debugPrint('Getting celebrity data for navigation: $celebrityName');
+      
+      // Use the service method for comprehensive data loading
+      final celebrityData = await _celebrityService.getCelebrityDataForNavigation(celebrityName);
+      
+      // Update local state with the loaded data
+      _selectedCelebrity = celebrityData['celebrity'] as Celebrity?;
+      _celebrityProducts[celebrityName] = celebrityData['recommendedProducts'] as List<Product>;
+      _celebritySocialMedia[celebrityName] = celebrityData['socialMediaLinks'] as Map<String, String>;
+      
+      // Notify listeners of state change
+      notifyListeners();
+
+      // Return data formatted for celebrity screen
+      return {
+        'recommendedProducts': celebrityData['recommendedProducts'],
+        'socialMediaLinks': celebrityData['socialMediaLinks'],
+        'morningRoutineProducts': celebrityData['morningRoutineProducts'],
+        'eveningRoutineProducts': celebrityData['eveningRoutineProducts'],
+        'celebrity': celebrityData['celebrity'],
+        'testimonial': celebrityData['testimonial'],
+        'followerCount': celebrityData['followerCount'],
+        'isVerified': celebrityData['isVerified'],
+        'totalEndorsements': celebrityData['totalEndorsements'],
+      };
+    } catch (e) {
+      debugPrint('Error getting celebrity data for navigation: $e');
+      _setError('Failed to load celebrity data: $e');
+      rethrow;
+    }
   }
 
   @override

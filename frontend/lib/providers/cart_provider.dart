@@ -91,7 +91,7 @@ class CartProvider extends ChangeNotifier {
         // Handle default variant case explicitly
         if (entry.key != 'default') {
           try {
-            variant = product.variants.firstWhere((v) => v.id == entry.key);
+          variant = product.variants.firstWhere((v) => v.id == entry.key);
           } catch (e) {
             debugPrint('Warning: Variant ${entry.key} not found for product ${product.id}');
             continue; // Skip this variant if not found
@@ -129,8 +129,8 @@ class CartProvider extends ChangeNotifier {
           quantity: quantity,
           selectedVariant: _items[itemIndex].selectedVariant,
         );
-        _saveCartToStorage();
-        notifyListeners();
+      _saveCartToStorage();
+      notifyListeners();
       }
     }
   }

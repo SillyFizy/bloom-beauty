@@ -7,12 +7,18 @@ import 'screens/home/home_screen.dart';
 import 'screens/products/product_list_screen.dart';
 import 'screens/cart/cart_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/search/search_screen.dart';
 import 'constants/app_constants.dart';
 import 'providers/app_providers.dart';
 import 'providers/cart_provider.dart';
+import 'services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize local storage
+  await StorageService.init();
+  
   runApp(const MyApp());
 }
 
@@ -152,7 +158,7 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/search',
           name: 'search',
-          builder: (context, state) => const ProductListScreen(),
+          builder: (context, state) => const SearchScreen(),
         ),
         
         // Cart
