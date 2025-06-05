@@ -302,7 +302,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
       child: GestureDetector(
         onTap: () => _onItemTapped(index),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -358,18 +358,20 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
                       : AppConstants.textSecondary,
                   size: 22,
                 ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected 
-                      ? AppConstants.accentColor
-                      : AppConstants.textSecondary,
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              const SizedBox(height: 1),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected 
+                        ? AppConstants.accentColor
+                        : AppConstants.textSecondary,
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

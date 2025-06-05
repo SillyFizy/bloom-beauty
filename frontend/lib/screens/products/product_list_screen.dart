@@ -63,14 +63,22 @@ class _ProductListScreenState extends State<ProductListScreen> {
             ),
             const SizedBox(height: 16),
             
-            ...SortOption.values.map((option) => _buildSortOption(
-              context,
-              provider,
-              option,
-              _getSortOptionLabel(option),
-              _getSortOptionIcon(option),
-              isSmallScreen,
-            )),
+            // Make the sort options scrollable to prevent overflow
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: SortOption.values.map((option) => _buildSortOption(
+                    context,
+                    provider,
+                    option,
+                    _getSortOptionLabel(option),
+                    _getSortOptionIcon(option),
+                    isSmallScreen,
+                  )).toList(),
+                ),
+              ),
+            ),
             
             const SizedBox(height: 8),
           ],
