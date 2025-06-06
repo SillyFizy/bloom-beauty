@@ -304,7 +304,6 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
             return CelebrityPicksProductCard(
               product: product,
               onTap: () => _navigateToProduct(product),
-              onWishlistTap: () => provider.toggleWishlist(product.id),
               formatPrice: _formatPrice,
               isSmallScreen: isSmallScreen,
             );

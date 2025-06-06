@@ -235,11 +235,11 @@ class EnhancedProductCard extends StatelessWidget {
                 vertical: isMobile ? 3 : 4, // Increased padding
               ),
               decoration: BoxDecoration(
-                color: AppConstants.accentColor,
+                color: AppConstants.favoriteColor,
                 borderRadius: BorderRadius.circular(isMobile ? 10 : 12), // Increased border radius
                 boxShadow: [
                   BoxShadow(
-                    color: AppConstants.accentColor.withValues(alpha: 0.3),
+                    color: AppConstants.favoriteColor.withValues(alpha: 0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),

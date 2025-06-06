@@ -8,6 +8,7 @@ import 'review_provider.dart';
 import 'cart_provider.dart';
 import 'app_state_provider.dart';
 import 'category_provider.dart';
+import 'wishlist_provider.dart';
 
 /// Centralized provider setup for the entire application
 /// This file manages all providers using MultiProvider pattern
@@ -69,6 +70,17 @@ class AppProviders {
           },
           lazy: false, // Initialize immediately for cart functionality
         ),
+
+        /// Wishlist Provider - Manages wishlist state
+        ChangeNotifierProvider<WishlistProvider>(
+          create: (_) {
+            final wishlistProvider = WishlistProvider();
+            // Load wishlist from storage when app starts
+            wishlistProvider.loadWishlistFromStorage();
+            return wishlistProvider;
+          },
+          lazy: false, // Initialize immediately for wishlist functionality
+        ),
       ],
       child: child,
     );
@@ -85,6 +97,7 @@ class AppProviders {
         _initializeCelebrityProvider(context),
         _initializeSearchProvider(context),
         _initializeCartProvider(context),
+        _initializeWishlistProvider(context),
         // Note: ReviewProvider is lazy-loaded when needed
       ]);
     } catch (e) {
@@ -122,6 +135,12 @@ class AppProviders {
     await cartProvider.loadCartFromStorage();
   }
 
+  /// Initialize Wishlist Provider
+  static Future<void> _initializeWishlistProvider(BuildContext context) async {
+    final wishlistProvider = Provider.of<WishlistProvider>(context, listen: false);
+    await wishlistProvider.loadWishlistFromStorage();
+  }
+
   /// Initialize Review Provider (called when needed)
   static Future<void> initializeReviewProvider(BuildContext context) async {
     final reviewProvider = Provider.of<ReviewProvider>(context, listen: false);
@@ -137,6 +156,7 @@ class AppProviders {
         Provider.of<CelebrityProvider>(context, listen: false).refresh(),
         Provider.of<SearchProvider>(context, listen: false).refresh(),
         Provider.of<ReviewProvider>(context, listen: false).refresh(),
+        Provider.of<WishlistProvider>(context, listen: false).refresh(),
         // Cart doesn't need refresh as it's local storage based
       ]);
     } catch (e) {
@@ -151,7 +171,7 @@ class AppProviders {
     Provider.of<CelebrityProvider>(context, listen: false).clearCache();
     Provider.of<SearchProvider>(context, listen: false).clearSearch();
     Provider.of<ReviewProvider>(context, listen: false).clearCache();
-    // Cart cache clearing would log out user, so we don't include it here
+    // Cart and wishlist cache clearing would affect user data, so we don't include them here
   }
 
   /// Check if all critical providers are initialized
@@ -190,6 +210,9 @@ class AppProviders {
 
   static CartProvider getCartProvider(BuildContext context) =>
       Provider.of<CartProvider>(context, listen: false);
+
+  static WishlistProvider getWishlistProvider(BuildContext context) =>
+      Provider.of<WishlistProvider>(context, listen: false);
 }
 
 /// Extension on BuildContext for easy provider access
@@ -223,6 +246,10 @@ extension ProviderExtension on BuildContext {
   CartProvider get cartProvider => read<CartProvider>();
   CartProvider get watchCartProvider => watch<CartProvider>();
 
+  /// Wishlist Provider getter
+  WishlistProvider get wishlistProvider => read<WishlistProvider>();
+  WishlistProvider get watchWishlistProvider => watch<WishlistProvider>();
+
   /// Select specific values for optimized rebuilds
   T selectProduct<T>(T Function(ProductProvider provider) selector) =>
       select<ProductProvider, T>(selector);
@@ -241,6 +268,9 @@ extension ProviderExtension on BuildContext {
 
   T selectCart<T>(T Function(CartProvider provider) selector) =>
       select<CartProvider, T>(selector);
+
+  T selectWishlist<T>(T Function(WishlistProvider provider) selector) =>
+      select<WishlistProvider, T>(selector);
 }
 
 /// Consumer widgets for common provider access patterns
@@ -339,6 +369,25 @@ class CartConsumer extends StatelessWidget {
   }
 }
 
+class WishlistConsumer extends StatelessWidget {
+  final Widget Function(BuildContext context, WishlistProvider provider, Widget? child) builder;
+  final Widget? child;
+
+  const WishlistConsumer({
+    Key? key,
+    required this.builder,
+    this.child,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<WishlistProvider>(
+      builder: builder,
+      child: child,
+    );
+  }
+}
+
 /// Multi-consumer for accessing multiple providers
 class MultiProviderConsumer extends StatelessWidget {
   final Widget Function(
@@ -347,6 +396,7 @@ class MultiProviderConsumer extends StatelessWidget {
     CategoryProvider categoryProvider,
     CelebrityProvider celebrityProvider,
     CartProvider cartProvider,
+    WishlistProvider wishlistProvider,
     Widget? child,
   ) builder;
   final Widget? child;
@@ -359,9 +409,9 @@ class MultiProviderConsumer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer4<ProductProvider, CategoryProvider, CelebrityProvider, CartProvider>(
-      builder: (context, productProvider, categoryProvider, celebrityProvider, cartProvider, child) {
-        return builder(context, productProvider, categoryProvider, celebrityProvider, cartProvider, child);
+    return Consumer5<ProductProvider, CategoryProvider, CelebrityProvider, CartProvider, WishlistProvider>(
+      builder: (context, productProvider, categoryProvider, celebrityProvider, cartProvider, wishlistProvider, child) {
+        return builder(context, productProvider, categoryProvider, celebrityProvider, cartProvider, wishlistProvider, child);
       },
       child: child,
     );

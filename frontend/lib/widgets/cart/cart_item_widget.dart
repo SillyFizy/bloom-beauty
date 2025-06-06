@@ -9,6 +9,7 @@ class CartItemWidget extends StatelessWidget {
   final double price;
   final int quantity;
   final String? variant;
+  final int beautyPoints;
   final VoidCallback? onIncrement;
   final VoidCallback? onDecrement;
   final VoidCallback? onRemove;
@@ -21,6 +22,7 @@ class CartItemWidget extends StatelessWidget {
     required this.price,
     required this.quantity,
     this.variant,
+    this.beautyPoints = 0,
     this.onIncrement,
     this.onDecrement,
     this.onRemove,
@@ -126,6 +128,30 @@ class CartItemWidget extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                        ),
+                      ],
+                      
+                      // Beauty Points (if exists)
+                      if (beautyPoints > 0) ...[
+                        SizedBox(height: isSmallScreen ? 2 : 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.stars_rounded,
+                              color: AppConstants.favoriteColor,
+                              size: isSmallScreen ? 12 : 14,
+                            ),
+                            SizedBox(width: isSmallScreen ? 3 : 4),
+                            Text(
+                              '+${beautyPoints * quantity} points',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 9 : 11,
+                                color: AppConstants.favoriteColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                       

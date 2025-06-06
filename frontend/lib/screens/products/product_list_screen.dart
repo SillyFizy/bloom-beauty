@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../providers/category_provider.dart';
+import '../../providers/wishlist_provider.dart';
 import '../../constants/app_constants.dart';
 import '../../widgets/category/category_selector.dart';
 import '../../widgets/product/enhanced_product_card.dart';
@@ -741,22 +742,19 @@ class _ProductListScreenState extends State<ProductListScreen> {
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             final product = products[index];
-            return EnhancedProductCard(
-              product: product,
-              isSmallScreen: isSmallScreen,
-              onTap: () => _navigateToProductDetail(context, product),
-              onFavorite: () {
-                // TODO: Implement favorite functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Favorite feature coming soon!'),
-                    backgroundColor: AppConstants.accentColor,
-                    duration: const Duration(seconds: 2),
-                    behavior: SnackBarBehavior.floating,
-                  ),
+            return Consumer<WishlistProvider>(
+              builder: (context, wishlistProvider, child) {
+                final isInWishlist = wishlistProvider.isInWishlist(product.id);
+                return EnhancedProductCard(
+                  product: product,
+                  isSmallScreen: isSmallScreen,
+                  onTap: () => _navigateToProductDetail(context, product),
+                  onFavorite: () async {
+                    await wishlistProvider.toggleWishlist(product);
+                  },
+                  isFavorite: isInWishlist,
                 );
               },
-              isFavorite: false, // TODO: Implement favorite state
             );
           },
           childCount: products.length,

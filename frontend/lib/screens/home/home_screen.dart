@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../widgets/product/celebrity_pick_card.dart';
+import '../../widgets/common/wishlist_button.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/celebrity_provider.dart';
 import '../../providers/app_providers.dart';
@@ -121,6 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       } else {
         // Fallback to original product if service fails
+        debugPrint('Error fetching fresh product data');
         if (context.mounted) {
           Navigator.push(
             context,
@@ -690,25 +692,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   Positioned(
                     top: isSmallScreen ? 6 : 8,
                     right: isSmallScreen ? 6 : 8,
-                    child: Container(
-                      width: isSmallScreen ? 28 : 32,
-                      height: isSmallScreen ? 28 : 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.favorite_border,
-                        size: isSmallScreen ? 14 : 18,
-                        color: AppConstants.favoriteColor,
-                      ),
+                    child: WishlistButton(
+                      product: product,
+                      size: isSmallScreen ? 14 : 18,
+                      heroTag: 'new_arrivals_wishlist_${product.id}',
                     ),
                   ),
                 ],
@@ -748,21 +735,48 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 2),
                         Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.star,
-                              size: isSmallScreen ? 12 : 14,
-                              color: AppConstants.accentColor,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  size: isSmallScreen ? 12 : 14,
+                                  color: AppConstants.accentColor,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  product.rating.toString(),
+                                  style: TextStyle(
+                                    fontSize: isSmallScreen ? 11 : 13,
+                                    color: AppConstants.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 2),
-                            Text(
-                              product.rating.toString(),
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 11 : 13,
-                                color: AppConstants.textSecondary,
+                            // Beauty Points
+                            if (product.beautyPoints > 0) ...[
+                              const SizedBox(width: 8),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.stars_rounded,
+                                    color: AppConstants.favoriteColor,
+                                    size: isSmallScreen ? 10 : 12,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    '+${product.beautyPoints}',
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 9 : 11,
+                                      color: AppConstants.favoriteColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ],
@@ -947,25 +961,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   Positioned(
                     top: isSmallScreen ? 6 : 8,
                     right: isSmallScreen ? 6 : 8,
-                    child: Container(
-                      width: isSmallScreen ? 28 : 32,
-                      height: isSmallScreen ? 28 : 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.favorite_border,
-                        size: isSmallScreen ? 14 : 18,
-                        color: AppConstants.favoriteColor,
-                      ),
+                    child: WishlistButton(
+                      product: product,
+                      size: isSmallScreen ? 14 : 18,
+                      heroTag: 'horizontal_wishlist_${product.id}',
                     ),
                   ),
                 ],
@@ -1005,21 +1004,48 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 2),
                         Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.star,
-                              size: isSmallScreen ? 12 : 14,
-                              color: AppConstants.accentColor,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  size: isSmallScreen ? 12 : 14,
+                                  color: AppConstants.accentColor,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  product.rating.toString(),
+                                  style: TextStyle(
+                                    fontSize: isSmallScreen ? 11 : 13,
+                                    color: AppConstants.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 2),
-                            Text(
-                              product.rating.toString(),
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 11 : 13,
-                                color: AppConstants.textSecondary,
+                            // Beauty Points
+                            if (product.beautyPoints > 0) ...[
+                              const SizedBox(width: 8),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.stars_rounded,
+                                    color: AppConstants.favoriteColor,
+                                    size: isSmallScreen ? 10 : 12,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    '+${product.beautyPoints}',
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 9 : 11,
+                                      color: AppConstants.favoriteColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ],

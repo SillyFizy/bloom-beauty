@@ -15,6 +15,10 @@ class CartProvider extends ChangeNotifier {
   double get totalPrice => _items.fold(
       0.0, (sum, item) => sum + (item.product.getCurrentPrice() * item.quantity));
 
+  // Calculate total beauty points from all items in cart
+  int get totalBeautyPoints => _items.fold(
+      0, (sum, item) => sum + (item.product.beautyPoints * item.quantity));
+
   bool get isEmpty => _items.isEmpty;
 
   // Initialize cart from local storage

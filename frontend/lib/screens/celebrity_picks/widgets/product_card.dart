@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../constants/app_constants.dart';
 import '../../../models/product_model.dart';
+import '../../../widgets/common/wishlist_button.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 
 class CelebrityPicksProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onTap;
-  final VoidCallback onWishlistTap;
+  final VoidCallback? onWishlistTap;
   final String Function(double) formatPrice;
   final bool isSmallScreen;
 
@@ -15,7 +16,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
     super.key,
     required this.product,
     required this.onTap,
-    required this.onWishlistTap,
+    this.onWishlistTap,
     required this.formatPrice,
     required this.isSmallScreen,
   });
@@ -201,27 +202,11 @@ class CelebrityPicksProductCard extends StatelessWidget {
   }
 
   Widget _buildWishlistButton() {
-    return GestureDetector(
-      onTap: onWishlistTap,
-      child: Container(
-        padding: EdgeInsets.all(isSmallScreen ? 7 : 8),
-        decoration: BoxDecoration(
-          color: AppConstants.surfaceColor.withValues(alpha: 0.9),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppConstants.textSecondary.withValues(alpha: 0.2),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(
-          Icons.favorite_border_rounded,
-          size: isSmallScreen ? 18 : 20,
-          color: AppConstants.favoriteColor,
-        ),
-      ),
+    return WishlistButton(
+      product: product,
+      size: isSmallScreen ? 18 : 20,
+      onPressed: onWishlistTap,
+      heroTag: 'celebrity_picks_wishlist_${product.id}',
     );
   }
 
@@ -251,6 +236,30 @@ class CelebrityPicksProductCard extends StatelessWidget {
           // Celebrity Endorsement
           if (product.celebrityEndorsement != null)
             _buildCelebrityEndorsement(),
+          
+          // Beauty Points Section
+          if (product.beautyPoints > 0) ...[
+            const SizedBox(height: 6),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.stars_rounded,
+                  color: AppConstants.favoriteColor,
+                  size: isSmallScreen ? 12 : 14,
+                ),
+                SizedBox(width: isSmallScreen ? 4 : 6),
+                Text(
+                  '+${product.beautyPoints} points',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 10 : 11,
+                    color: AppConstants.favoriteColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
           
           const SizedBox(height: 8),
           

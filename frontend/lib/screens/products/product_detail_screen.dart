@@ -5,6 +5,7 @@ import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/celebrity_provider.dart';
+import '../../widgets/common/wishlist_button.dart';
 import '../celebrity/celebrity_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -227,10 +228,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               ),
                               Row(
                                 children: [
-                                  _buildTransparentActionButton(
-                                    icon: Icons.favorite_border,
-                                    onPressed: () {},
-                                    isSmallScreen: isSmallScreen,
+                                  FloatingWishlistButton(
+                                    product: widget.product,
                                   ),
                                   SizedBox(width: isSmallScreen ? 8 : 12),
                                   _buildTransparentActionButton(
@@ -394,10 +393,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 
                 Row(
                   children: [
-                    _buildStickyActionButton(
-                      icon: Icons.favorite_border,
-                      onPressed: () {},
-                      isSmallScreen: isSmallScreen,
+                    Container(
+                      width: isSmallScreen ? 44 : 52,
+                      height: isSmallScreen ? 44 : 52,
+                      decoration: BoxDecoration(
+                        color: AppConstants.surfaceColor,
+                        borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+                        border: Border.all(
+                          color: AppConstants.borderColor.withOpacity(0.3),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppConstants.textSecondary.withOpacity(0.05),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: WishlistButton(
+                          product: widget.product,
+                          size: isSmallScreen ? 20 : 24,
+                          showBackground: false,
+                          showShadow: false,
+                          heroTag: 'sticky_header_wishlist_${widget.product.id}',
+                        ),
+                      ),
                     ),
                     SizedBox(width: isSmallScreen ? 8 : 12),
                     _buildStickyActionButton(
@@ -427,7 +449,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         color: AppConstants.surfaceColor,
         borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
         border: Border.all(
-          color: AppConstants.borderColor.withValues(alpha: 0.3),
+          color: AppConstants.borderColor.withOpacity(0.3),
           width: 1,
         ),
         boxShadow: [
@@ -634,6 +656,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               ),
             ],
           ),
+          
+          // Beauty Points section
+          if (widget.product.beautyPoints > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? 12 : 16,
+                vertical: isSmallScreen ? 8 : 10,
+              ),
+              decoration: BoxDecoration(
+                color: AppConstants.favoriteColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppConstants.favoriteColor.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.stars_rounded,
+                    color: AppConstants.favoriteColor,
+                    size: isSmallScreen ? 18 : 22,
+                  ),
+                  SizedBox(width: isSmallScreen ? 6 : 8),
+                  Text(
+                    'Earn ${widget.product.beautyPoints} Beauty Points',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 12 : 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppConstants.favoriteColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
