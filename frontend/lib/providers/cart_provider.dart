@@ -181,4 +181,16 @@ class CartProvider extends ChangeNotifier {
   List<CartItem> getProductVariantsInCart(String productId) {
     return _items.where((item) => item.product.id == productId).toList();
   }
+
+  /// Check if a specific product is in cart (any variant)
+  bool isInCart(String productId) {
+    return _items.any((item) => item.product.id == productId);
+  }
+
+  /// Get the total quantity of a specific product in cart (all variants combined)
+  int getProductQuantity(String productId) {
+    return _items
+        .where((item) => item.product.id == productId)
+        .fold(0, (sum, item) => sum + item.quantity);
+  }
 } 

@@ -188,13 +188,13 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                           spreadRadius: 0,
                         ),
                         BoxShadow(
-                          color: AppConstants.accentColor.withOpacity(0.1),
+                          color: AppConstants.accentColor.withValues(alpha: 0.1),
                           blurRadius: 40,
                           offset: const Offset(0, 12),
                         ),
@@ -218,8 +218,8 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    AppConstants.accentColor.withOpacity(0.05),
-                                    AppConstants.favoriteColor.withOpacity(0.05),
+                                    AppConstants.accentColor.withValues(alpha: 0.05),
+                                    AppConstants.favoriteColor.withValues(alpha: 0.05),
                                     Colors.transparent,
                                   ],
                                   begin: Alignment.topLeft,
@@ -243,8 +243,8 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                           shape: BoxShape.circle,
                                           gradient: LinearGradient(
                                             colors: [
-                                              AppConstants.accentColor.withOpacity(0.15),
-                                              AppConstants.favoriteColor.withOpacity(0.15),
+                                              AppConstants.accentColor.withValues(alpha: 0.15),
+                                              AppConstants.favoriteColor.withValues(alpha: 0.15),
                                             ],
                                             begin: Alignment.topLeft,
                                             end: Alignment.bottomRight,
@@ -254,7 +254,7 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                           child: Icon(
                                             Icons.spa_rounded,
                                             size: 42,
-                                            color: AppConstants.accentColor.withOpacity(0.8),
+                                            color: AppConstants.accentColor.withValues(alpha: 0.8),
                                           ),
                                         ),
                                       ),
@@ -295,13 +295,13 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                   gradient: LinearGradient(
                                     colors: [
                                       AppConstants.accentColor,
-                                      AppConstants.accentColor.withOpacity(0.8),
+                                      AppConstants.accentColor.withValues(alpha: 0.8),
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppConstants.accentColor.withOpacity(0.3),
+                                      color: AppConstants.accentColor.withValues(alpha: 0.3),
                                       blurRadius: 8,
                                       offset: const Offset(0, 3),
                                     ),
@@ -360,8 +360,8 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        Colors.black.withOpacity(0.8),
-                                        Colors.black.withOpacity(0.4),
+                                        Colors.black.withValues(alpha: 0.8),
+                                        Colors.black.withValues(alpha: 0.4),
                                         Colors.transparent,
                                       ],
                                       begin: Alignment.bottomCenter,
@@ -382,7 +382,7 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                           ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.black.withOpacity(0.2),
+                                              color: Colors.black.withValues(alpha: 0.2),
                                               blurRadius: 6,
                                               offset: const Offset(0, 2),
                                             ),
@@ -425,8 +425,8 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                                       decoration: BoxDecoration(
                                                         gradient: LinearGradient(
                                                           colors: [
-                                                            AppConstants.accentColor.withOpacity(0.5),
-                                                            AppConstants.favoriteColor.withOpacity(0.5),
+                                                            AppConstants.accentColor.withValues(alpha: 0.5),
+                                                            AppConstants.favoriteColor.withValues(alpha: 0.5),
                                                           ],
                                                           begin: Alignment.topLeft,
                                                           end: Alignment.bottomRight,
@@ -497,7 +497,7 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                             Text(
                                               'Celebrity Pick',
                                               style: TextStyle(
-                                                color: AppConstants.accentColor.withOpacity(0.9),
+                                                color: AppConstants.accentColor.withValues(alpha: 0.9),
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.w500,
                                                 letterSpacing: 0.3,
@@ -527,9 +527,9 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                         gradient: LinearGradient(
                                           colors: [
                                             Colors.transparent,
-                                            Colors.white.withOpacity(0.1 * shimmerValue),
-                                            Colors.white.withOpacity(0.2 * shimmerValue),
-                                            Colors.white.withOpacity(0.1 * shimmerValue),
+                                            Colors.white.withValues(alpha: 0.1 * shimmerValue),
+                                            Colors.white.withValues(alpha: 0.2 * shimmerValue),
+                                            Colors.white.withValues(alpha: 0.1 * shimmerValue),
                                             Colors.transparent,
                                           ],
                                           stops: const [0.0, 0.4, 0.5, 0.6, 1.0],
@@ -547,7 +547,7 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                               Positioned.fill(
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     borderRadius: BorderRadius.circular(24),
                                   ),
                                 ),

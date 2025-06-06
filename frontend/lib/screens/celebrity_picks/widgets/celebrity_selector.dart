@@ -33,7 +33,7 @@ class CelebritySelector extends StatelessWidget {
                   Text(
                     'Browse by Celebrity',
                     style: TextStyle(
-                      fontSize: isSmallScreen ? 16 : 18,
+                      fontSize: isSmallScreen ? 14 : 16,
                       fontWeight: FontWeight.w600,
                       color: AppConstants.textPrimary,
                     ),

@@ -39,7 +39,6 @@ class _CartScreenState extends State<CartScreen> {
       builder: (context, constraints) {
         // Determine screen size
         final isSmallScreen = constraints.maxWidth < 600;
-        final isMediumScreen = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
         
         return Scaffold(
           appBar: AppBar(
@@ -241,45 +240,45 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildOrderSummary(double subtotal, double total, bool isSmallScreen) {
     return Consumer<CartProvider>(
       builder: (context, cart, child) {
-        return Container(
-          padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-              ),
+    return Container(
+      padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Order Summary',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 16 : 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Order Summary',
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 16 : 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: isSmallScreen ? 8 : 12),
-              _buildSummaryRow('Subtotal', Formatters.formatPrice(subtotal), isSmallScreen),
-              _buildSummaryRow('Shipping', Formatters.formatPrice(shipping), isSmallScreen),
-              const Divider(),
-              _buildSummaryRow(
-                'Total',
-                Formatters.formatPrice(total),
-                isSmallScreen,
-                isTotal: true,
-              ),
+          SizedBox(height: isSmallScreen ? 8 : 12),
+          _buildSummaryRow('Subtotal', Formatters.formatPrice(subtotal), isSmallScreen),
+          _buildSummaryRow('Shipping', Formatters.formatPrice(shipping), isSmallScreen),
+          const Divider(),
+          _buildSummaryRow(
+            'Total',
+            Formatters.formatPrice(total),
+            isSmallScreen,
+            isTotal: true,
+          ),
               SizedBox(height: isSmallScreen ? 8 : 12),
               // Beauty Points section
               Container(
                 padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
                 decoration: BoxDecoration(
-                  color: AppConstants.favoriteColor.withOpacity(0.1),
+                  color: AppConstants.favoriteColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: AppConstants.favoriteColor.withOpacity(0.3),
+                    color: AppConstants.favoriteColor.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -311,8 +310,8 @@ class _CartScreenState extends State<CartScreen> {
                               color: AppConstants.textSecondary,
                             ),
                           ),
-                        ],
-                      ),
+        ],
+      ),
                     ),
                     Text(
                       '+${cart.totalBeautyPoints}',
@@ -388,7 +387,7 @@ class _CartScreenState extends State<CartScreen> {
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -443,9 +442,9 @@ class _CartScreenState extends State<CartScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const CheckoutScreen(),
-                        ),
-                      );
-                    },
+                  ),
+                );
+              },
             ),
           ],
         ),

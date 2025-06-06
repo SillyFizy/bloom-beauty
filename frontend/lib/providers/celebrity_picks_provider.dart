@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
 import '../models/celebrity_model.dart';
 import '../models/category_model.dart' as category_model;
-import '../services/data_service.dart';
+
 import '../services/product_service.dart';
 import '../services/celebrity_service.dart';
 import '../services/category_service.dart';
@@ -21,7 +21,6 @@ enum BrowseMode {
 }
 
 class CelebrityPicksProvider with ChangeNotifier {
-  final DataService _dataService = DataService();
   final ProductService _productService = ProductService();
   final CelebrityService _celebrityService = CelebrityService();
   final CategoryService _categoryService = CategoryService();
@@ -35,7 +34,7 @@ class CelebrityPicksProvider with ChangeNotifier {
   
   bool _isLoading = false;
   bool _isLoadingMore = false;
-  bool _isSearching = false;
+  final bool _isSearching = false;
   bool _hasMoreProducts = true;
   String? _error;
   
@@ -410,11 +409,6 @@ class CelebrityPicksProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void _setSearching(bool searching) {
-    _isSearching = searching;
-    notifyListeners();
-  }
-
   void _setError(String error) {
     _error = error;
     notifyListeners();
@@ -424,8 +418,5 @@ class CelebrityPicksProvider with ChangeNotifier {
     _error = null;
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
+
 } 

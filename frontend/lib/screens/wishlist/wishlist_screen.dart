@@ -275,7 +275,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
+            color: AppConstants.textSecondary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -297,14 +297,14 @@ class _WishlistScreenState extends State<WishlistScreen> {
                   color: AppConstants.backgroundColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppConstants.borderColor.withOpacity(0.3),
+                    color: AppConstants.borderColor.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Center(
                   child: Icon(
                     Icons.spa_outlined,
                     size: isSmallScreen ? 32 : 40,
-                    color: AppConstants.accentColor.withOpacity(0.5),
+                    color: AppConstants.accentColor.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -508,7 +508,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
             Icon(
               Icons.favorite_border,
               size: isSmallScreen ? 80 : 100,
-              color: AppConstants.textSecondary.withOpacity(0.5),
+              color: AppConstants.textSecondary.withValues(alpha: 0.5),
             ),
             SizedBox(height: isSmallScreen ? 24 : 32),
             Text(

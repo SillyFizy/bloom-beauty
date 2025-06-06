@@ -5,10 +5,10 @@ class LoadingWidget extends StatelessWidget {
   final double size;
 
   const LoadingWidget({
-    Key? key,
+    super.key,
     this.message,
-    this.size = 50,
-  }) : super(key: key);
+    this.size = 40.0,
+  });
 
   @override
   Widget build(BuildContext context) {

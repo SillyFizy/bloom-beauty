@@ -9,6 +9,7 @@ import 'cart_provider.dart';
 import 'app_state_provider.dart';
 import 'category_provider.dart';
 import 'wishlist_provider.dart';
+import '../models/product_model.dart';
 
 /// Centralized provider setup for the entire application
 /// This file manages all providers using MultiProvider pattern
@@ -271,6 +272,29 @@ extension ProviderExtension on BuildContext {
 
   T selectWishlist<T>(T Function(WishlistProvider provider) selector) =>
       select<WishlistProvider, T>(selector);
+  
+  /// Optimized selectors for specific commonly used values
+  bool get isCartEmpty => selectCart((cart) => cart.isEmpty);
+  int get cartItemCount => selectCart((cart) => cart.itemCount);
+  double get cartTotal => selectCart((cart) => cart.totalPrice);
+  
+  bool get isWishlistEmpty => selectWishlist((wishlist) => wishlist.isEmpty);
+  int get wishlistItemCount => selectWishlist((wishlist) => wishlist.itemCount);
+  
+  bool get isProductsLoading => selectProduct((provider) => provider.isLoading);
+  bool get isCelebritiesLoading => selectCelebrity((provider) => provider.isLoading);
+  
+  /// Check if a specific product is in wishlist (optimized)
+  bool isProductInWishlist(String productId) =>
+      selectWishlist((wishlist) => wishlist.isInWishlist(productId));
+      
+  /// Check if a specific product is in cart (optimized)
+  bool isProductInCart(String productId) =>
+      selectCart((cart) => cart.isInCart(productId));
+      
+  /// Get cart quantity for a specific product (optimized)
+  int getCartQuantity(String productId) =>
+      selectCart((cart) => cart.getProductQuantity(productId));
 }
 
 /// Consumer widgets for common provider access patterns
@@ -279,10 +303,10 @@ class ProductConsumer extends StatelessWidget {
   final Widget? child;
 
   const ProductConsumer({
-    Key? key,
+    super.key,
     required this.builder,
     this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -298,10 +322,10 @@ class CelebrityConsumer extends StatelessWidget {
   final Widget? child;
 
   const CelebrityConsumer({
-    Key? key,
+    super.key,
     required this.builder,
     this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -317,10 +341,10 @@ class CelebrityPicksConsumer extends StatelessWidget {
   final Widget? child;
 
   const CelebrityPicksConsumer({
-    Key? key,
+    super.key,
     required this.builder,
     this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -336,10 +360,10 @@ class ReviewConsumer extends StatelessWidget {
   final Widget? child;
 
   const ReviewConsumer({
-    Key? key,
+    super.key,
     required this.builder,
     this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -355,10 +379,10 @@ class CartConsumer extends StatelessWidget {
   final Widget? child;
 
   const CartConsumer({
-    Key? key,
+    super.key,
     required this.builder,
     this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -374,10 +398,10 @@ class WishlistConsumer extends StatelessWidget {
   final Widget? child;
 
   const WishlistConsumer({
-    Key? key,
+    super.key,
     required this.builder,
     this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -402,10 +426,10 @@ class MultiProviderConsumer extends StatelessWidget {
   final Widget? child;
 
   const MultiProviderConsumer({
-    Key? key,
+    super.key,
     required this.builder,
     this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -413,6 +437,172 @@ class MultiProviderConsumer extends StatelessWidget {
       builder: (context, productProvider, categoryProvider, celebrityProvider, cartProvider, wishlistProvider, child) {
         return builder(context, productProvider, categoryProvider, celebrityProvider, cartProvider, wishlistProvider, child);
       },
+      child: child,
+    );
+  }
+}
+
+/// Optimized Selector widgets for performance
+/// These prevent unnecessary rebuilds by only listening to specific properties
+
+/// Selector for cart item count (commonly used in badges)
+class CartItemCountSelector extends StatelessWidget {
+  final Widget Function(BuildContext context, int itemCount, Widget? child) builder;
+  final Widget? child;
+
+  const CartItemCountSelector({
+    super.key,
+    required this.builder,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<CartProvider, int>(
+      selector: (context, cart) => cart.itemCount,
+      builder: builder,
+      child: child,
+    );
+  }
+}
+
+/// Selector for wishlist item count
+class WishlistItemCountSelector extends StatelessWidget {
+  final Widget Function(BuildContext context, int itemCount, Widget? child) builder;
+  final Widget? child;
+
+  const WishlistItemCountSelector({
+    super.key,
+    required this.builder,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<WishlistProvider, int>(
+      selector: (context, wishlist) => wishlist.itemCount,
+      builder: builder,
+      child: child,
+    );
+  }
+}
+
+/// Selector for loading states
+class LoadingStateSelector<T extends ChangeNotifier> extends StatelessWidget {
+  final Widget Function(BuildContext context, bool isLoading, Widget? child) builder;
+  final bool Function(T provider) selector;
+  final Widget? child;
+
+  const LoadingStateSelector({
+    super.key,
+    required this.builder,
+    required this.selector,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<T, bool>(
+      selector: (context, provider) => selector(provider),
+      builder: builder,
+      child: child,
+    );
+  }
+}
+
+/// Selector for specific product in wishlist status
+class ProductWishlistSelector extends StatelessWidget {
+  final String productId;
+  final Widget Function(BuildContext context, bool isInWishlist, Widget? child) builder;
+  final Widget? child;
+
+  const ProductWishlistSelector({
+    super.key,
+    required this.productId,
+    required this.builder,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<WishlistProvider, bool>(
+      selector: (context, wishlist) => wishlist.isInWishlist(productId),
+      builder: builder,
+      child: child,
+    );
+  }
+}
+
+/// Selector for specific product in cart status
+class ProductCartSelector extends StatelessWidget {
+  final String productId;
+  final Widget Function(BuildContext context, bool isInCart, Widget? child) builder;
+  final Widget? child;
+
+  const ProductCartSelector({
+    super.key,
+    required this.productId,
+    required this.builder,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<CartProvider, bool>(
+      selector: (context, cart) => cart.isInCart(productId),
+      builder: builder,
+      child: child,
+    );
+  }
+}
+
+/// Selector for cart total price
+class CartTotalSelector extends StatelessWidget {
+  final Widget Function(BuildContext context, double total, Widget? child) builder;
+  final Widget? child;
+
+  const CartTotalSelector({
+    super.key,
+    required this.builder,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<CartProvider, double>(
+      selector: (context, cart) => cart.totalPrice,
+      builder: builder,
+      child: child,
+    );
+  }
+}
+
+/// Optimized selector for product lists that only rebuilds when list content changes
+class ProductListSelector extends StatelessWidget {
+  final Widget Function(BuildContext context, List<Product> products, Widget? child) builder;
+  final List<Product> Function(ProductProvider provider) selector;
+  final Widget? child;
+
+  const ProductListSelector({
+    super.key,
+    required this.builder,
+    required this.selector,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<ProductProvider, List<Product>>(
+      selector: (context, provider) => selector(provider),
+      shouldRebuild: (previous, next) {
+        // Only rebuild if the list length changed or individual products changed
+        if (previous.length != next.length) return true;
+        for (int i = 0; i < previous.length; i++) {
+          if (previous[i].id != next[i].id) return true;
+        }
+        return false;
+      },
+      builder: builder,
       child: child,
     );
   }

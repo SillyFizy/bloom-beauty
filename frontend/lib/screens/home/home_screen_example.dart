@@ -130,9 +130,9 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
                   borderRadius: BorderRadius.circular(16),
                   gradient: LinearGradient(
                     colors: [
-                      Colors.pink.withOpacity(0.8),
-                      Colors.purple.withOpacity(0.8),
-                      Colors.orange.withOpacity(0.8),
+                      Colors.pink.withValues(alpha: 0.8),
+                      Colors.purple.withValues(alpha: 0.8),
+                      Colors.orange.withValues(alpha: 0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -176,7 +176,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
                 shape: BoxShape.circle,
                 color: _currentBannerIndex == index
                     ? AppConstants.accentColor
-                    : AppConstants.textSecondary.withOpacity(0.3),
+                    : AppConstants.textSecondary.withValues(alpha: 0.3),
               ),
             ),
           ),
@@ -509,7 +509,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -531,7 +531,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
                   child: Icon(
                     Icons.spa_outlined,
                     size: isSmallScreen ? 32 : 40,
-                    color: AppConstants.accentColor.withOpacity(0.5),
+                    color: AppConstants.accentColor.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -620,7 +620,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -642,7 +642,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
                   child: Icon(
                     Icons.spa_outlined,
                     size: isSmallScreen ? 32 : 40,
-                    color: AppConstants.accentColor.withOpacity(0.5),
+                    color: AppConstants.accentColor.withValues(alpha: 0.5),
                   ),
                 ),
               ),

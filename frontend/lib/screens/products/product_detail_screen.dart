@@ -32,7 +32,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   bool _showStickyHeader = false;
   
   // Track quantities for each variant (starting from 0)
-  Map<String, int> _variantQuantities = {};
+  final Map<String, int> _variantQuantities = {};
 
   @override
   void initState() {
@@ -81,9 +81,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   void _onScroll() {
-    // Calculate scroll threshold based on screen height
-    final screenHeight = MediaQuery.of(context).size.height;
-    final threshold = screenHeight * 0.3; // Show sticky header after scrolling past 30% of screen
+    // Calculate scroll threshold - show sticky header earlier to prevent gap
+    const threshold = 100.0; // Show sticky header after scrolling past 100px
     
     final shouldShow = _scrollController.hasClients && _scrollController.offset > threshold;
     
@@ -187,7 +186,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       builder: (context, constraints) {
         // Determine screen size
         final isSmallScreen = constraints.maxWidth < 600;
-        final isMediumScreen = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
         
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
@@ -213,11 +211,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     child: Stack(
                       children: [
                         _buildImageSection(isSmallScreen),
-                        // Floating action buttons
+                        // Floating action buttons - always visible unless sticky header is fully shown
+                        if (!_showStickyHeader || _headerAnimation.value < 0.5)
                         Positioned(
                           top: MediaQuery.of(context).padding.top + 8,
                           left: 16,
                           right: 16,
+                            child: AnimatedOpacity(
+                              opacity: _showStickyHeader ? 1.0 - (_headerAnimation.value * 2).clamp(0.0, 1.0) : 1.0,
+                              duration: const Duration(milliseconds: 100),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -228,8 +230,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               ),
                               Row(
                                 children: [
-                                  FloatingWishlistButton(
-                                    product: widget.product,
+                                      FloatingWishlistButton(
+                                        product: widget.product,
                                   ),
                                   SizedBox(width: isSmallScreen ? 8 : 12),
                                   _buildTransparentActionButton(
@@ -240,6 +242,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 ],
                               ),
                             ],
+                              ),
                           ),
                         ),
                       ],
@@ -274,8 +277,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 ],
               ),
               
-              // Sticky header
-              if (_showStickyHeader)
+              // Sticky header - always positioned correctly at top
                 Positioned(
                   top: 0,
                   left: 0,
@@ -284,7 +286,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     animation: _headerAnimation,
                     builder: (context, child) {
                       return Transform.translate(
-                        offset: Offset(0, -60 * (1 - _headerAnimation.value)),
+                      offset: Offset(0, -80 * (1 - _headerAnimation.value)),
                         child: Opacity(
                           opacity: _headerAnimation.value,
                           child: _buildStickyHeader(isSmallScreen),
@@ -312,8 +314,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       width: isSmallScreen ? 44 : 52,
       height: isSmallScreen ? 44 : 52,
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppConstants.surfaceColor.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+        border: Border.all(
+          color: AppConstants.borderColor.withValues(alpha: 0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppConstants.textSecondary.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -344,7 +357,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         color: AppConstants.surfaceColor.withValues(alpha: 0.95),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
+            color: AppConstants.textSecondary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -400,12 +413,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                         color: AppConstants.surfaceColor,
                         borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
                         border: Border.all(
-                          color: AppConstants.borderColor.withOpacity(0.3),
+                          color: AppConstants.borderColor.withValues(alpha: 0.3),
                           width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppConstants.textSecondary.withOpacity(0.05),
+                            color: AppConstants.textSecondary.withValues(alpha: 0.05),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -449,7 +462,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         color: AppConstants.surfaceColor,
         borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
         border: Border.all(
-          color: AppConstants.borderColor.withOpacity(0.3),
+          color: AppConstants.borderColor.withValues(alpha: 0.3),
           width: 1,
         ),
         boxShadow: [
@@ -666,10 +679,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 vertical: isSmallScreen ? 8 : 10,
               ),
               decoration: BoxDecoration(
-                color: AppConstants.favoriteColor.withOpacity(0.1),
+                color: AppConstants.favoriteColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppConstants.favoriteColor.withOpacity(0.3),
+                  color: AppConstants.favoriteColor.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -730,18 +743,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppConstants.favoriteColor.withOpacity(0.08),
-              AppConstants.accentColor.withOpacity(0.05),
+              AppConstants.favoriteColor.withValues(alpha: 0.08),
+              AppConstants.accentColor.withValues(alpha: 0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppConstants.favoriteColor.withOpacity(0.3),
+            color: AppConstants.favoriteColor.withValues(alpha: 0.3),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppConstants.favoriteColor.withOpacity(0.1),
+              color: AppConstants.favoriteColor.withValues(alpha: 0.1),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -758,7 +771,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppConstants.favoriteColor.withOpacity(0.2),
+                    color: AppConstants.favoriteColor.withValues(alpha: 0.2),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -902,8 +915,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                         boxShadow: [
                           BoxShadow(
                             color: isSelected
-                                ? AppConstants.accentColor.withOpacity(0.3)
-                                : AppConstants.textSecondary.withOpacity(0.05),
+                                ? AppConstants.accentColor.withValues(alpha: 0.3)
+                                : AppConstants.textSecondary.withValues(alpha: 0.05),
                             blurRadius: isSelected ? 12 : 4,
                             offset: isSelected ? const Offset(0, 4) : const Offset(0, 2),
                           ),
@@ -932,7 +945,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               style: TextStyle(
                                 fontSize: isSmallScreen ? 11 : 13,
                                 color: isSelected
-                                    ? AppConstants.surfaceColor.withOpacity(0.9)
+                                    ? AppConstants.surfaceColor.withValues(alpha: 0.9)
                                     : AppConstants.textSecondary,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -959,7 +972,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppConstants.accentColor.withOpacity(0.3),
+                                      color: AppConstants.accentColor.withValues(alpha: 0.3),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
                                     ),
@@ -985,7 +998,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppConstants.accentColor.withOpacity(0.3),
+                                    color: AppConstants.accentColor.withValues(alpha: 0.3),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -1001,7 +1014,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                       width: isSmallScreen ? 24 : 28,
                                       height: isSmallScreen ? 24 : 28,
                                       decoration: BoxDecoration(
-                                        color: AppConstants.surfaceColor.withOpacity(0.2),
+                                        color: AppConstants.surfaceColor.withValues(alpha: 0.2),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Icon(
@@ -1031,15 +1044,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                       height: isSmallScreen ? 24 : 28,
                                       decoration: BoxDecoration(
                                         color: variantQuantity < 99 
-                                            ? AppConstants.surfaceColor.withOpacity(0.2) 
-                                            : AppConstants.surfaceColor.withOpacity(0.1),
+                                            ? AppConstants.surfaceColor.withValues(alpha: 0.2) 
+                                            : AppConstants.surfaceColor.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Icon(
                                         Icons.add,
                                         color: variantQuantity < 99 
                                             ? AppConstants.surfaceColor 
-                                            : AppConstants.surfaceColor.withOpacity(0.5),
+                                            : AppConstants.surfaceColor.withValues(alpha: 0.5),
                                         size: isSmallScreen ? 16 : 18,
                                       ),
                                     ),
@@ -1069,12 +1082,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             color: AppConstants.surfaceColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppConstants.borderColor.withOpacity(0.3),
+              color: AppConstants.borderColor.withValues(alpha: 0.3),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppConstants.textSecondary.withOpacity(0.05),
+                color: AppConstants.textSecondary.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -1189,7 +1202,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               color: AppConstants.backgroundColor,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppConstants.borderColor.withOpacity(0.3),
+                color: AppConstants.borderColor.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),
@@ -1216,10 +1229,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           Container(
             padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.05),
+              color: Colors.orange.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.orange.withOpacity(0.2),
+                color: Colors.orange.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -1315,7 +1328,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   color: AppConstants.backgroundColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppConstants.borderColor.withOpacity(0.3),
+                    color: AppConstants.borderColor.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -1351,10 +1364,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           Container(
             padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.05),
+              color: Colors.green.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.green.withOpacity(0.2),
+                color: Colors.green.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -1412,7 +1425,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 color: AppConstants.backgroundColor,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppConstants.borderColor.withOpacity(0.3),
+                  color: AppConstants.borderColor.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -1445,10 +1458,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   Container(
                     padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
                     decoration: BoxDecoration(
-                      color: AppConstants.accentColor.withOpacity(0.05),
+                      color: AppConstants.accentColor.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppConstants.accentColor.withOpacity(0.2),
+                        color: AppConstants.accentColor.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
@@ -1499,7 +1512,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   color: AppConstants.backgroundColor,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppConstants.borderColor.withOpacity(0.3),
+                    color: AppConstants.borderColor.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -1590,7 +1603,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
+            color: AppConstants.textSecondary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, -10),
           ),
@@ -1612,7 +1625,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         backgroundColor: AppConstants.accentColor,
         foregroundColor: AppConstants.surfaceColor,
         elevation: 8,
-        shadowColor: AppConstants.accentColor.withOpacity(0.3),
+        shadowColor: AppConstants.accentColor.withValues(alpha: 0.3),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -1630,7 +1643,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               vertical: isSmallScreen ? 4 : 6,
             ),
             decoration: BoxDecoration(
-              color: AppConstants.surfaceColor.withOpacity(0.2),
+              color: AppConstants.surfaceColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -1681,7 +1694,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.accentColor.withOpacity(0.3),
+            color: AppConstants.accentColor.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -1709,8 +1722,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     height: isSmallScreen ? 28 : 32,
                     decoration: BoxDecoration(
                       color: currentQuantity > 0 
-                          ? AppConstants.surfaceColor.withOpacity(0.2)
-                          : AppConstants.surfaceColor.withOpacity(0.1),
+                          ? AppConstants.surfaceColor.withValues(alpha: 0.2)
+                          : AppConstants.surfaceColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -1718,7 +1731,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                       size: isSmallScreen ? 16 : 18,
                       color: currentQuantity > 0 
                           ? AppConstants.surfaceColor
-                          : AppConstants.surfaceColor.withOpacity(0.5),
+                          : AppConstants.surfaceColor.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -1752,8 +1765,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     height: isSmallScreen ? 28 : 32,
                     decoration: BoxDecoration(
                       color: currentQuantity < 99 
-                          ? AppConstants.surfaceColor.withOpacity(0.2)
-                          : AppConstants.surfaceColor.withOpacity(0.1),
+                          ? AppConstants.surfaceColor.withValues(alpha: 0.2)
+                          : AppConstants.surfaceColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -1761,7 +1774,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                       size: isSmallScreen ? 16 : 18,
                       color: currentQuantity < 99 
                           ? AppConstants.surfaceColor
-                          : AppConstants.surfaceColor.withOpacity(0.5),
+                          : AppConstants.surfaceColor.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -1787,7 +1800,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                       fontWeight: FontWeight.bold,
                       color: currentQuantity > 0 
                           ? AppConstants.surfaceColor
-                          : AppConstants.surfaceColor.withOpacity(0.7),
+                          : AppConstants.surfaceColor.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -1823,7 +1836,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         color: AppConstants.backgroundColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppConstants.borderColor.withOpacity(0.3),
+          color: AppConstants.borderColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),

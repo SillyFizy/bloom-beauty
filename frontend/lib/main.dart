@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
             onSurface: AppConstants.textPrimary,
             brightness: Brightness.light,
           ),
-          appBarTheme: AppBarTheme(
+          appBarTheme: const AppBarTheme(
             backgroundColor: AppConstants.primaryColor,
             foregroundColor: AppConstants.textPrimary,
             elevation: 0,
@@ -64,30 +64,30 @@ class MyApp extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
-          cardTheme: CardTheme(
+          cardTheme: const CardTheme(
             color: AppConstants.surfaceColor,
             elevation: AppConstants.cardElevation,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+              borderRadius: BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
             ),
           ),
-          inputDecorationTheme: InputDecorationTheme(
+          inputDecorationTheme: const InputDecorationTheme(
             filled: true,
             fillColor: AppConstants.backgroundColor,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+              borderRadius: BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
               borderSide: BorderSide(color: AppConstants.borderColor),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+              borderRadius: BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
               borderSide: BorderSide(color: AppConstants.borderColor),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+              borderRadius: BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
               borderSide: BorderSide(color: AppConstants.accentColor, width: 2),
             ),
           ),
-          textTheme: TextTheme(
+          textTheme: const TextTheme(
             headlineLarge: TextStyle(
               color: AppConstants.textPrimary,
               fontWeight: FontWeight.bold,
@@ -103,7 +103,7 @@ class MyApp extends StatelessWidget {
               color: AppConstants.textSecondary,
             ),
           ),
-          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
             backgroundColor: AppConstants.surfaceColor,
             selectedItemColor: AppConstants.accentColor,
             unselectedItemColor: AppConstants.textSecondary,
@@ -347,51 +347,14 @@ Widget _buildSlideTransition(
   );
 }
 
-Widget _buildFadeSlideTransition(
-  Animation<double> animation,
-  Animation<double> secondaryAnimation,
-  Widget child,
-) {
-  const curve = Curves.easeOutCubic;
-  const reverseCurve = Curves.easeInCubic;
-  
-  final fadeAnimation = CurvedAnimation(parent: animation, curve: curve);
-  final scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(fadeAnimation);
-  
-  // Slide up slightly for search screen
-  final slideAnimation = Tween<Offset>(
-    begin: const Offset(0.0, 0.1),
-    end: Offset.zero,
-  ).animate(fadeAnimation);
-  
-  // Secondary animation for smoother transitions
-  final secondaryFade = Tween<double>(begin: 1.0, end: 0.8).animate(
-    CurvedAnimation(parent: secondaryAnimation, curve: reverseCurve),
-  );
-  
-  return FadeTransition(
-    opacity: secondaryFade,
-    child: SlideTransition(
-      position: slideAnimation,
-      child: FadeTransition(
-        opacity: fadeAnimation,
-        child: ScaleTransition(
-          scale: scaleAnimation,
-          child: child,
-        ),
-      ),
-    ),
-  );
-}
-
 // Main Navigation Wrapper with Bottom Navigation
 class MainNavigationWrapper extends StatefulWidget {
   final Widget child;
 
   const MainNavigationWrapper({
-    Key? key,
+    super.key,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
@@ -400,9 +363,7 @@ class MainNavigationWrapper extends StatefulWidget {
 class _MainNavigationWrapperState extends State<MainNavigationWrapper> 
     with TickerProviderStateMixin {
   int _selectedIndex = 0;
-  int _previousIndex = 0;
   late AnimationController _tabAnimationController;
-  late Animation<double> _tabAnimation;
 
   @override
   void initState() {
@@ -410,10 +371,6 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
     _tabAnimationController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
-    );
-    _tabAnimation = CurvedAnimation(
-      parent: _tabAnimationController,
-      curve: Curves.easeInOut,
     );
   }
 
@@ -429,7 +386,6 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
     // Add haptic feedback
     HapticFeedback.selectionClick();
     
-    _previousIndex = _selectedIndex;
     setState(() {
       _selectedIndex = index;
     });
@@ -486,7 +442,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
           color: AppConstants.surfaceColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -502,7 +458,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                 label: 'Home',
                 index: 0,
               ),
-              _buildNavItem(
+                _buildNavItem(
                 icon: Icons.grid_view_outlined,
                 activeIcon: Icons.grid_view,
                 label: 'Categories',
@@ -551,7 +507,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: isSelected 
-                ? AppConstants.accentColor.withOpacity(0.1)
+                ? AppConstants.accentColor.withValues(alpha: 0.1)
                 : Colors.transparent,
           ),
           child: Column(
@@ -570,44 +526,44 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 200),
                             child: Icon(
-                              isSelected ? activeIcon : icon,
+                          isSelected ? activeIcon : icon,
                               key: ValueKey('cart_icon_$isSelected'),
-                              color: isSelected 
-                                  ? AppConstants.accentColor
-                                  : AppConstants.textSecondary,
+                          color: isSelected 
+                              ? AppConstants.accentColor
+                              : AppConstants.textSecondary,
                               size: isSelected ? 24 : 22,
                             ),
-                          ),
-                          if (itemCount > 0)
-                            Positioned(
-                              right: 0,
-                              top: 0,
+                        ),
+                        if (itemCount > 0)
+                          Positioned(
+                            right: 0,
+                            top: 0,
                               child: AnimatedScale(
                                 scale: isSelected ? 1.1 : 1.0,
                                 duration: const Duration(milliseconds: 200),
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    color: AppConstants.favoriteColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 16,
-                                    minHeight: 16,
-                                  ),
-                                  child: Text(
-                                    itemCount > 99 ? '99+' : itemCount.toString(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: AppConstants.favoriteColor,
+                                shape: BoxShape.circle,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                itemCount > 99 ? '99+' : itemCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
                                 ),
+                                textAlign: TextAlign.center,
+                                  ),
                               ),
                             ),
-                        ],
+                          ),
+                      ],
                       ),
                     );
                   },
@@ -616,7 +572,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   child: Icon(
-                    isSelected ? activeIcon : icon,
+                  isSelected ? activeIcon : icon,
                     key: ValueKey('${label}_icon_$isSelected'),
                     color: isSelected 
                         ? AppConstants.accentColor

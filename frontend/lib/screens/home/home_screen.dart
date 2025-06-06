@@ -244,9 +244,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(16),
                   gradient: LinearGradient(
                     colors: [
-                      Colors.pink.withOpacity(0.8),
-                      Colors.purple.withOpacity(0.8),
-                      Colors.orange.withOpacity(0.8),
+                      Colors.pink.withValues(alpha: 0.8),
+                      Colors.purple.withValues(alpha: 0.8),
+                      Colors.orange.withValues(alpha: 0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -295,7 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: BoxShape.circle,
                 color: _currentBannerIndex == index
                     ? AppConstants.accentColor
-                    : AppConstants.textSecondary.withOpacity(0.3),
+                    : AppConstants.textSecondary.withValues(alpha: 0.3),
               ),
             ),
           ),
@@ -371,8 +371,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         shape: BoxShape.circle,
                                         gradient: LinearGradient(
                                           colors: [
-                                            AppConstants.accentColor.withOpacity(0.1),
-                                            AppConstants.favoriteColor.withOpacity(0.1),
+                                            AppConstants.accentColor.withValues(alpha: 0.1),
+                                            AppConstants.favoriteColor.withValues(alpha: 0.1),
                                           ],
                                         ),
                                       ),
@@ -465,13 +465,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             colors: [
-                                              AppConstants.accentColor.withOpacity(0.1),
-                                              AppConstants.accentColor.withOpacity(0.05),
+                                              AppConstants.accentColor.withValues(alpha: 0.1),
+                                              AppConstants.accentColor.withValues(alpha: 0.05),
                                             ],
                                           ),
                                           borderRadius: BorderRadius.circular(20),
                                           border: Border.all(
-                                            color: AppConstants.accentColor.withOpacity(0.3),
+                                            color: AppConstants.accentColor.withValues(alpha: 0.3),
                                             width: 1,
                                           ),
                                         ),
@@ -659,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -668,7 +668,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image with favorite button
+            // Image with favorite button and beauty points
             Expanded(
               flex: 3,
               child: Stack(
@@ -685,17 +685,56 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Icon(
                         Icons.spa_outlined,
                         size: isSmallScreen ? 32 : 40,
-                        color: AppConstants.accentColor.withOpacity(0.5),
+                        color: AppConstants.accentColor.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
                   Positioned(
                     top: isSmallScreen ? 6 : 8,
-                    right: isSmallScreen ? 6 : 8,
+                    left: isSmallScreen ? 6 : 8,
                     child: WishlistButton(
                       product: product,
                       size: isSmallScreen ? 14 : 18,
                       heroTag: 'new_arrivals_wishlist_${product.id}',
+                    ),
+                  ),
+                  // Beauty Points positioned at bottom-right of image
+                  if (product.beautyPoints > 0)
+                    Positioned(
+                      bottom: isSmallScreen ? 6 : 8,
+                    right: isSmallScreen ? 6 : 8,
+                    child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                          color: AppConstants.favoriteColor.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.stars_rounded,
+                              size: isSmallScreen ? 12 : 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '+${product.beautyPoints}',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 10 : 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                      ),
                     ),
                   ),
                 ],
@@ -722,10 +761,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
+                        // Price on the left
+                        Expanded(
+                          child: Text(
                           _formatPrice(product.price),
                           style: TextStyle(
                             fontSize: isSmallScreen ? 13 : 15,
@@ -733,51 +775,34 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: AppConstants.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Row(
+                        ),
+                        
+                        // Rating on the right
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppConstants.accentColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.star,
-                                  size: isSmallScreen ? 12 : 14,
-                                  color: AppConstants.accentColor,
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  product.rating.toString(),
-                                  style: TextStyle(
-                                    fontSize: isSmallScreen ? 11 : 13,
-                                    color: AppConstants.textSecondary,
-                                  ),
-                                ),
-                              ],
+                            Icon(
+                              Icons.star,
+                                size: isSmallScreen ? 14 : 16,
+                              color: AppConstants.accentColor,
                             ),
-                            // Beauty Points
-                            if (product.beautyPoints > 0) ...[
-                              const SizedBox(width: 8),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.stars_rounded,
-                                    color: AppConstants.favoriteColor,
-                                    size: isSmallScreen ? 10 : 12,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '+${product.beautyPoints}',
-                                    style: TextStyle(
-                                      fontSize: isSmallScreen ? 9 : 11,
-                                      color: AppConstants.favoriteColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                            const SizedBox(width: 2),
+                            Text(
+                              product.rating.toString(),
+                              style: TextStyle(
+                                  fontSize: isSmallScreen ? 12 : 14,
+                                  color: AppConstants.accentColor,
+                                  fontWeight: FontWeight.w600,
                               ),
-                            ],
+                            ),
                           ],
+                          ),
                         ),
                       ],
                     ),
@@ -928,7 +953,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -937,7 +962,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image with favorite button
+            // Image with favorite button and beauty points
             Expanded(
               flex: 3,
               child: Stack(
@@ -954,17 +979,56 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Icon(
                         Icons.spa_outlined,
                         size: isSmallScreen ? 32 : 40,
-                        color: AppConstants.accentColor.withOpacity(0.5),
+                        color: AppConstants.accentColor.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
                   Positioned(
                     top: isSmallScreen ? 6 : 8,
-                    right: isSmallScreen ? 6 : 8,
+                    left: isSmallScreen ? 6 : 8,
                     child: WishlistButton(
                       product: product,
                       size: isSmallScreen ? 14 : 18,
                       heroTag: 'horizontal_wishlist_${product.id}',
+                    ),
+                  ),
+                  // Beauty Points positioned at bottom-right of image
+                  if (product.beautyPoints > 0)
+                    Positioned(
+                      bottom: isSmallScreen ? 6 : 8,
+                    right: isSmallScreen ? 6 : 8,
+                    child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                          color: AppConstants.favoriteColor.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.stars_rounded,
+                              size: isSmallScreen ? 12 : 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '+${product.beautyPoints}',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 10 : 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                      ),
                     ),
                   ),
                 ],
@@ -991,10 +1055,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
+                        // Price on the left
+                        Expanded(
+                          child: Text(
                           _formatPrice(product.price),
                           style: TextStyle(
                             fontSize: isSmallScreen ? 13 : 15,
@@ -1002,51 +1069,34 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: AppConstants.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Row(
+                        ),
+                        
+                        // Rating on the right
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppConstants.accentColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.star,
-                                  size: isSmallScreen ? 12 : 14,
-                                  color: AppConstants.accentColor,
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  product.rating.toString(),
-                                  style: TextStyle(
-                                    fontSize: isSmallScreen ? 11 : 13,
-                                    color: AppConstants.textSecondary,
-                                  ),
-                                ),
-                              ],
+                            Icon(
+                              Icons.star,
+                                size: isSmallScreen ? 14 : 16,
+                              color: AppConstants.accentColor,
                             ),
-                            // Beauty Points
-                            if (product.beautyPoints > 0) ...[
-                              const SizedBox(width: 8),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.stars_rounded,
-                                    color: AppConstants.favoriteColor,
-                                    size: isSmallScreen ? 10 : 12,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '+${product.beautyPoints}',
-                                    style: TextStyle(
-                                      fontSize: isSmallScreen ? 9 : 11,
-                                      color: AppConstants.favoriteColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                            const SizedBox(width: 2),
+                            Text(
+                              product.rating.toString(),
+                              style: TextStyle(
+                                  fontSize: isSmallScreen ? 12 : 14,
+                                  color: AppConstants.accentColor,
+                                  fontWeight: FontWeight.w600,
                               ),
-                            ],
+                            ),
                           ],
+                          ),
                         ),
                       ],
                     ),
@@ -1154,7 +1204,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               Icons.spa_outlined,
               size: isSmallScreen ? 40 : 48,
-              color: AppConstants.textSecondary.withOpacity(0.5),
+              color: AppConstants.textSecondary.withValues(alpha: 0.5),
             ),
             SizedBox(height: isSmallScreen ? 12 : 16),
             Text(

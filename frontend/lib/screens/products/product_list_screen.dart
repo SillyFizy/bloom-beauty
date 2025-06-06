@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../providers/category_provider.dart';
-import '../../providers/wishlist_provider.dart';
 import '../../constants/app_constants.dart';
 import '../../widgets/category/category_selector.dart';
 import '../../widgets/product/enhanced_product_card.dart';
 import 'product_detail_screen.dart';
 
 class ProductListScreen extends StatefulWidget {
-  const ProductListScreen({Key? key}) : super(key: key);
+  const ProductListScreen({super.key});
 
   @override
   State<ProductListScreen> createState() => _ProductListScreenState();
@@ -20,8 +19,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
   void initState() {
     super.initState();
     // Initialize category provider when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CategoryProvider>().initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final categoryProvider = context.read<CategoryProvider>();
+      
+      // Check if already initialized, if not initialize
+      if (!categoryProvider.isLoading && 
+          categoryProvider.allProducts.isEmpty && 
+          !categoryProvider.hasError) {
+        await categoryProvider.initialize();
+      }
     });
   }
 
@@ -535,7 +541,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
         final screenWidth = constraints.maxWidth;
         final isSmallScreen = screenWidth < 600;
         final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
-        final isLargeScreen = screenWidth >= 900;
         
         // Grid configuration based on screen size
         final crossAxisCount = isSmallScreen ? 2 : (isMediumScreen ? 3 : 4);
@@ -742,19 +747,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             final product = products[index];
-            return Consumer<WishlistProvider>(
-              builder: (context, wishlistProvider, child) {
-                final isInWishlist = wishlistProvider.isInWishlist(product.id);
-                return EnhancedProductCard(
-                  product: product,
-                  isSmallScreen: isSmallScreen,
-                  onTap: () => _navigateToProductDetail(context, product),
-                  onFavorite: () async {
-                    await wishlistProvider.toggleWishlist(product);
-                  },
-                  isFavorite: isInWishlist,
-                );
-              },
+            return EnhancedProductCard(
+              product: product,
+              isSmallScreen: isSmallScreen,
+              onTap: () => _navigateToProductDetail(context, product),
             );
           },
           childCount: products.length,

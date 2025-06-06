@@ -570,18 +570,6 @@ class _SearchScreenState extends State<SearchScreen> {
                   product: product,
                   isSmallScreen: isSmallScreen,
                   onTap: () => _navigateToProduct(product),
-                  onFavorite: () {
-                    // TODO: Implement favorite functionality
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Favorite feature coming soon!'),
-                        backgroundColor: AppConstants.accentColor,
-                        duration: const Duration(seconds: 2),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  isFavorite: false,
                 );
               },
               childCount: searchProvider.searchResults.length,

@@ -125,8 +125,8 @@ class _SplashScreenState extends State<SplashScreen>
             end: Alignment.bottomRight,
             colors: [
               AppConstants.accentColor,
-              AppConstants.accentColor.withOpacity(0.8),
-              AppConstants.accentColor.withOpacity(0.6),
+                              AppConstants.accentColor.withValues(alpha: 0.8),
+                AppConstants.accentColor.withValues(alpha: 0.6),
               AppConstants.backgroundColor,
             ],
             stops: const [0.0, 0.3, 0.7, 1.0],
@@ -151,7 +151,7 @@ class _SplashScreenState extends State<SplashScreen>
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                                                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -188,7 +188,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 letterSpacing: 1.2,
                                 shadows: [
                                   Shadow(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     offset: const Offset(0, 2),
                                     blurRadius: 4,
                                   ),
@@ -200,7 +200,7 @@ class _SplashScreenState extends State<SplashScreen>
                               'Your Beauty Journey Starts Here',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -227,7 +227,7 @@ class _SplashScreenState extends State<SplashScreen>
                             child: CircularProgressIndicator(
                               strokeWidth: 3,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white.withOpacity(0.8),
+                                Colors.white.withValues(alpha: 0.8),
                               ),
                             ),
                           ),
@@ -235,7 +235,7 @@ class _SplashScreenState extends State<SplashScreen>
                           Text(
                             _loadingText,
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                               fontSize: 14,
                               letterSpacing: 0.5,
                             ),

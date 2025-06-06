@@ -270,58 +270,73 @@ class ProductService {
   Future<ProductStatistics> getProductStatistics() async {
     final products = await getAllProducts();
     
-    if (products.isEmpty) {
-      return ProductStatistics(
-        totalProducts: 0,
-        averageRating: 0.0,
-        averagePrice: 0.0,
-        inStockCount: 0,
-        outOfStockCount: 0,
-        brandCount: 0,
-        categoryCount: 0,
-      );
-    }
-
     final totalProducts = products.length;
-    final averageRating = products.fold(0.0, (sum, product) => sum + product.rating) / totalProducts;
-    final averagePrice = products.fold(0.0, (sum, product) => sum + product.price) / totalProducts;
-    final inStockCount = products.where((product) => product.isInStock).length;
-    final outOfStockCount = totalProducts - inStockCount;
-    final brandCount = products.map((product) => product.brand).toSet().length;
-    final categoryCount = products.map((product) => product.categoryId).toSet().length;
-
+    final averageRating = products.isNotEmpty 
+        ? products.map((p) => p.rating).reduce((a, b) => a + b) / totalProducts
+        : 0.0;
+    final totalReviews = products.map((p) => p.reviewCount).reduce((a, b) => a + b);
+    final inStockCount = products.where((p) => p.isInStock).length;
+    
     return ProductStatistics(
       totalProducts: totalProducts,
       averageRating: averageRating,
-      averagePrice: averagePrice,
+      totalReviews: totalReviews,
       inStockCount: inStockCount,
-      outOfStockCount: outOfStockCount,
-      brandCount: brandCount,
-      categoryCount: categoryCount,
+      outOfStockCount: totalProducts - inStockCount,
     );
+  }
+
+  /// Batch operations for better performance
+  Future<Map<String, Product?>> getProductsBatch(List<String> productIds) async {
+    final products = await getAllProducts();
+    final result = <String, Product?>{};
+    
+    for (final id in productIds) {
+      try {
+        result[id] = products.firstWhere((product) => product.id == id);
+      } catch (e) {
+        result[id] = null;
+      }
+    }
+    
+    return result;
+  }
+
+  /// Preload commonly accessed data
+  Future<void> preloadData() async {
+    try {
+      // Preload in parallel for better performance
+      await Future.wait([
+        getAllProducts(),
+        getBestsellingProducts(),
+        getNewArrivals(),
+        getTrendingProducts(),
+      ]);
+    } catch (e) {
+      debugPrint('Error preloading data: $e');
+    }
   }
 
   /// Private methods
 
+  /// Check if cache should be refreshed
   bool _shouldRefreshCache() {
     if (_cachedProducts == null || _lastCacheUpdate == null) return true;
     return DateTime.now().difference(_lastCacheUpdate!) > _cacheExpiry;
   }
 
+  /// Refresh product cache
   Future<void> _refreshProductCache() async {
     try {
-      // In production, this would call the API
-      // For now, use the data service
       _cachedProducts = _dataService.getAllProducts();
       _lastCacheUpdate = DateTime.now();
     } catch (e) {
-      // Handle error gracefully
-      print('Error refreshing product cache: $e');
-      _cachedProducts ??= [];
+      debugPrint('Error refreshing product cache: $e');
+      _cachedProducts ??= []; // Fallback to empty list if cache fails
     }
   }
 
-  /// Clear cache (useful for testing or force refresh)
+  /// Clear cache (useful for logout or data refresh)
   void clearCache() {
     _cachedProducts = null;
     _lastCacheUpdate = null;
@@ -349,19 +364,15 @@ enum ProductSortOption {
 class ProductStatistics {
   final int totalProducts;
   final double averageRating;
-  final double averagePrice;
+  final int totalReviews;
   final int inStockCount;
   final int outOfStockCount;
-  final int brandCount;
-  final int categoryCount;
 
   ProductStatistics({
     required this.totalProducts,
     required this.averageRating,
-    required this.averagePrice,
+    required this.totalReviews,
     required this.inStockCount,
     required this.outOfStockCount,
-    required this.brandCount,
-    required this.categoryCount,
   });
 } 

@@ -92,7 +92,6 @@ class _WishlistButtonState extends State<WishlistButton>
 
     try {
       final wishlistProvider = context.read<WishlistProvider>();
-      final wasInWishlist = wishlistProvider.isInWishlist(widget.product.id);
       
       final success = await wishlistProvider.toggleWishlist(widget.product);
       
@@ -186,13 +185,13 @@ class _WishlistButtonState extends State<WishlistButton>
                           ? BoxDecoration(
                               color: widget.backgroundColor ??
                                   (isInWishlist
-                                      ? AppConstants.favoriteColor.withOpacity(0.1)
-                                      : Colors.white.withOpacity(0.9)),
+                                      ? AppConstants.favoriteColor.withValues(alpha: 0.1)
+                                      : Colors.white.withValues(alpha: 0.9)),
                               shape: BoxShape.circle,
                               boxShadow: widget.showShadow
                                   ? [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
+                                        color: Colors.black.withValues(alpha: 0.1),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),

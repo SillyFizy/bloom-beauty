@@ -15,8 +15,10 @@ class CelebrityPicksSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: EdgeInsets.all(isSmallScreen ? 12 : 16),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
@@ -24,17 +26,19 @@ class CelebrityPicksSearchBar extends StatelessWidget {
           hintText: 'Search celebrity picks...',
           hintStyle: TextStyle(
             color: AppConstants.textSecondary.withValues(alpha: 0.6),
-            fontSize: 16,
+            fontSize: isSmallScreen ? 14 : 16,
           ),
           prefixIcon: Icon(
             Icons.search,
             color: AppConstants.textSecondary.withValues(alpha: 0.6),
+            size: isSmallScreen ? 20 : 24,
           ),
           suffixIcon: controller.text.isNotEmpty
               ? IconButton(
                   icon: Icon(
                     Icons.clear,
                     color: AppConstants.textSecondary,
+                    size: isSmallScreen ? 20 : 24,
                   ),
                   onPressed: onClear,
                 )
@@ -42,34 +46,34 @@ class CelebrityPicksSearchBar extends StatelessWidget {
           filled: true,
           fillColor: AppConstants.surfaceColor,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(25),
+            borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 25),
             borderSide: BorderSide(
               color: AppConstants.borderColor.withValues(alpha: 0.3),
               width: 1,
             ),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(25),
+            borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 25),
             borderSide: BorderSide(
               color: AppConstants.borderColor.withValues(alpha: 0.3),
               width: 1,
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(25),
+            borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 25),
             borderSide: BorderSide(
               color: AppConstants.accentColor,
               width: 2,
             ),
           ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isSmallScreen ? 16 : 20,
+            vertical: isSmallScreen ? 12 : 16,
           ),
         ),
         style: TextStyle(
           color: AppConstants.textPrimary,
-          fontSize: 16,
+          fontSize: isSmallScreen ? 14 : 16,
         ),
       ),
     );

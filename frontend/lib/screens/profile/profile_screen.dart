@@ -36,9 +36,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, constraints) {
         final isSmallScreen = constraints.maxWidth < 600;
         
-        return Scaffold(
+    return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
-          appBar: AppBar(
+      appBar: AppBar(
             backgroundColor: AppConstants.surfaceColor,
             elevation: 0,
             title: Text(
@@ -50,7 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             centerTitle: false,
-          ),
+      ),
           body: SingleChildScrollView(
             padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
             child: Column(
@@ -79,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
+            color: AppConstants.textSecondary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -92,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: isSmallScreen ? 60 : 80,
             height: isSmallScreen ? 60 : 80,
             decoration: BoxDecoration(
-              color: AppConstants.accentColor.withOpacity(0.1),
+              color: AppConstants.accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(isSmallScreen ? 30 : 40),
             ),
             child: Icon(
@@ -100,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               size: isSmallScreen ? 32 : 40,
               color: AppConstants.accentColor,
             ),
-          ),
+            ),
           
           SizedBox(width: isSmallScreen ? 16 : 20),
           
@@ -124,7 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontSize: isSmallScreen ? 14 : 16,
                     color: AppConstants.textSecondary,
                   ),
-                ),
+          ),
               ],
             ),
           ),
@@ -152,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
+            color: AppConstants.textSecondary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -297,7 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
               decoration: BoxDecoration(
-                color: AppConstants.accentColor.withOpacity(0.1),
+                color: AppConstants.accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(

@@ -95,10 +95,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppConstants.favoriteColor.withOpacity(0.1),
+                    color: AppConstants.favoriteColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppConstants.favoriteColor.withOpacity(0.3),
+                      color: AppConstants.favoriteColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -332,7 +332,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
+            color: AppConstants.textSecondary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -394,7 +394,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppConstants.borderColor.withOpacity(0.5)),
+          borderSide: BorderSide(color: AppConstants.borderColor.withValues(alpha: 0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -425,7 +425,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             color: AppConstants.backgroundColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppConstants.borderColor.withOpacity(0.5),
+              color: AppConstants.borderColor.withValues(alpha: 0.5),
             ),
           ),
           child: RadioListTile<String>(
@@ -511,10 +511,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         Container(
           padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
           decoration: BoxDecoration(
-            color: AppConstants.favoriteColor.withOpacity(0.1),
+            color: AppConstants.favoriteColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppConstants.favoriteColor.withOpacity(0.3),
+              color: AppConstants.favoriteColor.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -593,7 +593,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         color: AppConstants.surfaceColor,
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
+            color: AppConstants.textSecondary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),

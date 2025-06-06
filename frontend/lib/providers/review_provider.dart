@@ -92,7 +92,7 @@ class ReviewProvider with ChangeNotifier {
       final statistics = await _reviewService.getReviewStatistics(productId);
       _reviewStatistics[productId] = statistics;
     } catch (e) {
-      print('Failed to load review statistics: $e');
+      debugPrint('Failed to load review statistics: $e');
     }
   }
 
@@ -102,7 +102,7 @@ class ReviewProvider with ChangeNotifier {
       _recentReviews = await _reviewService.getRecentReviews();
       notifyListeners();
     } catch (e) {
-      print('Failed to load recent reviews: $e');
+      debugPrint('Failed to load recent reviews: $e');
     }
   }
 
@@ -112,7 +112,7 @@ class ReviewProvider with ChangeNotifier {
       _topReviewers = await _reviewService.getTopReviewers();
       notifyListeners();
     } catch (e) {
-      print('Failed to load top reviewers: $e');
+      debugPrint('Failed to load top reviewers: $e');
     }
   }
 
@@ -278,7 +278,7 @@ class ReviewProvider with ChangeNotifier {
       
       return success;
     } catch (e) {
-      print('Failed to mark review helpful: $e');
+      debugPrint('Failed to mark review helpful: $e');
       return false;
     }
   }
@@ -310,7 +310,7 @@ class ReviewProvider with ChangeNotifier {
       
       return success;
     } catch (e) {
-      print('Failed to report review: $e');
+      debugPrint('Failed to report review: $e');
       return false;
     }
   }
@@ -320,7 +320,7 @@ class ReviewProvider with ChangeNotifier {
     try {
       return await _reviewService.getReviewsByRating(productId, rating);
     } catch (e) {
-      print('Failed to get reviews by rating: $e');
+      debugPrint('Failed to get reviews by rating: $e');
       return [];
     }
   }
@@ -334,7 +334,7 @@ class ReviewProvider with ChangeNotifier {
     try {
       return await _reviewService.getReviewsByRatingRange(productId, minRating, maxRating);
     } catch (e) {
-      print('Failed to get reviews by rating range: $e');
+      debugPrint('Failed to get reviews by rating range: $e');
       return [];
     }
   }
@@ -344,7 +344,7 @@ class ReviewProvider with ChangeNotifier {
     try {
       return await _reviewService.getVerifiedReviews(productId);
     } catch (e) {
-      print('Failed to get verified reviews: $e');
+      debugPrint('Failed to get verified reviews: $e');
       return [];
     }
   }
@@ -354,7 +354,7 @@ class ReviewProvider with ChangeNotifier {
     try {
       return await _reviewService.getReviewsWithImages(productId);
     } catch (e) {
-      print('Failed to get reviews with images: $e');
+      debugPrint('Failed to get reviews with images: $e');
       return [];
     }
   }
@@ -373,7 +373,7 @@ class ReviewProvider with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('Failed to sort reviews: $e');
+      debugPrint('Failed to sort reviews: $e');
     }
   }
 

@@ -10,23 +10,23 @@ class CartItemWidget extends StatelessWidget {
   final int quantity;
   final String? variant;
   final int beautyPoints;
-  final VoidCallback? onIncrement;
-  final VoidCallback? onDecrement;
-  final VoidCallback? onRemove;
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
+  final VoidCallback onRemove;
 
   const CartItemWidget({
-    Key? key,
+    super.key,
     required this.imageUrl,
     required this.name,
     required this.brand,
     required this.price,
     required this.quantity,
     this.variant,
-    this.beautyPoints = 0,
-    this.onIncrement,
-    this.onDecrement,
-    this.onRemove,
-  }) : super(key: key);
+    required this.beautyPoints,
+    required this.onIncrement,
+    required this.onDecrement,
+    required this.onRemove,
+  });
 
   String _formatPrice(double price) {
     final formatter = NumberFormat('#,###');
@@ -111,10 +111,10 @@ class CartItemWidget extends StatelessWidget {
                             vertical: isSmallScreen ? 2 : 4
                           ),
                           decoration: BoxDecoration(
-                            color: AppConstants.accentColor.withOpacity(0.1),
+                            color: AppConstants.accentColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
                             border: Border.all(
-                              color: AppConstants.accentColor.withOpacity(0.3),
+                              color: AppConstants.accentColor.withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
@@ -261,7 +261,7 @@ class CartItemWidget extends StatelessWidget {
                         height: isSmallScreen ? 32 : 40,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppConstants.errorColor.withOpacity(0.1),
+                          color: AppConstants.errorColor.withValues(alpha: 0.1),
                         ),
                         child: IconButton(
                           onPressed: onRemove,
