@@ -263,6 +263,49 @@ class CelebrityService {
     );
   }
 
+  /// Get comprehensive celebrity data for navigation (ready for backend integration)
+  Future<Map<String, dynamic>> getCelebrityDataForNavigation(String celebrityName) async {
+    try {
+      // This method consolidates all celebrity data needed for the celebrity screen
+      // Ready for backend API integration - just replace the data calls with API endpoints
+      
+      final futures = await Future.wait([
+        getCelebrityByName(celebrityName),
+        getCelebritySocialMedia(celebrityName),
+        getCelebrityRecommendedProducts(celebrityName),
+        getCelebrityMorningRoutine(celebrityName),
+        getCelebrityEveningRoutine(celebrityName),
+      ]);
+
+      final celebrity = futures[0] as Celebrity?;
+      final socialMedia = futures[1] as Map<String, String>;
+      final recommendedProducts = futures[2] as List<Product>;
+      final morningProducts = futures[3] as List<Product>;
+      final eveningProducts = futures[4] as List<Product>;
+
+      if (celebrity == null) {
+        throw Exception('Celebrity not found: $celebrityName');
+      }
+
+      return {
+        'celebrity': celebrity,
+        'socialMediaLinks': socialMedia,
+        'recommendedProducts': recommendedProducts,
+        'morningRoutineProducts': morningProducts,
+        'eveningRoutineProducts': eveningProducts,
+        'testimonial': celebrity.testimonial ?? '',
+        
+        // Additional data that could come from backend
+        'followerCount': celebrity.followerCount,
+        'isVerified': celebrity.isVerified,
+        'joinDate': DateTime.now(),
+        'totalEndorsements': recommendedProducts.length + morningProducts.length + eveningProducts.length,
+      };
+    } catch (e) {
+      throw Exception('Failed to load celebrity data: $e');
+    }
+  }
+
   /// Private methods
 
   bool _shouldRefreshCache() {

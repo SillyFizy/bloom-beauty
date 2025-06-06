@@ -7,12 +7,18 @@ import 'screens/home/home_screen.dart';
 import 'screens/products/product_list_screen.dart';
 import 'screens/cart/cart_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/search/search_screen.dart';
 import 'constants/app_constants.dart';
 import 'providers/app_providers.dart';
 import 'providers/cart_provider.dart';
+import 'services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize local storage
+  await StorageService.init();
+  
   runApp(const MyApp());
 }
 
@@ -152,7 +158,7 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/search',
           name: 'search',
-          builder: (context, state) => const ProductListScreen(),
+          builder: (context, state) => const SearchScreen(),
         ),
         
         // Cart
@@ -296,16 +302,16 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
       child: GestureDetector(
         onTap: () => _onItemTapped(index),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Special handling for cart icon to show badge
               if (index == 3) 
-                Consumer<CartProvider>(
-                  builder: (context, cart, child) {
-                    final itemCount = cart.itemCount;
+                Selector<CartProvider, int>(
+                  selector: (context, cart) => cart.itemCount,
+                  builder: (context, itemCount, child) {
                     return Stack(
                       children: [
                         Icon(
@@ -352,18 +358,20 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
                       : AppConstants.textSecondary,
                   size: 22,
                 ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected 
-                      ? AppConstants.accentColor
-                      : AppConstants.textSecondary,
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              const SizedBox(height: 1),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected 
+                        ? AppConstants.accentColor
+                        : AppConstants.textSecondary,
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

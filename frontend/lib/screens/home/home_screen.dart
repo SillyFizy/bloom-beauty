@@ -7,6 +7,7 @@ import '../../providers/product_provider.dart';
 import '../../providers/celebrity_provider.dart';
 import '../../providers/app_providers.dart';
 import '../products/product_detail_screen.dart';
+import '../celebrity_picks/celebrity_picks_screen.dart';
 import 'package:intl/intl.dart';
 // not being used currently
 // import 'package:go_router/go_router.dart';
@@ -434,6 +435,68 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ],
                               ),
+                            ),
+                            // View All Button
+                            TweenAnimationBuilder<double>(
+                              tween: Tween<double>(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, buttonValue, child) {
+                                return Transform.translate(
+                                  offset: Offset(30 * (1 - buttonValue), 0),
+                                  child: Opacity(
+                                    opacity: buttonValue,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const CelebrityPicksScreen(),
+                                          ),
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isSmallScreen ? 12 : 16,
+                                          vertical: isSmallScreen ? 6 : 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              AppConstants.accentColor.withOpacity(0.1),
+                                              AppConstants.accentColor.withOpacity(0.05),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: AppConstants.accentColor.withOpacity(0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'View All',
+                                              style: TextStyle(
+                                                fontSize: isSmallScreen ? 12 : 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppConstants.accentColor,
+                                              ),
+                                            ),
+                                            SizedBox(width: isSmallScreen ? 4 : 6),
+                                            Icon(
+                                              Icons.arrow_forward_ios,
+                                              size: isSmallScreen ? 12 : 14,
+                                              color: AppConstants.accentColor,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),

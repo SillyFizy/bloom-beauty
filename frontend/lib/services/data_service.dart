@@ -437,7 +437,7 @@ class DataService {
         reviews: [],
         celebrityEndorsement: CelebrityEndorsement(
           celebrityName: 'Taylor Swift',
-          celebrityImage: 'https://images.unsplash.com/photo-1494790108755-2616c04a5821?w=150&h=150&fit=crop&crop=face',
+          celebrityImage: 'https://images.unsplash.com/photo-1558618644-fbd6c02c6d3b?w=150&h=150&fit=crop&crop=face',
           testimonial: 'Perfect red for my signature look',
         ),
       ),
@@ -583,7 +583,7 @@ class DataService {
       Celebrity(
         id: '6',
         name: 'Taylor Swift',
-        image: 'https://images.unsplash.com/photo-1494790108755-2616c04a5821?w=150&h=150&fit=crop&crop=face',
+        image: 'https://images.unsplash.com/photo-1558618644-fbd6c02c6d3b?w=150&h=150&fit=crop&crop=face',
         testimonial: 'Perfect red for my signature look',
         socialMediaLinks: {
           'instagram': 'https://instagram.com/taylorswift',

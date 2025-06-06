@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
 import 'data_service.dart';
-import 'api_service.dart';
 import 'storage_service.dart';
 
 /// Service responsible for all product-related data operations

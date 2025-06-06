@@ -45,10 +45,21 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
+  // Generate unique cart item ID that includes variant information
+  String _generateCartItemId(Product product, ProductVariant? variant) {
+    final baseId = product.id;
+    final variantId = variant?.id ?? 'default';
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return '${baseId}_${variantId}_$timestamp';
+  }
+
   void addItem(Product product, int quantity, {ProductVariant? variant}) {
+    // Ensure we have consistent variant identification
+    final variantId = variant?.id; // null for default, actual ID for variants
+    
     final existingItemIndex = _items.indexWhere((item) =>
         item.product.id == product.id &&
-        item.selectedVariant == variant?.id);
+        item.selectedVariant == variantId);
 
     if (existingItemIndex >= 0) {
       // Update existing item quantity
@@ -56,15 +67,15 @@ class CartProvider extends ChangeNotifier {
         id: _items[existingItemIndex].id,
         product: product,
         quantity: _items[existingItemIndex].quantity + quantity,
-        selectedVariant: variant?.id,
+        selectedVariant: variantId,
       );
     } else {
-      // Add new item
+      // Add new item with unique ID that incorporates variant information
       _items.add(CartItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: _generateCartItemId(product, variant),
         product: product,
         quantity: quantity,
-        selectedVariant: variant?.id,
+        selectedVariant: variantId,
       ));
     }
 
@@ -72,20 +83,35 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addMultipleItems(
-      Product product, Map<String, int> variantQuantities) {
+  void addMultipleItems(Product product, Map<String, int> variantQuantities) {
     for (var entry in variantQuantities.entries) {
       if (entry.value > 0) {
         ProductVariant? variant;
+        
+        // Handle default variant case explicitly
         if (entry.key != 'default') {
+          try {
           variant = product.variants.firstWhere((v) => v.id == entry.key);
+          } catch (e) {
+            debugPrint('Warning: Variant ${entry.key} not found for product ${product.id}');
+            continue; // Skip this variant if not found
+          }
         }
+        // For 'default' case, variant remains null
+        
         addItem(product, entry.value, variant: variant);
       }
     }
   }
 
   void removeItem(String itemId) {
+    final itemToRemove = _items.firstWhere(
+      (item) => item.id == itemId,
+      orElse: () => throw Exception('Cart item with ID $itemId not found'),
+    );
+    
+    debugPrint('Removing cart item: ${itemToRemove.id} - ${itemToRemove.product.name} (Variant: ${itemToRemove.selectedVariant ?? 'default'})');
+    
     _items.removeWhere((item) => item.id == itemId);
     _saveCartToStorage();
     notifyListeners();
@@ -95,7 +121,7 @@ class CartProvider extends ChangeNotifier {
     final itemIndex = _items.indexWhere((item) => item.id == itemId);
     if (itemIndex >= 0) {
       if (quantity <= 0) {
-        _items.removeAt(itemIndex);
+        removeItem(itemId);
       } else {
         _items[itemIndex] = CartItem(
           id: _items[itemIndex].id,
@@ -103,9 +129,9 @@ class CartProvider extends ChangeNotifier {
           quantity: quantity,
           selectedVariant: _items[itemIndex].selectedVariant,
         );
-      }
       _saveCartToStorage();
       notifyListeners();
+      }
     }
   }
 
@@ -123,5 +149,32 @@ class CartProvider extends ChangeNotifier {
     } catch (e) {
       return null;
     }
+  }
+
+  // Debug method to log cart contents
+  void debugPrintCart() {
+    debugPrint('=== CART CONTENTS ===');
+    for (int i = 0; i < _items.length; i++) {
+      final item = _items[i];
+      debugPrint('[$i] ID: ${item.id}');
+      debugPrint('    Product: ${item.product.name} (${item.product.id})');
+      debugPrint('    Variant: ${item.selectedVariant ?? 'default'}');
+      debugPrint('    Quantity: ${item.quantity}');
+      debugPrint('    ---');
+    }
+    debugPrint('Total items: ${_items.length}');
+    debugPrint('====================');
+  }
+
+  // Method to remove all variants of a specific product (if needed)
+  void removeAllVariantsOfProduct(String productId) {
+    _items.removeWhere((item) => item.product.id == productId);
+    _saveCartToStorage();
+    notifyListeners();
+  }
+
+  // Method to get all variants of a product in the cart
+  List<CartItem> getProductVariantsInCart(String productId) {
+    return _items.where((item) => item.product.id == productId).toList();
   }
 } 
