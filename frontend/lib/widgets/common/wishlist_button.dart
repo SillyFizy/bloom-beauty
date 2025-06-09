@@ -273,14 +273,52 @@ class FloatingWishlistButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WishlistButton(
-      product: product,
-      size: 28,
-      onPressed: onPressed,
-      showBackground: true,
-      showShadow: true,
-      backgroundColor: Colors.white,
-      heroTag: 'floating_wishlist_${product.id}',
+    return Consumer<WishlistProvider>(
+      builder: (context, wishlistProvider, child) {
+        final isInWishlist = wishlistProvider.isInWishlist(product.id);
+        final isSmallScreen = MediaQuery.of(context).size.width < 600;
+        
+        return Container(
+          width: isSmallScreen ? 44 : 52,
+          height: isSmallScreen ? 44 : 52,
+          decoration: BoxDecoration(
+            color: AppConstants.surfaceColor.withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+            border: Border.all(
+              color: AppConstants.borderColor.withValues(alpha: 0.3),
+              width: 1,
+            ),
+                         boxShadow: [
+               BoxShadow(
+                 color: AppConstants.textSecondary.withValues(alpha: 0.15),
+                 blurRadius: 12,
+                 offset: const Offset(0, 4),
+               ),
+               BoxShadow(
+                 color: Colors.white.withValues(alpha: 0.05),
+                 blurRadius: 1,
+                 offset: const Offset(0, 1),
+               ),
+             ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+            child: Material(
+              color: Colors.transparent,
+              child: Center(
+                child: WishlistButton(
+                  product: product,
+                  size: isSmallScreen ? 20 : 24,
+                  onPressed: onPressed,
+                  showBackground: false,
+                  showShadow: false,
+                  heroTag: 'floating_wishlist_${product.id}',
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 } 

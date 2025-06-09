@@ -597,7 +597,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               child: Container(
                                 width: 8,
                                 height: 8,
-                                decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                                   color: AppConstants.accentColor,
                                   shape: BoxShape.circle,
                                 ),
@@ -652,7 +653,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+const CircularProgressIndicator(
+
             color: AppConstants.accentColor,
           ),
           SizedBox(height: isSmallScreen ? 12 : 16),

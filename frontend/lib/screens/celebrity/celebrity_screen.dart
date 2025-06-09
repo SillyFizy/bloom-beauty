@@ -250,7 +250,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
               }
 
               return Container(
-                decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
@@ -258,7 +259,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                       AppConstants.backgroundColor,
                       AppConstants.surfaceColor,
                     ],
-                    stops: const [0.0, 0.3],
+stops: [0.0, 0.3],
+
                   ),
                 ),
                 child: CustomScrollView(
@@ -347,7 +349,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
+const CircularProgressIndicator(
+
               color: AppConstants.accentColor,
             ),
             SizedBox(height: isSmallScreen ? 16 : 20),
@@ -699,7 +702,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                 width: 1,
               ),
             ),
-            child: Text(
+child: const Text(
+
               'Beauty Influencer',
               style: TextStyle(
                 fontSize: 14,
@@ -892,7 +896,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
               Container(
                 width: isSmallScreen ? 22 : 28,
                 height: isSmallScreen ? 22 : 28,
-                decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                   color: AppConstants.accentColor,
                   shape: BoxShape.circle,
                 ),

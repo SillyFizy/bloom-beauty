@@ -168,10 +168,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: () {
               // TODO: Navigate to orders
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Orders feature coming soon!'),
+const SnackBar(
+                  content: Text('Orders feature coming soon!'),
                   backgroundColor: AppConstants.accentColor,
-                  duration: const Duration(seconds: 2),
+                  duration: Duration(seconds: 2),
+
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -221,10 +222,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: () {
               // TODO: Navigate to beauty points
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Beauty Points feature coming soon!'),
+const SnackBar(
+                  content: Text('Beauty Points feature coming soon!'),
                   backgroundColor: AppConstants.favoriteColor,
-                  duration: const Duration(seconds: 2),
+                  duration: Duration(seconds: 2),
+
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -242,10 +244,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: () {
               // TODO: Navigate to settings
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Settings feature coming soon!'),
+const SnackBar(
+                  content: Text('Settings feature coming soon!'),
                   backgroundColor: AppConstants.accentColor,
-                  duration: const Duration(seconds: 2),
+                  duration: Duration(seconds: 2),
+
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -263,10 +266,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: () {
               // TODO: Navigate to help
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Help & Support feature coming soon!'),
+const SnackBar(
+                  content: Text('Help & Support feature coming soon!'),
                   backgroundColor: AppConstants.accentColor,
-                  duration: const Duration(seconds: 2),
+                  duration: Duration(seconds: 2),
+
                   behavior: SnackBarBehavior.floating,
                 ),
               );

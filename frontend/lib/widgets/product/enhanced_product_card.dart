@@ -61,10 +61,11 @@ class EnhancedProductCard extends StatelessWidget {
       // Show error only if context is still valid
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to load celebrity profile'),
+const SnackBar(
+            content: Text('Failed to load celebrity profile'),
             backgroundColor: AppConstants.errorColor,
-            duration: const Duration(seconds: 2),
+            duration: Duration(seconds: 2),
+
           ),
         );
       }
@@ -479,7 +480,8 @@ class EnhancedProductCard extends StatelessWidget {
                           
                           // Original price if discounted (below current price)
                           if (hasDiscount) ...[
-                            SizedBox(height: 2),
+const SizedBox(height: 2),
+
                             Text(
                               Formatters.formatPrice(product.price),
                               style: TextStyle(
@@ -522,7 +524,8 @@ class EnhancedProductCard extends StatelessWidget {
                             size: isCompactLayout ? 12 : (isMobile ? 14 : 16),
                               color: AppConstants.accentColor,
                             ),
-                            SizedBox(width: 2),
+const SizedBox(width: 2),
+
                             Text(
                               product.rating.toStringAsFixed(1),
                               style: TextStyle(

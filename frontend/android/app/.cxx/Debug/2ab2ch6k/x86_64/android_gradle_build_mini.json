@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "C:\\src\\flutter\\packages\\flutter_tools\\gradle\\src\\main\\groovy\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\src\\sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-C",
+      "C:\\Users\\msi\\Downloads\\bloom-beauty-feature-new-wishlist\\bloom-beauty-feature-new-wishlist\\frontend\\android\\app\\.cxx\\Debug\\2ab2ch6k\\x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\src\\sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-C",
+    "C:\\Users\\msi\\Downloads\\bloom-beauty-feature-new-wishlist\\bloom-beauty-feature-new-wishlist\\frontend\\android\\app\\.cxx\\Debug\\2ab2ch6k\\x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

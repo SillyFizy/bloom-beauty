@@ -197,7 +197,8 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                               child: Container(
                                 width: 8,
                                 height: 8,
-                                decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                                   color: AppConstants.accentColor,
                                   shape: BoxShape.circle,
                                 ),
@@ -263,7 +264,8 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                       SliverToBoxAdapter(
                         child: Container(
                           padding: const EdgeInsets.all(16),
-                          child: Center(
+child: const Center(
+
                             child: CircularProgressIndicator(
                               color: AppConstants.accentColor,
                             ),

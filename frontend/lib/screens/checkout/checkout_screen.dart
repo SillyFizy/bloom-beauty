@@ -67,22 +67,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         backgroundColor: AppConstants.surfaceColor,
-        title: Row(
+        title: const Row(
           children: [
             Icon(
               Icons.check_circle,
               color: Colors.green,
               size: 28,
             ),
-            const SizedBox(width: 12),
-            const Text('Order Placed!'),
+            SizedBox(width: 12),
+            Text('Order Placed!'),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+const Text(
+
               'Your order has been placed successfully.',
               style: TextStyle(
                 fontSize: 16,
@@ -103,7 +104,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
+const Icon(
+
                         Icons.stars_rounded,
                         color: AppConstants.favoriteColor,
                         size: 24,
@@ -113,7 +115,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+const Text(
+
                               'Beauty Points Earned',
                               style: TextStyle(
                                 fontSize: 14,
@@ -123,7 +126,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                             Text(
                               '+${cart.totalBeautyPoints} points added to your account',
-                              style: TextStyle(
+style: const TextStyle(
+
                                 fontSize: 12,
                                 color: AppConstants.textSecondary,
                               ),
@@ -137,7 +141,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               },
             ),
             const SizedBox(height: 12),
-            Text(
+const Text(
+
               'You will receive a confirmation call within 24 hours.',
               style: TextStyle(
                 fontSize: 14,
@@ -155,7 +160,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Navigator.of(context).pop(); // Close checkout screen
               Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
             },
-            child: Text(
+child: const Text(
+
               'Continue Shopping',
               style: TextStyle(
                 color: AppConstants.accentColor,
@@ -390,7 +396,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         prefixIcon: Icon(icon, color: AppConstants.accentColor),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppConstants.borderColor),
+borderSide: const BorderSide(color: AppConstants.borderColor),
+
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -398,11 +405,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppConstants.accentColor, width: 2),
+borderSide: const BorderSide(color: AppConstants.accentColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppConstants.errorColor),
+          borderSide: const BorderSide(color: AppConstants.errorColor),
+
         ),
         filled: true,
         fillColor: AppConstants.backgroundColor,
@@ -614,7 +622,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             ),
             child: _isProcessing
-                ? SizedBox(
+? const SizedBox(
+
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(

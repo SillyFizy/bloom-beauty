@@ -61,7 +61,8 @@ class CelebrityPicksSearchBar extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 25),
-            borderSide: BorderSide(
+borderSide: const BorderSide(
+
               color: AppConstants.accentColor,
               width: 2,
             ),

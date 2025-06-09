@@ -54,6 +54,7 @@ dependencies:
 
   # Icons and Fonts
   cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
 
   # UI Components
   flutter_native_splash: ^2.3.6

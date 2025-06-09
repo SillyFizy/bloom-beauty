@@ -44,7 +44,8 @@ class ProductCard extends StatelessWidget {
                   children: [
                     Container(
                       width: double.infinity,
-                      decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                         borderRadius: BorderRadius.vertical(
                           top: Radius.circular(AppConstants.borderRadius),
                         ),
@@ -67,14 +68,16 @@ class ProductCard extends StatelessWidget {
                               color: AppConstants.accentColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(30),
                             ),
-                            child: Icon(
+child: const Icon(
+
                               Icons.spa_outlined,
                               size: 30,
                               color: AppConstants.accentColor,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text(
+const Text(
+
                             'Beauty Product',
                             style: TextStyle(
                               fontSize: 12,
@@ -106,7 +109,8 @@ class ProductCard extends StatelessWidget {
                         ),
                         child: IconButton(
                           onPressed: () {},
-                          icon: Icon(
+icon: const Icon(
+
                             Icons.favorite,
                             color: AppConstants.favoriteColor,
                             size: 18,
@@ -155,7 +159,8 @@ class ProductCard extends StatelessWidget {
                       // Brand
                       Text(
                         product.brand.toUpperCase(),
-                        style: TextStyle(
+style: const TextStyle(
+
                           fontSize: 9,
                           color: AppConstants.textSecondary,
                           fontWeight: FontWeight.w600,
@@ -168,7 +173,8 @@ class ProductCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           product.name,
-                          style: TextStyle(
+style: const TextStyle(
+
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppConstants.textPrimary,
@@ -182,7 +188,8 @@ class ProductCard extends StatelessWidget {
                       // Rating
                       Row(
                         children: [
-                          Icon(
+const Icon(
+
                             Icons.star,
                             size: 12,
                             color: AppConstants.accentColor,
@@ -190,14 +197,16 @@ class ProductCard extends StatelessWidget {
                           const SizedBox(width: 3),
                           Text(
                             product.rating.toString(),
-                            style: TextStyle(
+style: const TextStyle(
+
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: AppConstants.textSecondary,
                             ),
                           ),
                           const Spacer(),
-                          Icon(
+const Icon(
+
                             Icons.add_shopping_cart_outlined,
                             size: 14,
                             color: AppConstants.accentColor,
@@ -213,7 +222,8 @@ class ProductCard extends StatelessWidget {
                           if (product.discountPrice != null) ...[
                             Text(
                               '\$${product.discountPrice!.toStringAsFixed(2)}',
-                              style: TextStyle(
+style: const TextStyle(
+
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppConstants.accentColor,
@@ -222,7 +232,8 @@ class ProductCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               '\$${product.price.toStringAsFixed(2)}',
-                              style: TextStyle(
+style: const TextStyle(
+
                                 fontSize: 11,
                                 decoration: TextDecoration.lineThrough,
                                 color: AppConstants.textSecondary,
@@ -232,7 +243,8 @@ class ProductCard extends StatelessWidget {
                           ] else ...[
                             Text(
                               '\$${product.price.toStringAsFixed(2)}',
-                              style: TextStyle(
+style: const TextStyle(
+
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppConstants.textPrimary,

@@ -424,7 +424,8 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
+const CircularProgressIndicator(
+
               valueColor: AlwaysStoppedAnimation<Color>(AppConstants.accentColor),
             ),
             const SizedBox(height: 16),
@@ -523,8 +524,9 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
               flex: 3,
               child: Container(
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+
                   color: AppConstants.backgroundColor,
                 ),
                 child: Center(
@@ -634,8 +636,9 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
               flex: 3,
               child: Container(
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+
                   color: AppConstants.backgroundColor,
                 ),
                 child: Center(

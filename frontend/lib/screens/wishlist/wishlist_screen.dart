@@ -45,7 +45,8 @@ class _WishlistScreenState extends State<WishlistScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+const Text(
+
               'Sort By',
               style: TextStyle(
                 fontSize: 18,
@@ -67,7 +68,8 @@ class _WishlistScreenState extends State<WishlistScreen> {
                 ),
               ),
               trailing: _sortOption == option
-                  ? Icon(Icons.check_circle, color: AppConstants.accentColor)
+? const Icon(Icons.check_circle, color: AppConstants.accentColor)
+
                   : null,
               onTap: () {
                 setState(() {
@@ -133,22 +135,26 @@ class _WishlistScreenState extends State<WishlistScreen> {
                           size: isSmallScreen ? 22 : 24,
                         ),
                         itemBuilder: (context) => [
-                          PopupMenuItem(
+const PopupMenuItem(
+
                             value: 'clear',
                             child: Row(
                               children: [
                                 Icon(Icons.clear_all, color: AppConstants.errorColor),
-                                const SizedBox(width: 8),
+SizedBox(width: 8),
+
                                 Text('Clear Wishlist'),
                               ],
                             ),
                           ),
-                          PopupMenuItem(
+const PopupMenuItem(
+
                             value: 'refresh',
                             child: Row(
                               children: [
                                 Icon(Icons.refresh, color: AppConstants.accentColor),
-                                const SizedBox(width: 8),
+SizedBox(width: 8),
+
                                 Text('Refresh'),
                               ],
                             ),
@@ -251,7 +257,8 @@ class _WishlistScreenState extends State<WishlistScreen> {
         },
         decoration: InputDecoration(
           hintText: 'Search wishlist...',
-          prefixIcon: Icon(Icons.search, color: AppConstants.textSecondary),
+prefixIcon: const Icon(Icons.search, color: AppConstants.textSecondary),
+
           filled: true,
           fillColor: AppConstants.backgroundColor,
           border: OutlineInputBorder(
@@ -424,7 +431,8 @@ class _WishlistScreenState extends State<WishlistScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: AppConstants.accentColor),
+const CircularProgressIndicator(color: AppConstants.accentColor),
+
           SizedBox(height: isSmallScreen ? 16 : 20),
           Text(
             'Loading your wishlist...',
@@ -563,18 +571,20 @@ class _WishlistScreenState extends State<WishlistScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppConstants.surfaceColor,
-        title: Text(
+title: const Text(
           'Clear Wishlist',
           style: TextStyle(color: AppConstants.textPrimary),
         ),
-        content: Text(
+        content: const Text(
+
           'Are you sure you want to remove all items from your wishlist?',
           style: TextStyle(color: AppConstants.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
+child: const Text(
+
               'Cancel',
               style: TextStyle(color: AppConstants.textSecondary),
             ),

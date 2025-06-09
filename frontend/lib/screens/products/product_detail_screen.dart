@@ -43,7 +43,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     
     // Initialize header animation controller
     _headerAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _headerAnimation = Tween<double>(
@@ -51,7 +51,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _headerAnimationController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeInOutCubic,
     ));
     
     // Add scroll listener for sticky header
@@ -81,8 +81,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   void _onScroll() {
-    // Calculate scroll threshold - show sticky header earlier to prevent gap
-    const threshold = 100.0; // Show sticky header after scrolling past 100px
+    // Calculate scroll threshold for smooth transition
+    const threshold = 120.0; // Show sticky header after scrolling past 120px
     
     final shouldShow = _scrollController.hasClients && _scrollController.offset > threshold;
     
@@ -197,7 +197,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   // Transparent app bar
-                  SliverAppBar(
+                  const SliverAppBar(
                     backgroundColor: Colors.transparent,
                     elevation: 0,
                     pinned: false,
@@ -212,14 +212,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                       children: [
                         _buildImageSection(isSmallScreen),
                         // Floating action buttons - always visible unless sticky header is fully shown
-                        if (!_showStickyHeader || _headerAnimation.value < 0.5)
+                        if (!_showStickyHeader || _headerAnimation.value < 0.7)
                         Positioned(
                           top: MediaQuery.of(context).padding.top + 8,
                           left: 16,
                           right: 16,
                             child: AnimatedOpacity(
-                              opacity: _showStickyHeader ? 1.0 - (_headerAnimation.value * 2).clamp(0.0, 1.0) : 1.0,
-                              duration: const Duration(milliseconds: 100),
+                              opacity: _showStickyHeader ? 1.0 - (_headerAnimation.value * 1.5).clamp(0.0, 1.0) : 1.0,
+                              duration: const Duration(milliseconds: 200),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -286,7 +286,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     animation: _headerAnimation,
                     builder: (context, child) {
                       return Transform.translate(
-                      offset: Offset(0, -80 * (1 - _headerAnimation.value)),
+                      offset: Offset(0, -100 * (1 - _headerAnimation.value)),
                         child: Opacity(
                           opacity: _headerAnimation.value,
                           child: _buildStickyHeader(isSmallScreen),
@@ -314,34 +314,52 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       width: isSmallScreen ? 44 : 52,
       height: isSmallScreen ? 44 : 52,
       decoration: BoxDecoration(
-        color: AppConstants.surfaceColor.withValues(alpha: 0.9),
+        color: AppConstants.surfaceColor.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
         border: Border.all(
-          color: AppConstants.borderColor.withValues(alpha: 0.2),
+          color: AppConstants.borderColor.withValues(alpha: 0.3),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppConstants.textSecondary.withValues(alpha: 0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.05),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
-            ),
-            child: Center(
-              child: Icon(
-                icon,
-                color: AppConstants.textPrimary,
-                size: isSmallScreen ? 20 : 24,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+            splashColor: AppConstants.primaryColor.withValues(alpha: 0.1),
+            highlightColor: AppConstants.primaryColor.withValues(alpha: 0.05),
+            child: SizedBox(
+              width: double.infinity,
+              height: double.infinity,
+              child: Center(
+                child: icon == Icons.arrow_back_ios
+                    ? Container(
+                        padding: EdgeInsets.only(left: isSmallScreen ? 2 : 3),
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          color: AppConstants.textPrimary,
+                          size: isSmallScreen ? 20 : 24,
+                        ),
+                      )
+                    : Icon(
+                        icon,
+                        color: AppConstants.textPrimary,
+                        size: isSmallScreen ? 20 : 24,
+                      ),
               ),
             ),
           ),
@@ -357,18 +375,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         color: AppConstants.surfaceColor.withValues(alpha: 0.95),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppConstants.textSecondary.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: AppConstants.textSecondary.withValues(alpha: 0.05),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
       child: Stack(
         children: [
-          // Backdrop filter effect
+          // Enhanced backdrop effect
           Container(
             decoration: BoxDecoration(
-              color: AppConstants.surfaceColor.withValues(alpha: 0.85),
+              color: AppConstants.surfaceColor.withValues(alpha: 0.90),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppConstants.borderColor.withValues(alpha: 0.1),
+                  width: 0.5,
+                ),
+              ),
             ),
           ),
           
@@ -478,16 +507,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
-            ),
+          child: SizedBox(
+            width: double.infinity,
+            height: double.infinity,
             child: Center(
-              child: Icon(
-                icon,
-                color: AppConstants.textPrimary,
-                size: isSmallScreen ? 20 : 24,
-              ),
+              child: icon == Icons.arrow_back_ios
+                  ? Container(
+                      padding: EdgeInsets.only(left: isSmallScreen ? 2 : 3),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        color: AppConstants.textPrimary,
+                        size: isSmallScreen ? 20 : 24,
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      color: AppConstants.textPrimary,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
             ),
           ),
         ),
@@ -783,7 +820,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 backgroundImage: NetworkImage(endorsement.celebrityImage),
                 onBackgroundImageError: (exception, stackTrace) {},
                 child: endorsement.celebrityImage.isEmpty ? 
-                  Icon(
+                  const Icon(
                     Icons.star_rounded,
                     color: AppConstants.favoriteColor,
                     size: 24,
@@ -1337,7 +1374,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     Container(
                       width: isSmallScreen ? 6 : 8,
                       height: isSmallScreen ? 6 : 8,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppConstants.accentColor,
                         shape: BoxShape.circle,
                       ),
@@ -1595,7 +1632,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       ),
       decoration: BoxDecoration(
         color: AppConstants.surfaceColor,
-        border: Border(
+        border: const Border(
           top: BorderSide(
             color: AppConstants.borderColor,
             width: 1,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../widgets/product/celebrity_pick_card.dart';
@@ -197,9 +198,9 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             'Bloom Beauty',
-            style: TextStyle(
-              fontSize: isSmallScreen ? 20 : 24,
-              fontWeight: FontWeight.w600,
+            style: GoogleFonts.corinthia(
+              fontSize: isSmallScreen ? 42 : 50,
+              fontWeight: FontWeight.w700,
               color: AppConstants.accentColor,
             ),
           ),
@@ -675,8 +676,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Container(
                     width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(
+                    decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
                         top: Radius.circular(12),
                       ),
                       color: AppConstants.backgroundColor,
@@ -969,8 +970,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Container(
                     width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(
+                    decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
                         top: Radius.circular(12),
                       ),
                       color: AppConstants.backgroundColor,
@@ -1121,7 +1122,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
+            const CircularProgressIndicator(
               color: AppConstants.accentColor,
               strokeWidth: 3,
             ),

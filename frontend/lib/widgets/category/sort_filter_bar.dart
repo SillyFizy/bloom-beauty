@@ -159,7 +159,8 @@ class SortFilterBar extends StatelessWidget {
               Container(
                 width: isSmallScreen ? 6 : 8,
                 height: isSmallScreen ? 6 : 8,
-                decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                   color: AppConstants.accentColor,
                   shape: BoxShape.circle,
                 ),

@@ -582,7 +582,8 @@ class _SearchScreenState extends State<SearchScreen> {
           SliverToBoxAdapter(
             child: Container(
               padding: const EdgeInsets.all(16),
-              child: Center(
+child: const Center(
+
                 child: CircularProgressIndicator(
                   color: AppConstants.accentColor,
                 ),
@@ -603,7 +604,8 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+const CircularProgressIndicator(
+
             color: AppConstants.accentColor,
           ),
           SizedBox(height: isSmallScreen ? 16 : 20),
@@ -727,7 +729,8 @@ class _SearchScreenState extends State<SearchScreen> {
                     context.read<SearchProvider>().clearSearch();
                   },
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: AppConstants.accentColor),
+side: const BorderSide(color: AppConstants.accentColor),
+
                     padding: EdgeInsets.symmetric(
                       horizontal: isSmallScreen ? 20 : 24,
                       vertical: isSmallScreen ? 10 : 12,

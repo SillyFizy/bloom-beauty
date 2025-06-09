@@ -266,7 +266,8 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                     Flexible(
                                       child: Text(
                                         widget.product.name,
-                                        style: TextStyle(
+style: const TextStyle(
+
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
                                           color: AppConstants.textPrimary,
@@ -310,7 +311,8 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
+const Icon(
+
                                       Icons.star_rounded,
                                       size: 10,
                                       color: Colors.white,
@@ -397,7 +399,8 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                                   fit: BoxFit.cover,
                                                   errorBuilder: (context, error, stackTrace) {
                                                     return Container(
-                                                      decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                                                         gradient: LinearGradient(
                                                           colors: [
                                                             AppConstants.accentColor,
@@ -450,7 +453,8 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                                   },
                                                 )
                                               : Container(
-                                                  decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                                                     gradient: LinearGradient(
                                                       colors: [
                                                         AppConstants.accentColor,
