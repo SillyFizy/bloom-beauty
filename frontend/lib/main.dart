@@ -436,55 +436,84 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
         switchOutCurve: Curves.easeInOut,
         child: widget.child,
       ),
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: AppConstants.surfaceColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
+      bottomNavigationBar: LayoutBuilder(
+        builder: (context, constraints) {
+          // Responsive design breakpoints
+          final screenWidth = MediaQuery.of(context).size.width;
+          final isSmallScreen = screenWidth < 600;
+          final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
+          final isLargeScreen = screenWidth >= 900;
+          
+          // Responsive sizing
+          final navHeight = isSmallScreen ? 80.0 : (isMediumScreen ? 90.0 : 100.0);
+          final maxNavWidth = isLargeScreen ? 800.0 : double.infinity;
+          
+          return Container(
+            height: navHeight,
+            decoration: BoxDecoration(
+              color: AppConstants.surfaceColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home,
-                label: 'Home',
-                index: 0,
+            child: Center(
+              child: Container(
+                constraints: BoxConstraints(maxWidth: maxNavWidth),
+                child: SafeArea(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildNavItem(
+                        icon: Icons.home_outlined,
+                        activeIcon: Icons.home,
+                        label: 'Home',
+                        index: 0,
+                        isSmallScreen: isSmallScreen,
+                        isMediumScreen: isMediumScreen,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.grid_view_outlined,
+                        activeIcon: Icons.grid_view,
+                        label: 'Categories',
+                        index: 1,
+                        isSmallScreen: isSmallScreen,
+                        isMediumScreen: isMediumScreen,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.search_outlined,
+                        activeIcon: Icons.search,
+                        label: 'Search',
+                        index: 2,
+                        isSmallScreen: isSmallScreen,
+                        isMediumScreen: isMediumScreen,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.shopping_cart_outlined,
+                        activeIcon: Icons.shopping_cart,
+                        label: 'Cart',
+                        index: 3,
+                        isSmallScreen: isSmallScreen,
+                        isMediumScreen: isMediumScreen,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.person_outline,
+                        activeIcon: Icons.person,
+                        label: 'Profile',
+                        index: 4,
+                        isSmallScreen: isSmallScreen,
+                        isMediumScreen: isMediumScreen,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-                _buildNavItem(
-                icon: Icons.grid_view_outlined,
-                activeIcon: Icons.grid_view,
-                label: 'Categories',
-                index: 1,
-              ),
-              _buildNavItem(
-                icon: Icons.search_outlined,
-                activeIcon: Icons.search,
-                label: 'Search',
-                index: 2,
-              ),
-              _buildNavItem(
-                icon: Icons.shopping_cart_outlined,
-                activeIcon: Icons.shopping_cart,
-                label: 'Cart',
-                index: 3,
-              ),
-              _buildNavItem(
-                icon: Icons.person_outline,
-                activeIcon: Icons.person,
-                label: 'Profile',
-                index: 4,
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -494,8 +523,33 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
     required IconData activeIcon,
     required String label,
     required int index,
+    required bool isSmallScreen,
+    required bool isMediumScreen,
   }) {
     final bool isSelected = _selectedIndex == index;
+    
+    // Responsive sizing with proper height management
+    final iconSize = isSelected 
+        ? (isSmallScreen ? 24.0 : (isMediumScreen ? 26.0 : 28.0))
+        : (isSmallScreen ? 22.0 : (isMediumScreen ? 24.0 : 26.0));
+    
+    final fontSize = isSelected 
+        ? (isSmallScreen ? 12.0 : (isMediumScreen ? 13.0 : 14.0))
+        : (isSmallScreen ? 11.0 : (isMediumScreen ? 12.0 : 13.0));
+    
+    // Reduced padding to prevent overflow
+    final verticalPadding = isSmallScreen ? 2.0 : (isMediumScreen ? 3.0 : 4.0);
+    final borderRadius = isSmallScreen ? 12.0 : (isMediumScreen ? 14.0 : 16.0);
+    
+    // Optimized spacing to fit within navigation height
+    final spacingHeight = isSmallScreen ? 1.0 : (isMediumScreen ? 1.5 : 2.0);
+    final indicatorWidth = isSelected ? (isSmallScreen ? 20.0 : (isMediumScreen ? 24.0 : 28.0)) : 0.0;
+    final indicatorHeight = 2.0; // Fixed height for consistency
+    final indicatorTopMargin = isSmallScreen ? 1.0 : (isMediumScreen ? 1.5 : 2.0);
+    
+    // Badge sizing for cart
+    final badgeMinSize = isSmallScreen ? 16.0 : (isMediumScreen ? 18.0 : 20.0);
+    final badgeFontSize = isSmallScreen ? 10.0 : (isMediumScreen ? 11.0 : 12.0);
     
     return Expanded(
       child: GestureDetector(
@@ -503,9 +557,9 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: EdgeInsets.symmetric(vertical: verticalPadding),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(borderRadius),
             color: isSelected 
                 ? AppConstants.accentColor.withValues(alpha: 0.1)
                 : Colors.transparent,
@@ -514,95 +568,106 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Special handling for cart icon to show badge
-              if (index == 3) 
-                Selector<CartProvider, int>(
-                  selector: (context, cart) => cart.itemCount,
-                  builder: (context, itemCount, child) {
-                    return Hero(
-                      tag: 'cart_icon',
-                      child: Stack(
-                        children: [
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: Icon(
+              // Icon section with flexible sizing
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Special handling for cart icon to show badge
+                    if (index == 3) 
+                      Selector<CartProvider, int>(
+                        selector: (context, cart) => cart.itemCount,
+                        builder: (context, itemCount, child) {
+                          return Hero(
+                            tag: 'cart_icon',
+                            child: Stack(
+                              children: [
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 200),
+                                  child: Icon(
+                                    isSelected ? activeIcon : icon,
+                                    key: ValueKey('cart_icon_$isSelected'),
+                                    color: isSelected 
+                                        ? AppConstants.accentColor
+                                        : AppConstants.textSecondary,
+                                    size: iconSize,
+                                  ),
+                                ),
+                                if (itemCount > 0)
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: AnimatedScale(
+                                      scale: isSelected ? 1.1 : 1.0,
+                                      duration: const Duration(milliseconds: 200),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: AppConstants.favoriteColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        constraints: BoxConstraints(
+                                          minWidth: badgeMinSize,
+                                          minHeight: badgeMinSize,
+                                        ),
+                                        child: Text(
+                                          itemCount > 99 ? '99+' : itemCount.toString(),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: badgeFontSize,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      )
+                    else
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
                           isSelected ? activeIcon : icon,
-                              key: ValueKey('cart_icon_$isSelected'),
+                          key: ValueKey('${label}_icon_$isSelected'),
                           color: isSelected 
                               ? AppConstants.accentColor
                               : AppConstants.textSecondary,
-                              size: isSelected ? 24 : 22,
-                            ),
+                          size: iconSize,
                         ),
-                        if (itemCount > 0)
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                              child: AnimatedScale(
-                                scale: isSelected ? 1.1 : 1.0,
-                                duration: const Duration(milliseconds: 200),
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: AppConstants.favoriteColor,
-                                shape: BoxShape.circle,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
-                              child: Text(
-                                itemCount > 99 ? '99+' : itemCount.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                                  ),
-                              ),
-                            ),
-                          ),
-                      ],
                       ),
-                    );
-                  },
-                )
-              else
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: Icon(
-                  isSelected ? activeIcon : icon,
-                    key: ValueKey('${label}_icon_$isSelected'),
-                    color: isSelected 
-                        ? AppConstants.accentColor
-                        : AppConstants.textSecondary,
-                    size: isSelected ? 24 : 22,
-                  ),
-                ),
-              const SizedBox(height: 2),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 200),
-                style: TextStyle(
-                  color: isSelected 
-                      ? AppConstants.accentColor
-                      : AppConstants.textSecondary,
-                  fontSize: isSelected ? 12 : 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                ),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                    SizedBox(height: spacingHeight),
+                    // Text with constrained height
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
+                      style: TextStyle(
+                        color: isSelected 
+                            ? AppConstants.accentColor
+                            : AppConstants.textSecondary,
+                        fontSize: fontSize,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        height: 1.0, // Constrain line height
+                      ),
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              // Active indicator
+              // Active indicator with controlled spacing
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
-                height: 2,
-                width: isSelected ? 20 : 0,
-                margin: const EdgeInsets.only(top: 2),
+                height: indicatorHeight,
+                width: indicatorWidth,
+                margin: EdgeInsets.only(top: indicatorTopMargin),
                 decoration: BoxDecoration(
                   color: AppConstants.accentColor,
                   borderRadius: BorderRadius.circular(1),

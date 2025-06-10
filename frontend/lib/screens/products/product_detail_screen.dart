@@ -206,20 +206,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     toolbarHeight: 0, // Hide the default toolbar
                   ),
                   
-                  // Image section with floating buttons
+                  // Image section with scrollable buttons
                   SliverToBoxAdapter(
                     child: Stack(
                       children: [
                         _buildImageSection(isSmallScreen),
-                        // Floating action buttons - always visible unless sticky header is fully shown
-                        if (!_showStickyHeader || _headerAnimation.value < 0.7)
+                        // Action buttons that scroll with content
                         Positioned(
                           top: MediaQuery.of(context).padding.top + 8,
                           left: 16,
                           right: 16,
-                            child: AnimatedOpacity(
-                              opacity: _showStickyHeader ? 1.0 - (_headerAnimation.value * 1.5).clamp(0.0, 1.0) : 1.0,
-                              duration: const Duration(milliseconds: 200),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -230,8 +226,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               ),
                               Row(
                                 children: [
-                                      FloatingWishlistButton(
-                                        product: widget.product,
+                                  FloatingWishlistButton(
+                                    product: widget.product,
                                   ),
                                   SizedBox(width: isSmallScreen ? 8 : 12),
                                   _buildTransparentActionButton(
@@ -242,7 +238,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 ],
                               ),
                             ],
-                              ),
                           ),
                         ),
                       ],
@@ -276,6 +271,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   ),
                 ],
               ),
+              
+
               
               // Sticky header - always positioned correctly at top
                 Positioned(
@@ -535,7 +532,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   Widget _buildImageSection(bool isSmallScreen) {
     final screenHeight = MediaQuery.of(context).size.height;
     final imageHeight = isSmallScreen ? screenHeight * 0.4 : screenHeight * 0.45;
-    final topPadding = MediaQuery.of(context).padding.top + (isSmallScreen ? 64 : 72);
     
     return Container(
       height: imageHeight,
@@ -549,8 +545,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       ),
       child: Column(
         children: [
-          // Add top spacing for floating buttons
-          SizedBox(height: topPadding),
+          // Minimal top spacing to account for floating buttons
+          SizedBox(height: MediaQuery.of(context).padding.top + (isSmallScreen ? 60 : 70)),
           
           // Main Image with PageView
           Expanded(
