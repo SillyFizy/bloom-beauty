@@ -34,7 +34,7 @@ class CategoryProvider with ChangeNotifier {
   List<category_model.Category> _categories = [];
   
   bool _isLoading = false;
-  bool _isLoadingProducts = false;
+  final bool _isLoadingProducts = false;
   String? _error;
   
   // Filter and sort state
@@ -85,6 +85,9 @@ class CategoryProvider with ChangeNotifier {
         _loadAllProducts(),
       ]);
       
+      // Reset filters to ensure all products show initially
+      _resetFiltersToDefault();
+      
       // Apply initial filtering
       _applyFiltersAndSort();
       
@@ -92,6 +95,25 @@ class CategoryProvider with ChangeNotifier {
     } catch (e) {
       _setError('Failed to initialize categories: $e');
       _setLoading(false);
+    }
+  }
+
+  /// Reset filters to default state
+  void _resetFiltersToDefault() {
+    _selectedCategoryId = null;
+    _selectedSortOption = SortOption.newest;
+    _selectedFilters = {FilterOption.all};
+    _minRating = 0;
+    _searchQuery = '';
+    
+    // Set price range based on actual product prices if products are loaded
+    if (_allProducts.isNotEmpty) {
+      final priceRange = availablePriceRange;
+      _minPrice = priceRange['min']!;
+      _maxPrice = priceRange['max']! * 1.1; // Add 10% buffer
+    } else {
+      _minPrice = 0;
+      _maxPrice = double.infinity; // Allow all prices initially
     }
   }
 
@@ -103,6 +125,9 @@ class CategoryProvider with ChangeNotifier {
   /// Load all products
   Future<void> _loadAllProducts() async {
     _allProducts = await _productService.getAllProducts();
+    
+    // Initialize filtered products to show all products initially
+    _filteredProducts = List.from(_allProducts);
   }
 
   /// Select category filter
@@ -169,13 +194,7 @@ class CategoryProvider with ChangeNotifier {
 
   /// Clear all filters
   void clearFilters() {
-    _selectedCategoryId = null;
-    _selectedSortOption = SortOption.newest;
-    _selectedFilters = {FilterOption.all};
-    _minPrice = 0;
-    _maxPrice = 1000000;
-    _minRating = 0;
-    _searchQuery = '';
+    _resetFiltersToDefault();
     _applyFiltersAndSort();
     notifyListeners();
   }
@@ -299,11 +318,6 @@ class CategoryProvider with ChangeNotifier {
   /// Private helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;
-    if (loading) _clearError();
-  }
-
-  void _setLoadingProducts(bool loading) {
-    _isLoadingProducts = loading;
     if (loading) _clearError();
   }
 

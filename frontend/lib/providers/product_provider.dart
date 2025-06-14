@@ -127,7 +127,7 @@ class ProductProvider with ChangeNotifier {
       _productStatistics = await _productService.getProductStatistics();
       notifyListeners();
     } catch (e) {
-      print('Failed to load product statistics: $e');
+      debugPrint('Failed to load product statistics: $e');
     }
   }
 
@@ -259,7 +259,7 @@ class ProductProvider with ChangeNotifier {
     try {
       return await _productService.getRecommendedProducts(productId);
     } catch (e) {
-      print('Failed to get recommendations: $e');
+      debugPrint('Failed to get recommendations: $e');
       return [];
     }
   }
@@ -320,7 +320,7 @@ class ProductProvider with ChangeNotifier {
     try {
       await _productService.addToRecentlyViewed(product);
     } catch (e) {
-      print('Failed to add to recently viewed: $e');
+      debugPrint('Failed to add to recently viewed: $e');
     }
   }
 
@@ -329,7 +329,7 @@ class ProductProvider with ChangeNotifier {
     try {
       return await _productService.getRecentlyViewedProducts();
     } catch (e) {
-      print('Failed to get recently viewed products: $e');
+      debugPrint('Failed to get recently viewed products: $e');
       return [];
     }
   }

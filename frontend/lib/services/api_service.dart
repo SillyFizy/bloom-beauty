@@ -17,12 +17,34 @@ class ApiService {
     'Accept': 'application/json',
   };
 
+  /// Authentication token storage
+  static String? _authToken;
+  
+  /// Set authentication token for API requests
+  static void setAuthToken(String token) {
+    _authToken = token;
+  }
+  
+  /// Clear authentication token
+  static void clearAuthToken() {
+    _authToken = null;
+  }
+  
+  /// Get headers with authentication if available
+  static Map<String, String> get _headersWithAuth {
+    final headers = Map<String, String>.from(_headers);
+    if (_authToken != null) {
+      headers['Authorization'] = 'Bearer $_authToken';
+    }
+    return headers;
+  }
+
   /// Generic GET request with error handling and retries
   static Future<Map<String, dynamic>> get(String endpoint, {int retryCount = 0}) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl$endpoint'),
-        headers: _headers,
+        headers: _headersWithAuth,
       ).timeout(requestTimeout);
       
       return _handleResponse(response);
@@ -47,7 +69,7 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl$endpoint'),
-        headers: _headers,
+        headers: _headersWithAuth,
         body: json.encode(data),
       ).timeout(requestTimeout);
       
@@ -201,8 +223,96 @@ class ApiService {
     }
   }
 
-  // Health check endpoint
-  static Future<bool> healthCheck() async {
+  // Wishlist API endpoints
+  static Future<Map<String, dynamic>> addToWishlist(String productId) async {
+    try {
+      return await post('/wishlist/add/', {
+        'product_id': productId,
+      });
+    } catch (e) {
+      throw ApiException('Failed to add to wishlist: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> removeFromWishlist(String productId) async {
+    try {
+      return await post('/wishlist/remove/', {
+        'product_id': productId,
+      });
+    } catch (e) {
+      throw ApiException('Failed to remove from wishlist: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getWishlist() async {
+    try {
+      return await get('/wishlist/');
+    } catch (e) {
+      throw ApiException('Failed to load wishlist: $e');
+    }
+  }
+
+  // Review API endpoints
+  static Future<Map<String, dynamic>> submitReview(String productId, Map<String, dynamic> reviewData) async {
+    try {
+      return await post('/products/$productId/reviews/', reviewData);
+    } catch (e) {
+      throw ApiException('Failed to submit review: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getProductReviews(String productId) async {
+    try {
+      final response = await get('/products/$productId/reviews/');
+      final List<dynamic> results = response['results'] ?? response['data'] ?? [];
+      return results.cast<Map<String, dynamic>>();
+    } catch (e) {
+      throw ApiException('Failed to load reviews: $e');
+    }
+  }
+
+  // Category API endpoints
+  static Future<List<Map<String, dynamic>>> getCategories() async {
+    try {
+      final response = await get('/categories/');
+      final List<dynamic> results = response['results'] ?? response['data'] ?? [];
+      return results.cast<Map<String, dynamic>>();
+    } catch (e) {
+      throw ApiException('Failed to load categories: $e');
+    }
+  }
+
+  // Authentication endpoints
+  static Future<Map<String, dynamic>> login(String email, String password) async {
+    try {
+      return await post('/auth/login/', {
+        'email': email,
+        'password': password,
+      });
+    } catch (e) {
+      throw ApiException('Failed to login: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> register(Map<String, String> userData) async {
+    try {
+      return await post('/auth/register/', userData);
+    } catch (e) {
+      throw ApiException('Failed to register: $e');
+    }
+  }
+
+  static Future<void> logout() async {
+    try {
+      await post('/auth/logout/', {});
+      clearAuthToken();
+    } catch (e) {
+      throw ApiException('Failed to logout: $e');
+    }
+  }
+
+  // Network connectivity check
+  static Future<bool> isConnected() async {
     try {
       await get('/health/');
       return true;
@@ -210,13 +320,58 @@ class ApiService {
       return false;
     }
   }
+
+  // Batch operations for performance
+  static Future<List<Product>> getProductsBatch(List<String> productIds) async {
+    try {
+      final response = await post('/products/batch/', {
+        'product_ids': productIds,
+      });
+      final List<dynamic> results = response['results'] ?? response['data'] ?? [];
+      return results.map((json) => Product.fromJson(json)).toList();
+    } catch (e) {
+      throw ApiException('Failed to load products batch: $e');
+    }
+  }
 }
 
 /// Custom exception for API errors
 class ApiException implements Exception {
   final String message;
-  ApiException(this.message);
-  
+  final int? statusCode;
+
+  ApiException(this.message, [this.statusCode]);
+
   @override
-  String toString() => 'ApiException: $message';
+  String toString() => 'ApiException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
+}
+
+/// Network state management
+class NetworkManager {
+  static bool _isOnline = true;
+  static final List<VoidCallback> _listeners = [];
+
+  static bool get isOnline => _isOnline;
+
+  static void addListener(VoidCallback listener) {
+    _listeners.add(listener);
+  }
+
+  static void removeListener(VoidCallback listener) {
+    _listeners.remove(listener);
+  }
+
+  static void setNetworkState(bool isOnline) {
+    if (_isOnline != isOnline) {
+      _isOnline = isOnline;
+      for (final listener in _listeners) {
+        listener();
+      }
+    }
+  }
+
+  static Future<void> checkConnectivity() async {
+    final isConnected = await ApiService.isConnected();
+    setNetworkState(isConnected);
+  }
 }

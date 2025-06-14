@@ -250,7 +250,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
               }
 
               return Container(
-                decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
@@ -258,7 +259,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                       AppConstants.backgroundColor,
                       AppConstants.surfaceColor,
                     ],
-                    stops: const [0.0, 0.3],
+stops: [0.0, 0.3],
+
                   ),
                 ),
                 child: CustomScrollView(
@@ -347,7 +349,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
+const CircularProgressIndicator(
+
               color: AppConstants.accentColor,
             ),
             SizedBox(height: isSmallScreen ? 16 : 20),
@@ -699,7 +702,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                 width: 1,
               ),
             ),
-            child: Text(
+child: const Text(
+
               'Beauty Influencer',
               style: TextStyle(
                 fontSize: 14,
@@ -858,7 +862,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
               margin: const EdgeInsets.only(bottom: 8),
               child: _buildRoutineProductCard(context, product, index + 1, isSmallScreen),
             );
-          }).toList()
+          })
         else
           _buildEmptyRoutineCard(isSmallScreen),
       ],
@@ -892,7 +896,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
               Container(
                 width: isSmallScreen ? 22 : 28,
                 height: isSmallScreen ? 22 : 28,
-                decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                   color: AppConstants.accentColor,
                   shape: BoxShape.circle,
                 ),
@@ -1357,169 +1362,61 @@ class _CelebrityScreenState extends State<CelebrityScreen>
       margin: const EdgeInsets.fromLTRB(0, 30, 0, 20),
       child: Column(
         children: [
-          // Header section
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(isSmallScreen ? 20 : 24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppConstants.accentColor.withOpacity(0.1),
-                  AppConstants.favoriteColor.withOpacity(0.08),
-                ],
-              ),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-              ),
-              border: Border.all(
-                color: AppConstants.accentColor.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.share_rounded,
-                  color: AppConstants.accentColor,
-                  size: isSmallScreen ? 24 : 28,
-                ),
-                const SizedBox(height: 12),
+          // Simple header section
                 Text(
-                  'Connect with ${widget.celebrityName}',
+            'Follow on Social Media',
                   style: TextStyle(
                     fontSize: isSmallScreen ? 18 : 20,
-                    fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
                     color: AppConstants.textPrimary,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Follow for the latest beauty tips and updates',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 13 : 14,
-                    color: AppConstants.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
           
-          // Social media buttons section
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(isSmallScreen ? 20 : 24),
-            decoration: BoxDecoration(
-              color: AppConstants.backgroundColor,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-              border: Border(
-                left: BorderSide(
-                  color: AppConstants.accentColor.withOpacity(0.2),
-                  width: 1,
-                ),
-                right: BorderSide(
-                  color: AppConstants.accentColor.withOpacity(0.2),
-                  width: 1,
-                ),
-                bottom: BorderSide(
-                  color: AppConstants.accentColor.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppConstants.textSecondary.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: isSmallScreen ? 12 : 16,
-              runSpacing: isSmallScreen ? 12 : 16,
+          const SizedBox(height: 20),
+          
+          // Clean social media icons row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
               children: availableLinks.entries.map((entry) {
-                return _buildResponsiveSocialButton(
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildCleanSocialButton(
                   entry.key,
                   entry.value['icon'],
                   entry.value['color'],
                   entry.value['bgColor'],
-                  entry.value['label'],
                   entry.value['url'],
                   isSmallScreen,
+                ),
                 );
               }).toList(),
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildResponsiveSocialButton(
+  Widget _buildCleanSocialButton(
     String platform, 
     IconData icon, 
     Color iconColor, 
     Color bgColor, 
-    String label, 
     String url,
     bool isSmallScreen,
   ) {
     return GestureDetector(
       onTap: () => _launchSocialMedia(url),
       child: Container(
-        width: isSmallScreen ? 100 : 120,
-        padding: EdgeInsets.symmetric(
-          vertical: isSmallScreen ? 12 : 16, 
-          horizontal: isSmallScreen ? 8 : 12
-        ),
-        decoration: BoxDecoration(
-          color: AppConstants.surfaceColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: platform == 'snapchat' 
-                ? Colors.black.withOpacity(0.3)
-                : bgColor.withOpacity(0.3),
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: platform == 'snapchat'
-                  ? Colors.black.withOpacity(0.15)
-                  : bgColor.withOpacity(0.15),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
-            ),
-            BoxShadow(
-              color: AppConstants.textSecondary.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon container
-            Container(
-              width: isSmallScreen ? 40 : 52,
-              height: isSmallScreen ? 40 : 52,
+        width: isSmallScreen ? 48 : 56,
+        height: isSmallScreen ? 48 : 56,
               decoration: BoxDecoration(
                 color: bgColor,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: platform == 'snapchat'
-                        ? Colors.black.withOpacity(0.4)
-                        : bgColor.withOpacity(0.4),
-                    blurRadius: 12,
+              color: bgColor.withOpacity(0.3),
+              blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -1527,46 +1424,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
               child: Icon(
                 icon,
                 color: platform == 'snapchat' ? Colors.black : Colors.white,
-                size: isSmallScreen ? 18 : 24,
-              ),
-            ),
-            
-            const SizedBox(height: 12),
-            
-            // Platform label
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: isSmallScreen ? 11 : 13,
-                fontWeight: FontWeight.w600,
-                color: AppConstants.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            
-            const SizedBox(height: 4),
-            
-            // Follow indicator
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: platform == 'snapchat' 
-                    ? Colors.black.withOpacity(0.1)
-                    : bgColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Follow',
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 9 : 10,
-                  color: platform == 'snapchat' 
-                      ? Colors.black87
-                      : bgColor.withOpacity(0.8),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
+          size: isSmallScreen ? 24 : 28,
         ),
       ),
     );

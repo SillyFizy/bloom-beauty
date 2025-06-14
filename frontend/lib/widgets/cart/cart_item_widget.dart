@@ -9,22 +9,24 @@ class CartItemWidget extends StatelessWidget {
   final double price;
   final int quantity;
   final String? variant;
-  final VoidCallback? onIncrement;
-  final VoidCallback? onDecrement;
-  final VoidCallback? onRemove;
+  final int beautyPoints;
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
+  final VoidCallback onRemove;
 
   const CartItemWidget({
-    Key? key,
+    super.key,
     required this.imageUrl,
     required this.name,
     required this.brand,
     required this.price,
     required this.quantity,
     this.variant,
-    this.onIncrement,
-    this.onDecrement,
-    this.onRemove,
-  }) : super(key: key);
+    required this.beautyPoints,
+    required this.onIncrement,
+    required this.onDecrement,
+    required this.onRemove,
+  });
 
   String _formatPrice(double price) {
     final formatter = NumberFormat('#,###');
@@ -129,6 +131,30 @@ class CartItemWidget extends StatelessWidget {
                         ),
                       ],
                       
+                      // Beauty Points (if exists)
+                      if (beautyPoints > 0) ...[
+                        SizedBox(height: isSmallScreen ? 2 : 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.stars_rounded,
+                              color: AppConstants.favoriteColor,
+                              size: isSmallScreen ? 12 : 14,
+                            ),
+                            SizedBox(width: isSmallScreen ? 3 : 4),
+                            Text(
+                              '+${beautyPoints * quantity} points',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 9 : 11,
+                                color: AppConstants.favoriteColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      
                       SizedBox(height: isSmallScreen ? 4 : 8),
                       
                       // Price Info
@@ -142,7 +168,8 @@ class CartItemWidget extends StatelessWidget {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 '${_formatPrice(price)} × $quantity',
-                                style: TextStyle(
+style: const TextStyle(
+
                                   fontSize: 11,
                                   color: AppConstants.textSecondary,
                                   fontWeight: FontWeight.w500,
@@ -156,7 +183,7 @@ class CartItemWidget extends StatelessWidget {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 _formatPrice(price * quantity),
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                   color: AppConstants.accentColor,
@@ -177,7 +204,7 @@ class CartItemWidget extends StatelessWidget {
                                 alignment: Alignment.centerLeft,
                                 child: Text(
                                   _formatPrice(price),
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: AppConstants.textSecondary,
                                     fontWeight: FontWeight.w500,
@@ -189,7 +216,7 @@ class CartItemWidget extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               '× $quantity',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: AppConstants.textSecondary,
                               ),
@@ -203,7 +230,7 @@ class CartItemWidget extends StatelessWidget {
                                 alignment: Alignment.centerRight,
                                 child: Text(
                                   _formatPrice(price * quantity),
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: AppConstants.accentColor,

@@ -1,205 +1,177 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_constants.dart';
 
-enum ButtonVariant { primary, secondary, outline, text }
+enum ButtonType {
+  primary,
+  secondary,
+  outline,
+  text,
+}
 
 class CustomButton extends StatefulWidget {
   final String text;
   final VoidCallback? onPressed;
-  final ButtonVariant variant;
   final bool isLoading;
-  final bool isExpanded;
-  final IconData? icon;
-  final Color? color;
+  final bool isEnabled;
+  final Color? backgroundColor;
+  final Color? textColor;
+  final double? width;
+  final double? height;
   final EdgeInsetsGeometry? padding;
   final double? borderRadius;
+  final ButtonType type;
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
     this.onPressed,
-    this.variant = ButtonVariant.primary,
     this.isLoading = false,
-    this.isExpanded = true,
-    this.icon,
-    this.color,
+    this.isEnabled = true,
+    this.backgroundColor,
+    this.textColor,
+    this.width,
+    this.height,
     this.padding,
     this.borderRadius,
-  }) : super(key: key);
+    this.type = ButtonType.primary,
+  });
 
   @override
   State<CustomButton> createState() => _CustomButtonState();
 }
 
-class _CustomButtonState extends State<CustomButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
+class _CustomButtonState extends State<CustomButton> {
+  bool _isPressed = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+  void _onTapDown(TapDownDetails details) {
+    if (widget.isEnabled && !widget.isLoading) {
+      setState(() {
+        _isPressed = true;
+      });
+    }
   }
 
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
+  void _onTapUp(TapUpDetails details) {
+    setState(() {
+      _isPressed = false;
+    });
   }
 
-  Color get _primaryColor => widget.color ?? AppConstants.accentColor;
+  void _onTapCancel() {
+    setState(() {
+      _isPressed = false;
+    });
+  }
+
+  Color get _primaryColor => widget.backgroundColor ?? AppConstants.accentColor;
 
   @override
   Widget build(BuildContext context) {
     Widget button = _buildButton();
 
-    if (widget.isExpanded) {
-      button = SizedBox(width: double.infinity, child: button);
+    if (widget.width != null || widget.height != null) {
+      button = SizedBox(
+        width: widget.width,
+        height: widget.height,
+        child: button,
+      );
     }
 
-    return AnimatedBuilder(
-      animation: _scaleAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: button,
-        );
-      },
+    return GestureDetector(
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      onTap: widget.isEnabled && !widget.isLoading ? widget.onPressed : null,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: button,
+      ),
     );
   }
 
   Widget _buildButton() {
-    switch (widget.variant) {
-      case ButtonVariant.primary:
+    switch (widget.type) {
+      case ButtonType.primary:
         return _buildPrimaryButton();
-      case ButtonVariant.secondary:
+      case ButtonType.secondary:
         return _buildSecondaryButton();
-      case ButtonVariant.outline:
+      case ButtonType.outline:
         return _buildOutlineButton();
-      case ButtonVariant.text:
+      case ButtonType.text:
         return _buildTextButton();
     }
   }
 
   Widget _buildPrimaryButton() {
+    final backgroundColor = widget.isEnabled
+        ? _primaryColor
+        : AppConstants.textSecondary.withOpacity(0.3);
+    final textColor = widget.textColor ?? Colors.white;
+
     return Container(
+      padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-        gradient: LinearGradient(
-          colors: [
-            _primaryColor,
-            _primaryColor.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryColor.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(widget.borderRadius ?? 8),
+        boxShadow: widget.isEnabled
+            ? [
+                BoxShadow(
+                  color: _primaryColor.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.isLoading ? null : widget.onPressed,
-          onTapDown: widget.isLoading ? null : (_) => _animationController.forward(),
-          onTapUp: widget.isLoading ? null : (_) => _animationController.reverse(),
-          onTapCancel: widget.isLoading ? null : () => _animationController.reverse(),
-          borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-          child: Container(
-            padding: widget.padding ??
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            child: _buildButtonContent(Colors.white),
-          ),
-        ),
-      ),
+      child: _buildButtonContent(textColor),
     );
   }
 
   Widget _buildSecondaryButton() {
+    final backgroundColor = widget.isEnabled
+        ? AppConstants.surfaceColor
+        : AppConstants.textSecondary.withOpacity(0.1);
+    final textColor = widget.textColor ?? AppConstants.textPrimary;
+
     return Container(
+      padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-        color: _primaryColor.withOpacity(0.1),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(widget.borderRadius ?? 8),
         border: Border.all(
-          color: _primaryColor.withOpacity(0.2),
+          color: AppConstants.borderColor,
           width: 1,
         ),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.isLoading ? null : widget.onPressed,
-          onTapDown: widget.isLoading ? null : (_) => _animationController.forward(),
-          onTapUp: widget.isLoading ? null : (_) => _animationController.reverse(),
-          onTapCancel: widget.isLoading ? null : () => _animationController.reverse(),
-          borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-          child: Container(
-            padding: widget.padding ??
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            child: _buildButtonContent(_primaryColor),
-          ),
-        ),
-      ),
+      child: _buildButtonContent(textColor),
     );
   }
 
   Widget _buildOutlineButton() {
+    final borderColor = widget.isEnabled ? _primaryColor : AppConstants.textSecondary;
+    final textColor = widget.textColor ?? (widget.isEnabled ? _primaryColor : AppConstants.textSecondary);
+
     return Container(
+      padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(widget.borderRadius ?? 8),
         border: Border.all(
-          color: _primaryColor,
+          color: borderColor,
           width: 2,
         ),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.isLoading ? null : widget.onPressed,
-          onTapDown: widget.isLoading ? null : (_) => _animationController.forward(),
-          onTapUp: widget.isLoading ? null : (_) => _animationController.reverse(),
-          onTapCancel: widget.isLoading ? null : () => _animationController.reverse(),
-          borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-          child: Container(
-            padding: widget.padding ??
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            child: _buildButtonContent(_primaryColor),
-          ),
-        ),
-      ),
+      child: _buildButtonContent(textColor),
     );
   }
 
   Widget _buildTextButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: widget.isLoading ? null : widget.onPressed,
-        onTapDown: widget.isLoading ? null : (_) => _animationController.forward(),
-        onTapUp: widget.isLoading ? null : (_) => _animationController.reverse(),
-        onTapCancel: widget.isLoading ? null : () => _animationController.reverse(),
-        borderRadius: BorderRadius.circular(widget.borderRadius ?? 8),
-        child: Container(
-          padding: widget.padding ??
-              const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          child: _buildButtonContent(_primaryColor),
-        ),
-      ),
+    final textColor = widget.textColor ?? (widget.isEnabled ? _primaryColor : AppConstants.textSecondary);
+
+    return Container(
+      padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: _buildButtonContent(textColor),
     );
   }
 
@@ -217,34 +189,11 @@ class _CustomButtonState extends State<CustomButton>
               valueColor: AlwaysStoppedAnimation<Color>(textColor),
             ),
           ),
-          const SizedBox(width: 12),
-          Text(
-            'Loading...',
-            style: TextStyle(
-              color: textColor,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      );
-    }
-
-    if (widget.icon != null) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            widget.icon,
-            color: textColor,
-            size: 20,
-          ),
           const SizedBox(width: 8),
           Text(
             widget.text,
             style: TextStyle(
-              color: textColor,
+              color: textColor.withOpacity(0.7),
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),

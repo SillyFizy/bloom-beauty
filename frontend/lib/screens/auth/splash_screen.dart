@@ -125,8 +125,8 @@ class _SplashScreenState extends State<SplashScreen>
             end: Alignment.bottomRight,
             colors: [
               AppConstants.accentColor,
-              AppConstants.accentColor.withOpacity(0.8),
-              AppConstants.accentColor.withOpacity(0.6),
+                              AppConstants.accentColor.withOpacity(0.8),
+                AppConstants.accentColor.withOpacity(0.6),
               AppConstants.backgroundColor,
             ],
             stops: const [0.0, 0.3, 0.7, 1.0],
@@ -151,7 +151,7 @@ class _SplashScreenState extends State<SplashScreen>
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                                                              color: Colors.black.withOpacity(0.1),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),

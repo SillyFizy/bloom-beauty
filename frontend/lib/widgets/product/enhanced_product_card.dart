@@ -7,12 +7,12 @@ import '../../models/product_model.dart';
 import '../../utils/formatters.dart';
 import '../../screens/celebrity/celebrity_screen.dart';
 import '../../providers/celebrity_provider.dart';
+import '../common/wishlist_button.dart';
 
 class EnhancedProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onTap;
   final VoidCallback? onFavorite;
-  final bool isFavorite;
   final bool isSmallScreen;
 
   // Prevent rapid navigation attempts
@@ -23,7 +23,6 @@ class EnhancedProductCard extends StatelessWidget {
     required this.product,
     required this.onTap,
     this.onFavorite,
-    this.isFavorite = false,
     this.isSmallScreen = false,
   });
 
@@ -62,10 +61,11 @@ class EnhancedProductCard extends StatelessWidget {
       // Show error only if context is still valid
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to load celebrity profile'),
+const SnackBar(
+            content: Text('Failed to load celebrity profile'),
             backgroundColor: AppConstants.errorColor,
-            duration: const Duration(seconds: 2),
+            duration: Duration(seconds: 2),
+
           ),
         );
       }
@@ -94,12 +94,12 @@ class EnhancedProductCard extends StatelessWidget {
               color: AppConstants.surfaceColor,
               borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
               border: Border.all(
-                color: AppConstants.borderColor.withValues(alpha: 0.3),
+                color: AppConstants.borderColor.withOpacity(0.3),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppConstants.textSecondary.withValues(alpha: 0.1),
+                  color: AppConstants.textSecondary.withOpacity(0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -162,40 +162,23 @@ class EnhancedProductCard extends StatelessWidget {
           ),
         ),
         
-        // Favorite button
+        // Wishlist button
         Positioned(
           top: isMobile ? 6 : 8,
-          right: isMobile ? 6 : 8,
-          child: GestureDetector(
-            onTap: onFavorite,
-            child: Container(
-              width: isMobile ? 28 : 32,
-              height: isMobile ? 28 : 32,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                isFavorite ? Icons.favorite : Icons.favorite_border,
+          left: isMobile ? 6 : 8,
+          child: WishlistButton(
+            product: product,
                 size: isMobile ? 16 : 18,
-                color: isFavorite ? AppConstants.favoriteColor : AppConstants.textSecondary,
-              ),
-            ),
+            onPressed: onFavorite,
+            heroTag: 'enhanced_card_wishlist_${product.id}',
           ),
         ),
         
-        // Discount badge
+        // Discount badge - Moved to top-right to avoid overlap with wishlist
         if (hasDiscount)
           Positioned(
             top: isMobile ? 6 : 8,
-            left: isMobile ? 6 : 8,
+            right: isMobile ? 6 : 8,
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: isMobile ? 6 : 8,
@@ -206,7 +189,7 @@ class EnhancedProductCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
                 boxShadow: [
                   BoxShadow(
-                    color: AppConstants.errorColor.withValues(alpha: 0.3),
+                    color: AppConstants.errorColor.withOpacity(0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -235,11 +218,11 @@ class EnhancedProductCard extends StatelessWidget {
                 vertical: isMobile ? 3 : 4, // Increased padding
               ),
               decoration: BoxDecoration(
-                color: AppConstants.accentColor,
+                color: AppConstants.favoriteColor,
                 borderRadius: BorderRadius.circular(isMobile ? 10 : 12), // Increased border radius
                 boxShadow: [
                   BoxShadow(
-                    color: AppConstants.accentColor.withValues(alpha: 0.3),
+                    color: AppConstants.favoriteColor.withOpacity(0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -273,7 +256,7 @@ class EnhancedProductCard extends StatelessWidget {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
+                color: Colors.black.withOpacity(0.6),
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(isMobile ? 12 : 16),
                 ),
@@ -311,7 +294,7 @@ class EnhancedProductCard extends StatelessWidget {
         child: Icon(
           Icons.spa_outlined,
           size: isMobile ? 32 : 40,
-          color: AppConstants.accentColor.withValues(alpha: 0.5),
+          color: AppConstants.accentColor.withOpacity(0.5),
         ),
       ),
     );
@@ -387,7 +370,7 @@ class EnhancedProductCard extends StatelessWidget {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppConstants.accentColor.withValues(alpha: 0.2),
+                                color: AppConstants.accentColor.withOpacity(0.2),
                                 blurRadius: 3, // Increased shadow
                                 offset: const Offset(0, 1),
                               ),
@@ -400,11 +383,11 @@ class EnhancedProductCard extends StatelessWidget {
                               memCacheWidth: isCompactLayout ? 48 : (isMobile ? 56 : 64), // Increased cache sizes
                               memCacheHeight: isCompactLayout ? 48 : (isMobile ? 56 : 64),
                               placeholder: (context, url) => Shimmer.fromColors(
-                                baseColor: AppConstants.borderColor.withValues(alpha: 0.3),
+                                baseColor: AppConstants.borderColor.withOpacity(0.3),
                                 highlightColor: AppConstants.surfaceColor,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                    color: AppConstants.borderColor.withOpacity(0.3),
                                   ),
                                 ),
                               ),
@@ -413,8 +396,8 @@ class EnhancedProductCard extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        AppConstants.accentColor.withValues(alpha: 0.6),
-                                        AppConstants.accentColor.withValues(alpha: 0.3),
+                                        AppConstants.accentColor.withOpacity(0.6),
+                                        AppConstants.accentColor.withOpacity(0.3),
                                       ],
                                     ),
                                   ),
@@ -479,76 +462,81 @@ class EnhancedProductCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Current price - big and prominent
+                          // Current price - nicely sized and prominent
                           Text(
                             Formatters.formatPrice(currentPrice),
                             style: TextStyle(
                               fontSize: isCompactLayout 
-                                  ? (isMobile ? 14 : 16) 
-                                  : (isMobile ? 16 : 18), // Significantly increased font size
-                              fontWeight: FontWeight.w700, // Made bolder
+                                  ? (isMobile ? 13 : 15) 
+                                  : (isMobile ? 15 : 17),
+                              fontWeight: FontWeight.w700,
                               color: AppConstants.textPrimary,
-                              letterSpacing: 0.2, // Added letter spacing for better readability
+                              letterSpacing: 0.1,
+                              height: 1.2,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           
                           // Original price if discounted (below current price)
-                          if (hasDiscount)
+                          if (hasDiscount) ...[
+const SizedBox(height: 2),
+
                             Text(
                               Formatters.formatPrice(product.price),
                               style: TextStyle(
                                 fontSize: isCompactLayout 
                                     ? (isMobile ? 10 : 11) 
-                                    : (isMobile ? 11 : 12), // Slightly increased font size
+                                    : (isMobile ? 11 : 12),
                                 color: AppConstants.textSecondary,
                                 decoration: TextDecoration.lineThrough,
                                 decorationColor: AppConstants.textSecondary,
+                                fontWeight: FontWeight.w500,
+                                height: 1.2,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
+                          ],
                         ],
                       ),
                     ),
                     
-                    // Right side - Rating stacked with count at far bottom-right
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Rating with star
-                        Row(
+                    // Right side - Rating only (removed count)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isCompactLayout ? 5 : (isMobile ? 6 : 8),
+                        vertical: isCompactLayout ? 3 : (isMobile ? 4 : 5),
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppConstants.accentColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(isCompactLayout ? 5 : (isMobile ? 6 : 8)),
+                        border: Border.all(
+                          color: AppConstants.accentColor.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.star_rounded,
-                              size: isCompactLayout ? 12 : (isMobile ? 14 : 16), // Increased icon size
+                            size: isCompactLayout ? 12 : (isMobile ? 14 : 16),
                               color: AppConstants.accentColor,
                             ),
-                            SizedBox(width: 2),
+const SizedBox(width: 2),
+
                             Text(
                               product.rating.toStringAsFixed(1),
                               style: TextStyle(
-                                fontSize: isCompactLayout ? 10 : (isMobile ? 11 : 12), // Increased font size
-                                color: AppConstants.textPrimary, // Changed to primary for better visibility
-                                fontWeight: FontWeight.w600, // Made bold
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        // Review count below rating
-                        Text(
-                          '(${product.reviewCount})',
-                          style: TextStyle(
-                            fontSize: isCompactLayout ? 8 : (isMobile ? 9 : 10), // Increased font size
-                            color: AppConstants.textSecondary,
-                            fontWeight: FontWeight.w500,
+                              fontSize: isCompactLayout ? 10 : (isMobile ? 11 : 13),
+                              color: AppConstants.accentColor,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.1,
                           ),
                         ),
                       ],
+                      ),
                     ),
                   ],
                 ),

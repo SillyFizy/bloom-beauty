@@ -2,6 +2,7 @@ import 'dart:async';
 import '../models/product_model.dart';
 import '../models/celebrity_model.dart';
 import 'data_service.dart';
+import 'package:flutter/foundation.dart';
 
 /// Service responsible for all celebrity-related data operations
 /// Provides abstraction between UI components and celebrity data sources
@@ -320,7 +321,7 @@ class CelebrityService {
       _cachedCelebrityPicks = _dataService.getCelebrityPicks();
       _lastCacheUpdate = DateTime.now();
     } catch (e) {
-      print('Error refreshing celebrity cache: $e');
+      debugPrint('Error refreshing celebrity cache: $e');
       _cachedCelebrities ??= [];
       _cachedCelebrityPicks ??= [];
     }

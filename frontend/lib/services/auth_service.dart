@@ -3,7 +3,7 @@ class AuthService {
   static const String _userIdKey = 'user_id';
   
   // In-memory storage as fallback
-  static Map<String, String> _memoryStorage = {};
+  static final Map<String, String> _memoryStorage = {};
   
   static Future<bool> login(String email, String password) async {
     try {

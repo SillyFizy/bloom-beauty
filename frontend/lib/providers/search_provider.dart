@@ -96,7 +96,7 @@ class SearchProvider with ChangeNotifier {
       _updatePriceRange();
     } catch (e) {
       debugPrint('Error loading products: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -106,7 +106,7 @@ class SearchProvider with ChangeNotifier {
       _categories = await _categoryService.getAllCategories();
     } catch (e) {
       debugPrint('Error loading categories: $e');
-      throw e;
+      rethrow;
     }
   }
 

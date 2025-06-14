@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../models/product_model.dart';
 import 'product_service.dart';
+import 'package:flutter/foundation.dart';
 
 /// Service responsible for all review-related data operations
 /// Provides abstraction between UI components and review data sources
@@ -73,7 +74,7 @@ class ReviewService {
 
       return true;
     } catch (e) {
-      print('Error adding review: $e');
+      debugPrint('Error adding review: $e');
       return false;
     }
   }
@@ -109,7 +110,7 @@ class ReviewService {
       _cachedProductReviews![productId]![reviewIndex] = updatedReview;
       return true;
     } catch (e) {
-      print('Error updating review: $e');
+      debugPrint('Error updating review: $e');
       return false;
     }
   }
@@ -121,7 +122,7 @@ class ReviewService {
       reviews.removeWhere((review) => review.id == reviewId);
       return true;
     } catch (e) {
-      print('Error deleting review: $e');
+      debugPrint('Error deleting review: $e');
       return false;
     }
   }
@@ -152,7 +153,7 @@ class ReviewService {
       _cachedProductReviews![productId]![reviewIndex] = updatedReview;
       return true;
     } catch (e) {
-      print('Error marking review helpful: $e');
+      debugPrint('Error marking review helpful: $e');
       return false;
     }
   }
@@ -183,11 +184,11 @@ class ReviewService {
       _cachedProductReviews![productId]![reviewIndex] = updatedReview;
       
       // In production, would send report to moderation system
-      print('Review reported: $reviewId, Reason: $reason');
+      debugPrint('Review reported: $reviewId, Reason: $reason');
       
       return true;
     } catch (e) {
-      print('Error reporting review: $e');
+      debugPrint('Error reporting review: $e');
       return false;
     }
   }
@@ -394,7 +395,7 @@ class ReviewService {
       
       _lastCacheUpdate = DateTime.now();
     } catch (e) {
-      print('Error refreshing review cache: $e');
+      debugPrint('Error refreshing review cache: $e');
       _cachedProductReviews ??= {};
     }
   }

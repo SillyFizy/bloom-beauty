@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../widgets/cart/cart_item_widget.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../utils/formatters.dart';
+import '../checkout/checkout_screen.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/cart_provider.dart';
 
@@ -17,7 +18,6 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   
   double get shipping => 5.99;
-  double get taxRate => 0.08;
 
   void _clearCart() {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
@@ -39,7 +39,6 @@ class _CartScreenState extends State<CartScreen> {
       builder: (context, constraints) {
         // Determine screen size
         final isSmallScreen = constraints.maxWidth < 600;
-        final isMediumScreen = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
         
         return Scaffold(
           appBar: AppBar(
@@ -130,8 +129,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildCartContent(CartProvider cart, bool isSmallScreen) {
     final subtotal = cart.totalPrice;
-    final tax = subtotal * taxRate;
-    final total = subtotal + shipping + tax;
+    final total = subtotal + shipping;
 
     return Column(
       children: [
@@ -184,6 +182,7 @@ class _CartScreenState extends State<CartScreen> {
                   price: item.product.getCurrentPrice(),
                   quantity: item.quantity,
                   variant: variant?.name ?? (item.selectedVariant == null ? null : 'Unknown Variant'),
+                  beautyPoints: item.product.beautyPoints,
                   onIncrement: () {
                     cart.updateItemQuantity(item.id, item.quantity + 1);
                   },
@@ -233,12 +232,14 @@ class _CartScreenState extends State<CartScreen> {
         ),
         
         // Order summary
-        _buildOrderSummary(subtotal, tax, total, isSmallScreen),
+        _buildOrderSummary(subtotal, total, isSmallScreen),
       ],
     );
   }
 
-  Widget _buildOrderSummary(double subtotal, double tax, double total, bool isSmallScreen) {
+  Widget _buildOrderSummary(double subtotal, double total, bool isSmallScreen) {
+    return Consumer<CartProvider>(
+      builder: (context, cart, child) {
     return Container(
       padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
       decoration: BoxDecoration(
@@ -262,7 +263,6 @@ class _CartScreenState extends State<CartScreen> {
           SizedBox(height: isSmallScreen ? 8 : 12),
           _buildSummaryRow('Subtotal', Formatters.formatPrice(subtotal), isSmallScreen),
           _buildSummaryRow('Shipping', Formatters.formatPrice(shipping), isSmallScreen),
-          _buildSummaryRow('Tax', Formatters.formatPrice(tax), isSmallScreen),
           const Divider(),
           _buildSummaryRow(
             'Total',
@@ -270,8 +270,64 @@ class _CartScreenState extends State<CartScreen> {
             isSmallScreen,
             isTotal: true,
           ),
+              SizedBox(height: isSmallScreen ? 8 : 12),
+              // Beauty Points section
+              Container(
+                padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+                decoration: BoxDecoration(
+                  color: AppConstants.favoriteColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppConstants.favoriteColor.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.stars_rounded,
+                      color: AppConstants.favoriteColor,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
+                    SizedBox(width: isSmallScreen ? 8 : 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Beauty Points',
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 13 : 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppConstants.favoriteColor,
+                            ),
+                          ),
+                          Text(
+                            'You will earn ${cart.totalBeautyPoints} points',
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 11 : 12,
+                              color: AppConstants.textSecondary,
+                            ),
+                          ),
         ],
       ),
+                    ),
+                    Text(
+                      '+${cart.totalBeautyPoints}',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 16 : 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppConstants.favoriteColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -323,8 +379,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildCheckoutSection(CartProvider cart, bool isSmallScreen) {
     final subtotal = cart.totalPrice;
-    final tax = subtotal * taxRate;
-    final total = subtotal + shipping + tax;
+    final total = subtotal + shipping;
 
     return Container(
       padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
@@ -380,27 +435,13 @@ class _CartScreenState extends State<CartScreen> {
             SizedBox(height: isSmallScreen ? 12 : 16),
             CustomButton(
               text: 'Proceed to Checkout',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text(
-                      'Checkout',
-                      style: TextStyle(fontSize: isSmallScreen ? 18 : 20),
-                    ),
-                    content: Text(
-                      'Checkout feature coming soon!',
-                      style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(
-                          'OK',
-                          style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
-                        ),
-                      ),
-                    ],
+              onPressed: cart.isEmpty
+                  ? null
+                  : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CheckoutScreen(),
                   ),
                 );
               },

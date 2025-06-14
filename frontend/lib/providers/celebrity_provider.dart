@@ -91,7 +91,7 @@ class CelebrityProvider with ChangeNotifier {
       _trendingCelebrities = await _celebrityService.getTrendingCelebrities();
       notifyListeners();
     } catch (e) {
-      print('Failed to load trending celebrities: $e');
+      debugPrint('Failed to load trending celebrities: $e');
     }
   }
 
@@ -101,7 +101,7 @@ class CelebrityProvider with ChangeNotifier {
       _celebrityStatistics = await _celebrityService.getCelebrityStatistics();
       notifyListeners();
     } catch (e) {
-      print('Failed to load celebrity statistics: $e');
+      debugPrint('Failed to load celebrity statistics: $e');
     }
   }
 
@@ -152,7 +152,7 @@ class CelebrityProvider with ChangeNotifier {
       
       // Additional products are available if needed for specific functionality
     } catch (e) {
-      print('Failed to load celebrity details: $e');
+      debugPrint('Failed to load celebrity details: $e');
     }
   }
 
@@ -196,7 +196,7 @@ class CelebrityProvider with ChangeNotifier {
     try {
       return await _celebrityService.getCelebritiesByProductCategory(categoryId);
     } catch (e) {
-      print('Failed to get celebrities by category: $e');
+      debugPrint('Failed to get celebrities by category: $e');
       return [];
     }
   }
@@ -206,7 +206,7 @@ class CelebrityProvider with ChangeNotifier {
     try {
       return await _celebrityService.getCelebritiesBySocialMediaPlatform(platform);
     } catch (e) {
-      print('Failed to get celebrities by social media: $e');
+      debugPrint('Failed to get celebrities by social media: $e');
       return [];
     }
   }
@@ -216,7 +216,7 @@ class CelebrityProvider with ChangeNotifier {
     try {
       return await _celebrityService.getCelebrityRecommendedProducts(celebrityName);
     } catch (e) {
-      print('Failed to get celebrity recommended products: $e');
+      debugPrint('Failed to get celebrity recommended products: $e');
       return [];
     }
   }
@@ -226,7 +226,7 @@ class CelebrityProvider with ChangeNotifier {
     try {
       return await _celebrityService.getCelebrityMorningRoutine(celebrityName);
     } catch (e) {
-      print('Failed to get celebrity morning routine: $e');
+      debugPrint('Failed to get celebrity morning routine: $e');
       return [];
     }
   }
@@ -236,7 +236,7 @@ class CelebrityProvider with ChangeNotifier {
     try {
       return await _celebrityService.getCelebrityEveningRoutine(celebrityName);
     } catch (e) {
-      print('Failed to get celebrity evening routine: $e');
+      debugPrint('Failed to get celebrity evening routine: $e');
       return [];
     }
   }
@@ -246,7 +246,7 @@ class CelebrityProvider with ChangeNotifier {
     try {
       return await _celebrityService.getCelebritySocialMedia(celebrityName);
     } catch (e) {
-      print('Failed to get celebrity social media: $e');
+      debugPrint('Failed to get celebrity social media: $e');
       return {};
     }
   }
@@ -256,7 +256,7 @@ class CelebrityProvider with ChangeNotifier {
     try {
       return await _celebrityService.getCelebrityTopProducts(celebrityName);
     } catch (e) {
-      print('Failed to get celebrity top products: $e');
+      debugPrint('Failed to get celebrity top products: $e');
       return [];
     }
   }
@@ -292,7 +292,7 @@ class CelebrityProvider with ChangeNotifier {
     try {
       return await _celebrityService.validateCelebrityData();
     } catch (e) {
-      print('Failed to validate celebrity data: $e');
+      debugPrint('Failed to validate celebrity data: $e');
       return CelebrityValidationResult(isValid: false, issues: ['Validation failed']);
     }
   }

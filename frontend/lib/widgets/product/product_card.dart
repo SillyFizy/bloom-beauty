@@ -1,29 +1,19 @@
 import 'package:flutter/material.dart';
+
 import '../../constants/app_constants.dart';
+import '../../models/product_model.dart';
 
 class ProductCard extends StatelessWidget {
-  final String imageUrl;
-  final String name;
-  final String brand;
-  final double price;
-  final double? discountPrice;
-  final double rating;
+  final Product product;
   final VoidCallback? onTap;
-  final VoidCallback? onFavorite;
-  final bool isFavorite;
+  final bool isSmallScreen;
 
   const ProductCard({
-    Key? key,
-    required this.imageUrl,
-    required this.name,
-    required this.brand,
-    required this.price,
-    this.discountPrice,
-    required this.rating,
+    super.key,
+    required this.product,
     this.onTap,
-    this.onFavorite,
-    this.isFavorite = false,
-  }) : super(key: key);
+    this.isSmallScreen = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +23,7 @@ class ProductCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppConstants.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -54,7 +44,8 @@ class ProductCard extends StatelessWidget {
                   children: [
                     Container(
                       width: double.infinity,
-                      decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                         borderRadius: BorderRadius.vertical(
                           top: Radius.circular(AppConstants.borderRadius),
                         ),
@@ -77,14 +68,16 @@ class ProductCard extends StatelessWidget {
                               color: AppConstants.accentColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(30),
                             ),
-                            child: Icon(
+child: const Icon(
+
                               Icons.spa_outlined,
                               size: 30,
                               color: AppConstants.accentColor,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text(
+const Text(
+
                             'Beauty Product',
                             style: TextStyle(
                               fontSize: 12,
@@ -115,10 +108,11 @@ class ProductCard extends StatelessWidget {
                           ],
                         ),
                         child: IconButton(
-                          onPressed: onFavorite,
-                          icon: Icon(
-                            isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: isFavorite ? AppConstants.favoriteColor : AppConstants.textSecondary,
+                          onPressed: () {},
+icon: const Icon(
+
+                            Icons.favorite,
+                            color: AppConstants.favoriteColor,
                             size: 18,
                           ),
                           padding: EdgeInsets.zero,
@@ -127,7 +121,7 @@ class ProductCard extends StatelessWidget {
                     ),
                     
                     // Discount Badge
-                    if (discountPrice != null)
+                    if (product.discountPrice != null)
                       Positioned(
                         top: 12,
                         left: 12,
@@ -141,7 +135,7 @@ class ProductCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            '${((price - discountPrice!) / price * 100).round()}% OFF',
+                            '${((product.price - product.discountPrice!) / product.price * 100).round()}% OFF',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -164,8 +158,9 @@ class ProductCard extends StatelessWidget {
                     children: [
                       // Brand
                       Text(
-                        brand.toUpperCase(),
-                        style: TextStyle(
+                        product.brand.toUpperCase(),
+style: const TextStyle(
+
                           fontSize: 9,
                           color: AppConstants.textSecondary,
                           fontWeight: FontWeight.w600,
@@ -177,8 +172,9 @@ class ProductCard extends StatelessWidget {
                       // Product Name
                       Expanded(
                         child: Text(
-                          name,
-                          style: TextStyle(
+                          product.name,
+style: const TextStyle(
+
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppConstants.textPrimary,
@@ -192,22 +188,25 @@ class ProductCard extends StatelessWidget {
                       // Rating
                       Row(
                         children: [
-                          Icon(
+const Icon(
+
                             Icons.star,
                             size: 12,
                             color: AppConstants.accentColor,
                           ),
                           const SizedBox(width: 3),
                           Text(
-                            rating.toString(),
-                            style: TextStyle(
+                            product.rating.toString(),
+style: const TextStyle(
+
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: AppConstants.textSecondary,
                             ),
                           ),
                           const Spacer(),
-                          Icon(
+const Icon(
+
                             Icons.add_shopping_cart_outlined,
                             size: 14,
                             color: AppConstants.accentColor,
@@ -220,10 +219,11 @@ class ProductCard extends StatelessWidget {
                       // Price
                       Row(
                         children: [
-                          if (discountPrice != null) ...[
+                          if (product.discountPrice != null) ...[
                             Text(
-                              '\$${discountPrice!.toStringAsFixed(2)}',
-                              style: TextStyle(
+                              '\$${product.discountPrice!.toStringAsFixed(2)}',
+style: const TextStyle(
+
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppConstants.accentColor,
@@ -231,8 +231,9 @@ class ProductCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '\$${price.toStringAsFixed(2)}',
-                              style: TextStyle(
+                              '\$${product.price.toStringAsFixed(2)}',
+style: const TextStyle(
+
                                 fontSize: 11,
                                 decoration: TextDecoration.lineThrough,
                                 color: AppConstants.textSecondary,
@@ -241,8 +242,9 @@ class ProductCard extends StatelessWidget {
                             ),
                           ] else ...[
                             Text(
-                              '\$${price.toStringAsFixed(2)}',
-                              style: TextStyle(
+                              '\$${product.price.toStringAsFixed(2)}',
+style: const TextStyle(
+
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppConstants.textPrimary,

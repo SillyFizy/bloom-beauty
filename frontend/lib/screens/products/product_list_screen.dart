@@ -8,7 +8,7 @@ import '../../widgets/product/enhanced_product_card.dart';
 import 'product_detail_screen.dart';
 
 class ProductListScreen extends StatefulWidget {
-  const ProductListScreen({Key? key}) : super(key: key);
+  const ProductListScreen({super.key});
 
   @override
   State<ProductListScreen> createState() => _ProductListScreenState();
@@ -19,8 +19,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
   void initState() {
     super.initState();
     // Initialize category provider when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CategoryProvider>().initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final categoryProvider = context.read<CategoryProvider>();
+      
+      // Check if already initialized, if not initialize
+      if (!categoryProvider.isLoading && 
+          categoryProvider.allProducts.isEmpty && 
+          !categoryProvider.hasError) {
+        await categoryProvider.initialize();
+      }
     });
   }
 
@@ -93,7 +100,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (context) => Consumer<CategoryProvider>(
         builder: (context, categoryProvider, child) => Container(
           width: MediaQuery.of(context).size.width, // Full width from beginning of screen
@@ -137,7 +144,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        backgroundColor: AppConstants.accentColor.withValues(alpha: 0.1),
+                        backgroundColor: AppConstants.accentColor.withOpacity(0.1),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -190,7 +197,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   color: AppConstants.surfaceColor,
                   border: Border(
                     top: BorderSide(
-                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                      color: AppConstants.borderColor.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
@@ -270,10 +277,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
             vertical: isSmallScreen ? 10 : 12,
           ),
           decoration: BoxDecoration(
-            color: AppConstants.accentColor.withValues(alpha: 0.1),
+            color: AppConstants.accentColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: AppConstants.accentColor.withValues(alpha: 0.3),
+              color: AppConstants.accentColor.withOpacity(0.3),
               width: 1,
             ),
           ),
@@ -341,7 +348,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             max: maxPrice,
             divisions: 20,
             activeColor: AppConstants.accentColor,
-            inactiveColor: AppConstants.borderColor.withValues(alpha: 0.3),
+            inactiveColor: AppConstants.borderColor.withOpacity(0.3),
             onChanged: (RangeValues values) {
               provider.updatePriceRange(values.start, values.end);
             },
@@ -433,10 +440,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
         decoration: BoxDecoration(
           color: isSelected 
               ? AppConstants.accentColor 
-              : AppConstants.accentColor.withValues(alpha: 0.1),
+              : AppConstants.accentColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 24),
           border: Border.all(
-            color: AppConstants.accentColor.withValues(alpha: 0.3),
+            color: AppConstants.accentColor.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -534,7 +541,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
         final screenWidth = constraints.maxWidth;
         final isSmallScreen = screenWidth < 600;
         final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
-        final isLargeScreen = screenWidth >= 900;
         
         // Grid configuration based on screen size
         final crossAxisCount = isSmallScreen ? 2 : (isMediumScreen ? 3 : 4);
@@ -591,7 +597,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               child: Container(
                                 width: 8,
                                 height: 8,
-                                decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                                   color: AppConstants.accentColor,
                                   shape: BoxShape.circle,
                                 ),
@@ -646,7 +653,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+const CircularProgressIndicator(
+
             color: AppConstants.accentColor,
           ),
           SizedBox(height: isSmallScreen ? 12 : 16),
@@ -745,18 +753,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
               product: product,
               isSmallScreen: isSmallScreen,
               onTap: () => _navigateToProductDetail(context, product),
-              onFavorite: () {
-                // TODO: Implement favorite functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Favorite feature coming soon!'),
-                    backgroundColor: AppConstants.accentColor,
-                    duration: const Duration(seconds: 2),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              isFavorite: false, // TODO: Implement favorite state
             );
           },
           childCount: products.length,
@@ -775,7 +771,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             Icon(
               Icons.search_off_rounded,
               size: isSmallScreen ? 64 : 80,
-              color: AppConstants.textSecondary.withValues(alpha: 0.5),
+              color: AppConstants.textSecondary.withOpacity(0.5),
             ),
             SizedBox(height: isSmallScreen ? 12 : 16),
             Text(

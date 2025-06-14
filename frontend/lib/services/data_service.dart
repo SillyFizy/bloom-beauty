@@ -126,7 +126,8 @@ class DataService {
             userImage: 'user1.jpg',
             rating: 5.0,
             comment: 'Amazing results after just 2 weeks!',
-            date: DateTime.now().subtract(Duration(days: 5)),
+date: DateTime.now().subtract(const Duration(days: 5)),
+
           ),
         ],
         celebrityEndorsement: CelebrityEndorsement(

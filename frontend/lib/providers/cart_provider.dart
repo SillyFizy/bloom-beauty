@@ -15,6 +15,10 @@ class CartProvider extends ChangeNotifier {
   double get totalPrice => _items.fold(
       0.0, (sum, item) => sum + (item.product.getCurrentPrice() * item.quantity));
 
+  // Calculate total beauty points from all items in cart
+  int get totalBeautyPoints => _items.fold(
+      0, (sum, item) => sum + (item.product.beautyPoints * item.quantity));
+
   bool get isEmpty => _items.isEmpty;
 
   // Initialize cart from local storage
@@ -176,5 +180,17 @@ class CartProvider extends ChangeNotifier {
   // Method to get all variants of a product in the cart
   List<CartItem> getProductVariantsInCart(String productId) {
     return _items.where((item) => item.product.id == productId).toList();
+  }
+
+  /// Check if a specific product is in cart (any variant)
+  bool isInCart(String productId) {
+    return _items.any((item) => item.product.id == productId);
+  }
+
+  /// Get the total quantity of a specific product in cart (all variants combined)
+  int getProductQuantity(String productId) {
+    return _items
+        .where((item) => item.product.id == productId)
+        .fold(0, (sum, item) => sum + item.quantity);
   }
 } 

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../lib/services/storage_service.dart';
+import 'package:bloom_beauty/services/storage_service.dart';
 
 void main() {
   group('Search History Persistence Tests', () {

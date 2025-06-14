@@ -5,6 +5,7 @@ import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/celebrity_provider.dart';
+import '../../widgets/common/wishlist_button.dart';
 import '../celebrity/celebrity_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -31,7 +32,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   bool _showStickyHeader = false;
   
   // Track quantities for each variant (starting from 0)
-  Map<String, int> _variantQuantities = {};
+  final Map<String, int> _variantQuantities = {};
 
   @override
   void initState() {
@@ -42,7 +43,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     
     // Initialize header animation controller
     _headerAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _headerAnimation = Tween<double>(
@@ -50,7 +51,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _headerAnimationController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeInOutCubic,
     ));
     
     // Add scroll listener for sticky header
@@ -80,9 +81,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   void _onScroll() {
-    // Calculate scroll threshold based on screen height
-    final screenHeight = MediaQuery.of(context).size.height;
-    final threshold = screenHeight * 0.3; // Show sticky header after scrolling past 30% of screen
+    // Calculate scroll threshold for smooth transition
+    const threshold = 120.0; // Show sticky header after scrolling past 120px
     
     final shouldShow = _scrollController.hasClients && _scrollController.offset > threshold;
     
@@ -186,7 +186,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       builder: (context, constraints) {
         // Determine screen size
         final isSmallScreen = constraints.maxWidth < 600;
-        final isMediumScreen = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
         
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
@@ -198,7 +197,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   // Transparent app bar
-                  SliverAppBar(
+                  const SliverAppBar(
                     backgroundColor: Colors.transparent,
                     elevation: 0,
                     pinned: false,
@@ -207,12 +206,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     toolbarHeight: 0, // Hide the default toolbar
                   ),
                   
-                  // Image section with floating buttons
+                  // Image section with scrollable buttons
                   SliverToBoxAdapter(
                     child: Stack(
                       children: [
                         _buildImageSection(isSmallScreen),
-                        // Floating action buttons
+                        // Action buttons that scroll with content
                         Positioned(
                           top: MediaQuery.of(context).padding.top + 8,
                           left: 16,
@@ -227,10 +226,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               ),
                               Row(
                                 children: [
-                                  _buildTransparentActionButton(
-                                    icon: Icons.favorite_border,
-                                    onPressed: () {},
-                                    isSmallScreen: isSmallScreen,
+                                  FloatingWishlistButton(
+                                    product: widget.product,
                                   ),
                                   SizedBox(width: isSmallScreen ? 8 : 12),
                                   _buildTransparentActionButton(
@@ -275,8 +272,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 ],
               ),
               
-              // Sticky header
-              if (_showStickyHeader)
+
+              
+              // Sticky header - always positioned correctly at top
                 Positioned(
                   top: 0,
                   left: 0,
@@ -285,7 +283,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     animation: _headerAnimation,
                     builder: (context, child) {
                       return Transform.translate(
-                        offset: Offset(0, -60 * (1 - _headerAnimation.value)),
+                      offset: Offset(0, -100 * (1 - _headerAnimation.value)),
                         child: Opacity(
                           opacity: _headerAnimation.value,
                           child: _buildStickyHeader(isSmallScreen),
@@ -313,23 +311,52 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       width: isSmallScreen ? 44 : 52,
       height: isSmallScreen ? 44 : 52,
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppConstants.surfaceColor.withOpacity(0.95),
         borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+        border: Border.all(
+          color: AppConstants.borderColor.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppConstants.textSecondary.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.05),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
-            ),
-            child: Center(
-              child: Icon(
-                icon,
-                color: AppConstants.textPrimary,
-                size: isSmallScreen ? 20 : 24,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+            splashColor: AppConstants.primaryColor.withOpacity(0.1),
+            highlightColor: AppConstants.primaryColor.withOpacity(0.05),
+            child: SizedBox(
+              width: double.infinity,
+              height: double.infinity,
+              child: Center(
+                child: icon == Icons.arrow_back_ios
+                    ? Container(
+                        padding: EdgeInsets.only(left: isSmallScreen ? 2 : 3),
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          color: AppConstants.textPrimary,
+                          size: isSmallScreen ? 20 : 24,
+                        ),
+                      )
+                    : Icon(
+                        icon,
+                        color: AppConstants.textPrimary,
+                        size: isSmallScreen ? 20 : 24,
+                      ),
               ),
             ),
           ),
@@ -342,21 +369,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     return Container(
       height: MediaQuery.of(context).padding.top + (isSmallScreen ? 56 : 64),
       decoration: BoxDecoration(
-        color: AppConstants.surfaceColor.withValues(alpha: 0.95),
+        color: AppConstants.surfaceColor.withOpacity(0.95),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppConstants.textSecondary.withOpacity(0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: AppConstants.textSecondary.withOpacity(0.05),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
       child: Stack(
         children: [
-          // Backdrop filter effect
+          // Enhanced backdrop effect
           Container(
             decoration: BoxDecoration(
-              color: AppConstants.surfaceColor.withValues(alpha: 0.85),
+              color: AppConstants.surfaceColor.withOpacity(0.90),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppConstants.borderColor.withOpacity(0.1),
+                  width: 0.5,
+                ),
+              ),
             ),
           ),
           
@@ -394,10 +432,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 
                 Row(
                   children: [
-                    _buildStickyActionButton(
-                      icon: Icons.favorite_border,
-                      onPressed: () {},
-                      isSmallScreen: isSmallScreen,
+                    Container(
+                      width: isSmallScreen ? 44 : 52,
+                      height: isSmallScreen ? 44 : 52,
+                      decoration: BoxDecoration(
+                        color: AppConstants.surfaceColor,
+                        borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+                        border: Border.all(
+                          color: AppConstants.borderColor.withOpacity(0.3),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppConstants.textSecondary.withOpacity(0.05),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: WishlistButton(
+                          product: widget.product,
+                          size: isSmallScreen ? 20 : 24,
+                          showBackground: false,
+                          showShadow: false,
+                          heroTag: 'sticky_header_wishlist_${widget.product.id}',
+                        ),
+                      ),
                     ),
                     SizedBox(width: isSmallScreen ? 8 : 12),
                     _buildStickyActionButton(
@@ -427,12 +488,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         color: AppConstants.surfaceColor,
         borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
         border: Border.all(
-          color: AppConstants.borderColor.withValues(alpha: 0.3),
+          color: AppConstants.borderColor.withOpacity(0.3),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withValues(alpha: 0.05),
+            color: AppConstants.textSecondary.withOpacity(0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -443,16 +504,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
-            ),
+          child: SizedBox(
+            width: double.infinity,
+            height: double.infinity,
             child: Center(
-              child: Icon(
-                icon,
-                color: AppConstants.textPrimary,
-                size: isSmallScreen ? 20 : 24,
-              ),
+              child: icon == Icons.arrow_back_ios
+                  ? Container(
+                      padding: EdgeInsets.only(left: isSmallScreen ? 2 : 3),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        color: AppConstants.textPrimary,
+                        size: isSmallScreen ? 20 : 24,
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      color: AppConstants.textPrimary,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
             ),
           ),
         ),
@@ -463,7 +532,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   Widget _buildImageSection(bool isSmallScreen) {
     final screenHeight = MediaQuery.of(context).size.height;
     final imageHeight = isSmallScreen ? screenHeight * 0.4 : screenHeight * 0.45;
-    final topPadding = MediaQuery.of(context).padding.top + (isSmallScreen ? 64 : 72);
     
     return Container(
       height: imageHeight,
@@ -477,8 +545,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       ),
       child: Column(
         children: [
-          // Add top spacing for floating buttons
-          SizedBox(height: topPadding),
+          // Minimal top spacing to account for floating buttons
+          SizedBox(height: MediaQuery.of(context).padding.top + (isSmallScreen ? 60 : 70)),
           
           // Main Image with PageView
           Expanded(
@@ -507,7 +575,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppConstants.textSecondary.withValues(alpha: 0.15),
+                        color: AppConstants.textSecondary.withOpacity(0.15),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -565,7 +633,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                       shape: BoxShape.circle,
                       color: _currentImageIndex == index
                           ? AppConstants.accentColor
-                          : AppConstants.textSecondary.withValues(alpha: 0.3),
+                          : AppConstants.textSecondary.withOpacity(0.3),
                     ),
                   ),
                 ),
@@ -634,6 +702,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               ),
             ],
           ),
+          
+          // Beauty Points section
+          if (widget.product.beautyPoints > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? 12 : 16,
+                vertical: isSmallScreen ? 8 : 10,
+              ),
+              decoration: BoxDecoration(
+                color: AppConstants.favoriteColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppConstants.favoriteColor.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.stars_rounded,
+                    color: AppConstants.favoriteColor,
+                    size: isSmallScreen ? 18 : 22,
+                  ),
+                  SizedBox(width: isSmallScreen ? 6 : 8),
+                  Text(
+                    'Earn ${widget.product.beautyPoints} Beauty Points',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 12 : 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppConstants.favoriteColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -710,7 +816,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 backgroundImage: NetworkImage(endorsement.celebrityImage),
                 onBackgroundImageError: (exception, stackTrace) {},
                 child: endorsement.celebrityImage.isEmpty ? 
-                  Icon(
+                  const Icon(
                     Icons.star_rounded,
                     color: AppConstants.favoriteColor,
                     size: 24,
@@ -1264,7 +1370,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     Container(
                       width: isSmallScreen ? 6 : 8,
                       height: isSmallScreen ? 6 : 8,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppConstants.accentColor,
                         shape: BoxShape.circle,
                       ),
@@ -1522,7 +1628,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       ),
       decoration: BoxDecoration(
         color: AppConstants.surfaceColor,
-        border: Border(
+        border: const Border(
           top: BorderSide(
             color: AppConstants.borderColor,
             width: 1,

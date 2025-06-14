@@ -24,7 +24,7 @@ class SortFilterBar extends StatelessWidget {
             color: AppConstants.surfaceColor,
             border: Border(
               bottom: BorderSide(
-                color: AppConstants.borderColor.withValues(alpha: 0.2),
+                color: AppConstants.borderColor.withOpacity(0.2),
                 width: 1,
               ),
             ),
@@ -83,7 +83,7 @@ class SortFilterBar extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           border: Border.all(
-            color: AppConstants.borderColor.withValues(alpha: 0.3),
+            color: AppConstants.borderColor.withOpacity(0.3),
             width: 1,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -129,12 +129,12 @@ class SortFilterBar extends StatelessWidget {
           border: Border.all(
             color: hasActiveFilters 
                 ? AppConstants.accentColor
-                : AppConstants.borderColor.withValues(alpha: 0.3),
+                : AppConstants.borderColor.withOpacity(0.3),
             width: 1,
           ),
           borderRadius: BorderRadius.circular(8),
           color: hasActiveFilters 
-              ? AppConstants.accentColor.withValues(alpha: 0.1)
+              ? AppConstants.accentColor.withOpacity(0.1)
               : null,
         ),
         child: Row(
@@ -159,7 +159,8 @@ class SortFilterBar extends StatelessWidget {
               Container(
                 width: isSmallScreen ? 6 : 8,
                 height: isSmallScreen ? 6 : 8,
-                decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                   color: AppConstants.accentColor,
                   shape: BoxShape.circle,
                 ),

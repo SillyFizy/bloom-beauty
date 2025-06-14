@@ -39,6 +39,7 @@ class AppConstants {
   static const double largePadding = 24.0;
   static const double borderRadius = 12.0;
   static const double cardElevation = 4.0;
+  static const double listCacheExtent = 500.0;
 
   // Animation Durations
   static const Duration shortAnimation = Duration(milliseconds: 200);

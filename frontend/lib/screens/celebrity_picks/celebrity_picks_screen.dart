@@ -112,14 +112,28 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isSmallScreen = constraints.maxWidth < 600;
+        final screenWidth = constraints.maxWidth;
         
-        // Determine grid columns
-        int crossAxisCount = 2; // Default for mobile
-        if (constraints.maxWidth >= 1200) {
-          crossAxisCount = 4; // Large screens
-        } else if (constraints.maxWidth >= 600) {
-          crossAxisCount = 3; // Tablets
+        // Define screen categories for better responsiveness
+        final isVerySmall = screenWidth < 400;
+        final isSmall = screenWidth >= 400 && screenWidth < 600;
+        final isMedium = screenWidth >= 600 && screenWidth < 900;
+        final isLarge = screenWidth >= 900 && screenWidth < 1200;
+        // Legacy compatibility
+        final isSmallScreen = screenWidth < 600;
+        
+        // Determine grid columns with more granular breakpoints
+        int crossAxisCount;
+        if (isVerySmall) {
+          crossAxisCount = 2; // Very small mobile
+        } else if (isSmall) {
+          crossAxisCount = 2; // Small mobile/large mobile
+        } else if (isMedium) {
+          crossAxisCount = 3; // Tablet portrait
+        } else if (isLarge) {
+          crossAxisCount = 4; // Tablet landscape/small desktop
+        } else {
+          crossAxisCount = 5; // Large desktop
         }
 
         return Scaffold(
@@ -183,7 +197,8 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                               child: Container(
                                 width: 8,
                                 height: 8,
-                                decoration: BoxDecoration(
+decoration: const BoxDecoration(
+
                                   color: AppConstants.accentColor,
                                   shape: BoxShape.circle,
                                 ),
@@ -249,7 +264,8 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                       SliverToBoxAdapter(
                         child: Container(
                           padding: const EdgeInsets.all(16),
-                          child: Center(
+child: const Center(
+
                             child: CircularProgressIndicator(
                               color: AppConstants.accentColor,
                             ),
@@ -273,29 +289,64 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
       );
     }
 
-    // Improved aspect ratios for better card sizing
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Define screen categories
+    final isVerySmall = screenWidth < 400;
+    final isSmall = screenWidth >= 400 && screenWidth < 600;
+    final isMedium = screenWidth >= 600 && screenWidth < 900;
+    final isLarge = screenWidth >= 900 && screenWidth < 1200;
+
+
+    // Calculate aspect ratio based on screen size for optimal card proportions
+    // Higher values = wider cards, lower values = taller cards
     double childAspectRatio;
-    if (crossAxisCount == 2) {
-      // Mobile: 2 columns - taller cards for better content display
-      childAspectRatio = isSmallScreen ? 0.65 : 0.7;
-    } else if (crossAxisCount == 3) {
-      // Tablet: 3 columns - balanced aspect ratio
-      childAspectRatio = 0.75;
+    if (isVerySmall) {
+      childAspectRatio = 0.5; // Taller cards for more content space on very small screens
+    } else if (isSmall) {
+      childAspectRatio = 0.55; // Slightly more space for small screens
+    } else if (isMedium) {
+      childAspectRatio = 0.6; // Balanced for tablets
+    } else if (isLarge) {
+      childAspectRatio = 0.65; // Good proportions for large screens
     } else {
-      // Desktop: 4 columns - slightly taller cards
-      childAspectRatio = 0.8;
+      childAspectRatio = 0.7; // More width for extra large screens
+    }
+
+    // Calculate responsive padding and spacing
+    double horizontalPadding, verticalPadding, spacing;
+    if (isVerySmall) {
+      horizontalPadding = 8;
+      verticalPadding = 8;
+      spacing = 8;
+    } else if (isSmall) {
+      horizontalPadding = 12;
+      verticalPadding = 12;
+      spacing = 10;
+    } else if (isMedium) {
+      horizontalPadding = 16;
+      verticalPadding = 16;
+      spacing = 12;
+    } else if (isLarge) {
+      horizontalPadding = 20;
+      verticalPadding = 20;
+      spacing = 16;
+    } else {
+      horizontalPadding = 24;
+      verticalPadding = 24;
+      spacing = 20;
     }
 
     return SliverPadding(
       padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 16 : 20,
-        vertical: 16,
+        horizontal: horizontalPadding,
+        vertical: verticalPadding,
       ),
       sliver: SliverGrid(
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
-          crossAxisSpacing: isSmallScreen ? 12 : 16,
-          mainAxisSpacing: isSmallScreen ? 16 : 20,
+          crossAxisSpacing: spacing,
+          mainAxisSpacing: spacing,
           childAspectRatio: childAspectRatio,
         ),
         delegate: SliverChildBuilderDelegate(
@@ -304,9 +355,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
             return CelebrityPicksProductCard(
               product: product,
               onTap: () => _navigateToProduct(product),
-              onWishlistTap: () => provider.toggleWishlist(product.id),
               formatPrice: _formatPrice,
-              isSmallScreen: isSmallScreen,
             );
           },
           childCount: provider.displayProducts.length,
@@ -319,11 +368,13 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
     // Use the same aspect ratio calculation as the main grid
     double childAspectRatio;
     if (crossAxisCount == 2) {
-      childAspectRatio = isSmallScreen ? 0.65 : 0.7;
+      childAspectRatio = isSmallScreen ? 0.5 : 0.55;
     } else if (crossAxisCount == 3) {
-      childAspectRatio = 0.75;
+      childAspectRatio = 0.6;
+    } else if (crossAxisCount == 4) {
+      childAspectRatio = 0.65;
     } else {
-      childAspectRatio = 0.8;
+      childAspectRatio = 0.7;
     }
 
     return Padding(
@@ -334,7 +385,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
           Container(
             height: 50,
             decoration: BoxDecoration(
-              color: AppConstants.borderColor.withValues(alpha: 0.3),
+              color: AppConstants.borderColor.withOpacity(0.3),
               borderRadius: BorderRadius.circular(25),
             ),
           ),
@@ -356,7 +407,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: AppConstants.borderColor.withValues(alpha: 0.3),
+                          color: AppConstants.borderColor.withOpacity(0.3),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -364,7 +415,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                       Container(
                         height: 12,
                         decoration: BoxDecoration(
-                          color: AppConstants.borderColor.withValues(alpha: 0.3),
+                          color: AppConstants.borderColor.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
@@ -392,7 +443,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                     color: AppConstants.surfaceColor,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                      color: AppConstants.borderColor.withOpacity(0.3),
                     ),
                   ),
                   child: Column(
@@ -401,7 +452,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                         flex: 5,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: AppConstants.borderColor.withValues(alpha: 0.3),
+                            color: AppConstants.borderColor.withOpacity(0.3),
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                           ),
                         ),
@@ -416,7 +467,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                               Expanded(
                                 child: Container(
                                 decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                  color: AppConstants.borderColor.withOpacity(0.3),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                 ),
@@ -428,7 +479,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                                     width: 28,
                                     height: 28,
                                 decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                  color: AppConstants.borderColor.withOpacity(0.3),
                                       shape: BoxShape.circle,
                                 ),
                               ),
@@ -437,7 +488,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                                     child: Container(
                                       height: 12,
                                 decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                  color: AppConstants.borderColor.withOpacity(0.3),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                     ),
@@ -529,7 +580,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
           Icon(
             Icons.search_off,
             size: isSmallScreen ? 64 : 80,
-            color: AppConstants.textSecondary.withValues(alpha: 0.5),
+            color: AppConstants.textSecondary.withOpacity(0.5),
           ),
           SizedBox(height: isSmallScreen ? 16 : 24),
           Text(
@@ -545,7 +596,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
             'Try adjusting your filters or search terms',
             style: TextStyle(
               fontSize: isSmallScreen ? 14 : 16,
-              color: AppConstants.textSecondary.withValues(alpha: 0.7),
+              color: AppConstants.textSecondary.withOpacity(0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -627,7 +678,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (context) => Consumer<CelebrityPicksProvider>(
         builder: (context, celebrityProvider, child) => Container(
           width: MediaQuery.of(context).size.width, // Full width from beginning of screen
@@ -671,7 +722,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                       },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        backgroundColor: AppConstants.accentColor.withValues(alpha: 0.1),
+                        backgroundColor: AppConstants.accentColor.withOpacity(0.1),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -724,7 +775,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                   color: AppConstants.surfaceColor,
                   border: Border(
                     top: BorderSide(
-                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                      color: AppConstants.borderColor.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
@@ -841,10 +892,10 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
             vertical: isSmallScreen ? 10 : 12,
           ),
           decoration: BoxDecoration(
-            color: AppConstants.accentColor.withValues(alpha: 0.1),
+            color: AppConstants.accentColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: AppConstants.accentColor.withValues(alpha: 0.3),
+              color: AppConstants.accentColor.withOpacity(0.3),
               width: 1,
             ),
           ),
@@ -911,9 +962,9 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                     overlayRadius: isSmallScreen ? 18 : 22,
                   ),
                   activeTrackColor: AppConstants.accentColor,
-                  inactiveTrackColor: AppConstants.borderColor.withValues(alpha: 0.3),
+                  inactiveTrackColor: AppConstants.borderColor.withOpacity(0.3),
                   thumbColor: AppConstants.accentColor,
-                  overlayColor: AppConstants.accentColor.withValues(alpha: 0.2),
+                  overlayColor: AppConstants.accentColor.withOpacity(0.2),
                 ),
                 child: RangeSlider(
                   values: RangeValues(
@@ -993,10 +1044,10 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
         decoration: BoxDecoration(
           color: isSelected 
               ? AppConstants.accentColor 
-              : AppConstants.accentColor.withValues(alpha: 0.1),
+              : AppConstants.accentColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 24),
           border: Border.all(
-            color: AppConstants.accentColor.withValues(alpha: 0.3),
+            color: AppConstants.accentColor.withOpacity(0.3),
             width: 1,
           ),
         ),

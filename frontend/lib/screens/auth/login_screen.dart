@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../widgets/common/custom_button.dart';
-import '../../widgets/common/custom_text_field.dart';
-import '../../utils/validators.dart';
 import '../../constants/app_constants.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -26,191 +24,169 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (!_formKey.currentState!.validate()) return;
 
-      // Simulate login process
-      await Future.delayed(const Duration(seconds: 2));
+    setState(() {
+      _isLoading = true;
+    });
 
+    // Simulate login delay
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (mounted) {
       setState(() {
         _isLoading = false;
       });
-
-      if (mounted) {
-        // Navigate to home on successful login
-        context.goNamed('home');
-        
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Login successful!'),
-            backgroundColor: AppConstants.successColor,
-          ),
-        );
-      }
+      
+      // Navigate to home screen after successful login
+      context.go('/home');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Welcome Back'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.goNamed('home'),
-        ),
-      ),
+      backgroundColor: AppConstants.backgroundColor,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 20),
-                
-                // Logo section
-                Container(
-                  alignment: Alignment.center,
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Icon(
-                          Icons.shopping_bag,
-                          size: 40,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Sign In',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Welcome back to Bloom Beauty',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppConstants.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 60),
+              
+              // App Logo/Title
+              const Icon(
+                Icons.spa_outlined,
+                size: 80,
+                color: AppConstants.accentColor,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Bloom Beauty',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppConstants.accentColor,
                 ),
-                
-                const SizedBox(height: 40),
-                
-                // Email field
-                CustomTextField(
-                  label: 'Email',
-                  hint: 'Enter your email',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  validator: Validators.validateEmail,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Welcome back! Please sign in to your account.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppConstants.textSecondary,
                 ),
-                
-                const SizedBox(height: 16),
-                
-                // Password field
-                CustomTextField(
-                  label: 'Password',
-                  hint: 'Enter your password',
-                  controller: _passwordController,
-                  obscureText: true,
-                  prefixIcon: const Icon(Icons.lock_outlined),
-                  validator: Validators.validatePassword,
-                ),
-                
-                const SizedBox(height: 12),
-                
-                // Forgot password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Forgot password feature coming soon!'),
-                        ),
-                      );
-                    },
-                    child: const Text('Forgot Password?'),
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Login button
-                CustomButton(
-                  text: 'Sign In',
-                  onPressed: _handleLogin,
-                  isLoading: _isLoading,
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Divider
-                Row(
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 48),
+              
+              // Login Form
+              Form(
+                key: _formKey,
+                child: Column(
                   children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'OR',
-                        style: TextStyle(
-                          color: AppConstants.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                    // Email Field
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email_outlined),
                       ),
-                    ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Continue as guest
-                OutlinedButton(
-                  onPressed: () => context.goNamed('home'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Continue as Guest'),
-                ),
-                
-                const Spacer(),
-                
-                // Sign up prompt
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Don't have an account? "),
-                    TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Sign up feature coming soon!'),
-                          ),
-                        );
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) {
+                          return 'Email is required';
+                        }
+                        if (!value!.contains('@')) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
                       },
-                      child: const Text('Sign Up'),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Password Field
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: const Icon(Icons.lock_outlined),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) {
+                          return 'Password is required';
+                        }
+                        if (value!.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Login Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppConstants.accentColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text(
+                                'Sign In',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Skip Login Button (for development)
+              TextButton(
+                onPressed: () => context.go('/home'),
+                child: const Text(
+                  'Skip for now',
+                  style: TextStyle(
+                    color: AppConstants.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
