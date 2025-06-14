@@ -185,13 +185,13 @@ class _WishlistButtonState extends State<WishlistButton>
                           ? BoxDecoration(
                               color: widget.backgroundColor ??
                                   (isInWishlist
-                                      ? AppConstants.favoriteColor.withValues(alpha: 0.1)
-                                      : Colors.white.withValues(alpha: 0.9)),
+                                      ? AppConstants.favoriteColor.withOpacity(0.1)
+                                      : Colors.white.withOpacity(0.9)),
                               shape: BoxShape.circle,
                               boxShadow: widget.showShadow
                                   ? [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
+                                        color: Colors.black.withOpacity(0.1),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),
@@ -282,20 +282,20 @@ class FloatingWishlistButton extends StatelessWidget {
           width: isSmallScreen ? 44 : 52,
           height: isSmallScreen ? 44 : 52,
           decoration: BoxDecoration(
-            color: AppConstants.surfaceColor.withValues(alpha: 0.95),
+            color: AppConstants.surfaceColor.withOpacity(0.95),
             borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
             border: Border.all(
-              color: AppConstants.borderColor.withValues(alpha: 0.3),
+              color: AppConstants.borderColor.withOpacity(0.3),
               width: 1,
             ),
                          boxShadow: [
                BoxShadow(
-                 color: AppConstants.textSecondary.withValues(alpha: 0.15),
+                 color: AppConstants.textSecondary.withOpacity(0.15),
                  blurRadius: 12,
                  offset: const Offset(0, 4),
                ),
                BoxShadow(
-                 color: Colors.white.withValues(alpha: 0.05),
+                 color: Colors.white.withOpacity(0.05),
                  blurRadius: 1,
                  offset: const Offset(0, 1),
                ),

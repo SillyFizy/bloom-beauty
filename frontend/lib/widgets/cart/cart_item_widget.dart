@@ -111,10 +111,10 @@ class CartItemWidget extends StatelessWidget {
                             vertical: isSmallScreen ? 2 : 4
                           ),
                           decoration: BoxDecoration(
-                            color: AppConstants.accentColor.withValues(alpha: 0.1),
+                            color: AppConstants.accentColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
                             border: Border.all(
-                              color: AppConstants.accentColor.withValues(alpha: 0.3),
+                              color: AppConstants.accentColor.withOpacity(0.3),
                               width: 1,
                             ),
                           ),
@@ -262,7 +262,7 @@ style: const TextStyle(
                         height: isSmallScreen ? 32 : 40,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppConstants.errorColor.withValues(alpha: 0.1),
+                          color: AppConstants.errorColor.withOpacity(0.1),
                         ),
                         child: IconButton(
                           onPressed: onRemove,

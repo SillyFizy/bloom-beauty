@@ -488,9 +488,9 @@ const CircularProgressIndicator(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppConstants.favoriteColor.withValues(alpha: 0.15),
-                    AppConstants.favoriteColor.withValues(alpha: 0.08),
-                    AppConstants.accentColor.withValues(alpha: 0.05),
+                    AppConstants.favoriteColor.withOpacity(0.15),
+                    AppConstants.favoriteColor.withOpacity(0.08),
+                    AppConstants.accentColor.withOpacity(0.05),
                     AppConstants.surfaceColor,
                   ],
                   stops: const [0.0, 0.3, 0.7, 1.0],
@@ -507,7 +507,7 @@ const CircularProgressIndicator(
                 height: 150,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppConstants.favoriteColor.withValues(alpha: 0.1),
+                  color: AppConstants.favoriteColor.withOpacity(0.1),
                 ),
               ),
             ),
@@ -519,7 +519,7 @@ const CircularProgressIndicator(
                 height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppConstants.accentColor.withValues(alpha: 0.08),
+                  color: AppConstants.accentColor.withOpacity(0.08),
                 ),
               ),
             ),
@@ -534,8 +534,8 @@ const CircularProgressIndicator(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        AppConstants.favoriteColor.withValues(alpha: 0.3),
-                        AppConstants.favoriteColor.withValues(alpha: 0.1),
+                        AppConstants.favoriteColor.withOpacity(0.3),
+                        AppConstants.favoriteColor.withOpacity(0.1),
                         Colors.transparent,
                       ],
                       stops: const [0.7, 0.9, 1.0],
@@ -551,12 +551,12 @@ const CircularProgressIndicator(
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppConstants.favoriteColor.withValues(alpha: 0.4),
+                          color: AppConstants.favoriteColor.withOpacity(0.4),
                           blurRadius: 25,
                           offset: const Offset(0, 8),
                         ),
                         BoxShadow(
-                          color: AppConstants.favoriteColor.withValues(alpha: 0.2),
+                          color: AppConstants.favoriteColor.withOpacity(0.2),
                           blurRadius: 15,
                           offset: const Offset(0, 4),
                         ),
@@ -596,8 +596,8 @@ const CircularProgressIndicator(
       decoration: BoxDecoration(
         gradient: RadialGradient(
           colors: [
-            AppConstants.favoriteColor.withValues(alpha: 0.2),
-            AppConstants.favoriteColor.withValues(alpha: 0.1),
+            AppConstants.favoriteColor.withOpacity(0.2),
+            AppConstants.favoriteColor.withOpacity(0.1),
             AppConstants.surfaceColor,
           ],
           stops: const [0.0, 0.5, 1.0],
@@ -635,7 +635,7 @@ const CircularProgressIndicator(
       decoration: BoxDecoration(
         gradient: RadialGradient(
           colors: [
-            AppConstants.favoriteColor.withValues(alpha: 0.1),
+            AppConstants.favoriteColor.withOpacity(0.1),
             AppConstants.surfaceColor,
           ],
           stops: const [0.0, 1.0],
@@ -692,13 +692,13 @@ const CircularProgressIndicator(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppConstants.favoriteColor.withValues(alpha: 0.1),
-                  AppConstants.accentColor.withValues(alpha: 0.1),
+                  AppConstants.favoriteColor.withOpacity(0.1),
+                  AppConstants.accentColor.withOpacity(0.1),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppConstants.favoriteColor.withValues(alpha: 0.3),
+                color: AppConstants.favoriteColor.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -740,13 +740,13 @@ child: const Text(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppConstants.favoriteColor.withValues(alpha: 0.08),
-            AppConstants.accentColor.withValues(alpha: 0.05),
+            AppConstants.favoriteColor.withOpacity(0.08),
+            AppConstants.accentColor.withOpacity(0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppConstants.favoriteColor.withValues(alpha: 0.3),
+          color: AppConstants.favoriteColor.withOpacity(0.3),
           width: 1.5,
         ),
       ),
@@ -883,7 +883,7 @@ child: const Text(
           ),
           boxShadow: [
             BoxShadow(
-              color: AppConstants.textSecondary.withValues(alpha: 0.08),
+              color: AppConstants.textSecondary.withOpacity(0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -922,7 +922,7 @@ decoration: const BoxDecoration(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: AppConstants.borderColor.withValues(alpha: 0.5),
+                    color: AppConstants.borderColor.withOpacity(0.5),
                     width: 1,
                   ),
                 ),
@@ -1012,10 +1012,10 @@ decoration: const BoxDecoration(
         vertical: isSmallScreen ? 16 : 20
       ),
       decoration: BoxDecoration(
-        color: AppConstants.backgroundColor.withValues(alpha: 0.5),
+        color: AppConstants.backgroundColor.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppConstants.borderColor.withValues(alpha: 0.5),
+          color: AppConstants.borderColor.withOpacity(0.5),
           width: 1,
         ),
       ),
@@ -1113,7 +1113,7 @@ decoration: const BoxDecoration(
           ),
           boxShadow: [
             BoxShadow(
-              color: AppConstants.textSecondary.withValues(alpha: 0.08),
+              color: AppConstants.textSecondary.withOpacity(0.08),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -1230,10 +1230,10 @@ decoration: const BoxDecoration(
                         vertical: isSmallScreen ? 2 : 3
                       ),
                       decoration: BoxDecoration(
-                        color: AppConstants.favoriteColor.withValues(alpha: 0.1),
+                        color: AppConstants.favoriteColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: AppConstants.favoriteColor.withValues(alpha: 0.3),
+                          color: AppConstants.favoriteColor.withOpacity(0.3),
                           width: 0.5,
                         ),
                       ),
@@ -1415,7 +1415,7 @@ decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-              color: bgColor.withValues(alpha: 0.3),
+              color: bgColor.withOpacity(0.3),
               blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),

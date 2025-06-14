@@ -36,12 +36,12 @@ class CelebrityPicksProductCard extends StatelessWidget {
           color: AppConstants.surfaceColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppConstants.borderColor.withValues(alpha: 0.3),
+            color: AppConstants.borderColor.withOpacity(0.3),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppConstants.textSecondary.withValues(alpha: 0.1),
+              color: AppConstants.textSecondary.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -126,11 +126,11 @@ class CelebrityPicksProductCard extends StatelessWidget {
       memCacheWidth: isSmallScreen ? 300 : 400,
       memCacheHeight: isSmallScreen ? 300 : 400,
       placeholder: (context, url) => Shimmer.fromColors(
-        baseColor: AppConstants.borderColor.withValues(alpha: 0.3),
+        baseColor: AppConstants.borderColor.withOpacity(0.3),
         highlightColor: AppConstants.surfaceColor,
         child: Container(
           decoration: BoxDecoration(
-            color: AppConstants.borderColor.withValues(alpha: 0.3),
+            color: AppConstants.borderColor.withOpacity(0.3),
           ),
         ),
       ),
@@ -140,8 +140,8 @@ class CelebrityPicksProductCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppConstants.favoriteColor.withValues(alpha: 0.3),
-                AppConstants.favoriteColor.withValues(alpha: 0.1),
+                AppConstants.favoriteColor.withOpacity(0.3),
+                AppConstants.favoriteColor.withOpacity(0.1),
               ],
             ),
           ),
@@ -149,7 +149,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
             child: Icon(
               Icons.spa_outlined,
               size: isSmallScreen ? 32 : 40,
-              color: AppConstants.textSecondary.withValues(alpha: 0.5),
+              color: AppConstants.textSecondary.withOpacity(0.5),
             ),
           ),
       ),
@@ -176,7 +176,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -207,11 +207,11 @@ class CelebrityPicksProductCard extends StatelessWidget {
         vertical: isSmallScreen ? 4 : 6,
       ),
       decoration: BoxDecoration(
-            color: AppConstants.favoriteColor.withValues(alpha: 0.9),
+            color: AppConstants.favoriteColor.withOpacity(0.9),
         borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -371,7 +371,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
               ),
             boxShadow: isLarge && !isCompactHeight ? [
                 BoxShadow(
-                  color: AppConstants.accentColor.withValues(alpha: 0.2),
+                  color: AppConstants.accentColor.withOpacity(0.2),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
               ),
@@ -384,15 +384,15 @@ class CelebrityPicksProductCard extends StatelessWidget {
               memCacheWidth: (avatarSize * 2).toInt(),
               memCacheHeight: (avatarSize * 2).toInt(),
               placeholder: (context, url) => Container(
-                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                      color: AppConstants.borderColor.withOpacity(0.3),
                 ),
                 errorWidget: (context, error, stackTrace) {
                   return Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppConstants.accentColor.withValues(alpha: 0.6),
-                          AppConstants.accentColor.withValues(alpha: 0.3),
+                          AppConstants.accentColor.withOpacity(0.6),
+                          AppConstants.accentColor.withOpacity(0.3),
                         ],
                       ),
                     ),
@@ -514,7 +514,7 @@ class CelebrityPicksProductCard extends StatelessWidget {
             vertical: isVerySmall ? 3 : 4,
           ),
           decoration: BoxDecoration(
-            color: AppConstants.accentColor.withValues(alpha: 0.1),
+            color: AppConstants.accentColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(

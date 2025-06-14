@@ -23,7 +23,7 @@ class ProductCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppConstants.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
+                            color: Colors.grey.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -65,7 +65,7 @@ decoration: const BoxDecoration(
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
-                              color: AppConstants.accentColor.withValues(alpha: 0.1),
+                              color: AppConstants.accentColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(30),
                             ),
 child: const Icon(
@@ -101,7 +101,7 @@ const Text(
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
+                              color: Colors.black.withOpacity(0.1),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),

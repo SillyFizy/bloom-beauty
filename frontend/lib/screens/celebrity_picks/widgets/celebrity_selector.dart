@@ -59,18 +59,18 @@ class CelebritySelector extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            AppConstants.accentColor.withValues(alpha: 0.1),
-                            AppConstants.accentColor.withValues(alpha: 0.05),
+                            AppConstants.accentColor.withOpacity(0.1),
+                            AppConstants.accentColor.withOpacity(0.05),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: AppConstants.accentColor.withValues(alpha: 0.2),
+                          color: AppConstants.accentColor.withOpacity(0.2),
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppConstants.accentColor.withValues(alpha: 0.1),
+                            color: AppConstants.accentColor.withOpacity(0.1),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -100,7 +100,7 @@ class CelebritySelector extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                           decoration: BoxDecoration(
                             color: provider.browseMode == BrowseMode.celebrity 
-                                ? AppConstants.accentColor.withValues(alpha: 0.1)
+                                ? AppConstants.accentColor.withOpacity(0.1)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -136,7 +136,7 @@ class CelebritySelector extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                           decoration: BoxDecoration(
                             color: provider.browseMode == BrowseMode.category 
-                                ? AppConstants.accentColor.withValues(alpha: 0.1)
+                                ? AppConstants.accentColor.withOpacity(0.1)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -235,13 +235,13 @@ class CelebritySelector extends StatelessWidget {
                 border: Border.all(
                   color: isSelected 
                       ? AppConstants.accentColor 
-                      : AppConstants.borderColor.withValues(alpha: 0.3),
+                      : AppConstants.borderColor.withOpacity(0.3),
                   width: isSelected ? 3 : 2,
                 ),
                 boxShadow: isSelected 
                     ? [
                         BoxShadow(
-                          color: AppConstants.accentColor.withValues(alpha: 0.3),
+                          color: AppConstants.accentColor.withOpacity(0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -281,8 +281,8 @@ class CelebritySelector extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppConstants.accentColor.withValues(alpha: 0.8),
-            AppConstants.favoriteColor.withValues(alpha: 0.6),
+            AppConstants.accentColor.withOpacity(0.8),
+            AppConstants.favoriteColor.withOpacity(0.6),
           ],
         ),
       ),
@@ -303,11 +303,11 @@ class CelebritySelector extends StatelessWidget {
       memCacheWidth: isSmallScreen ? 130 : 150,
       memCacheHeight: isSmallScreen ? 130 : 150,
       placeholder: (context, url) => Shimmer.fromColors(
-        baseColor: AppConstants.borderColor.withValues(alpha: 0.3),
+        baseColor: AppConstants.borderColor.withOpacity(0.3),
         highlightColor: AppConstants.surfaceColor,
         child: Container(
           decoration: BoxDecoration(
-            color: AppConstants.borderColor.withValues(alpha: 0.3),
+            color: AppConstants.borderColor.withOpacity(0.3),
           ),
         ),
       ),
@@ -317,8 +317,8 @@ class CelebritySelector extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppConstants.favoriteColor.withValues(alpha: 0.6),
-              AppConstants.favoriteColor.withValues(alpha: 0.3),
+              AppConstants.favoriteColor.withOpacity(0.6),
+              AppConstants.favoriteColor.withOpacity(0.3),
             ],
           ),
         ),

@@ -245,9 +245,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(16),
                   gradient: LinearGradient(
                     colors: [
-                      Colors.pink.withValues(alpha: 0.8),
-                      Colors.purple.withValues(alpha: 0.8),
-                      Colors.orange.withValues(alpha: 0.8),
+                      Colors.pink.withOpacity(0.8),
+                      Colors.purple.withOpacity(0.8),
+                      Colors.orange.withOpacity(0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -296,7 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: BoxShape.circle,
                 color: _currentBannerIndex == index
                     ? AppConstants.accentColor
-                    : AppConstants.textSecondary.withValues(alpha: 0.3),
+                    : AppConstants.textSecondary.withOpacity(0.3),
               ),
             ),
           ),
@@ -372,8 +372,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         shape: BoxShape.circle,
                                         gradient: LinearGradient(
                                           colors: [
-                                            AppConstants.accentColor.withValues(alpha: 0.1),
-                                            AppConstants.favoriteColor.withValues(alpha: 0.1),
+                                            AppConstants.accentColor.withOpacity(0.1),
+                                            AppConstants.favoriteColor.withOpacity(0.1),
                                           ],
                                         ),
                                       ),
@@ -466,13 +466,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             colors: [
-                                              AppConstants.accentColor.withValues(alpha: 0.1),
-                                              AppConstants.accentColor.withValues(alpha: 0.05),
+                                              AppConstants.accentColor.withOpacity(0.1),
+                                              AppConstants.accentColor.withOpacity(0.05),
                                             ],
                                           ),
                                           borderRadius: BorderRadius.circular(20),
                                           border: Border.all(
-                                            color: AppConstants.accentColor.withValues(alpha: 0.3),
+                                            color: AppConstants.accentColor.withOpacity(0.3),
                                             width: 1,
                                           ),
                                         ),
@@ -660,7 +660,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
+              color: Colors.grey.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -686,7 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Icon(
                         Icons.spa_outlined,
                         size: isSmallScreen ? 32 : 40,
-                        color: AppConstants.accentColor.withValues(alpha: 0.5),
+                        color: AppConstants.accentColor.withOpacity(0.5),
                       ),
                     ),
                   ),
@@ -707,11 +707,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                          color: AppConstants.favoriteColor.withValues(alpha: 0.9),
+                          color: AppConstants.favoriteColor.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: Colors.black.withOpacity(0.1),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -782,7 +782,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppConstants.accentColor.withValues(alpha: 0.1),
+                            color: AppConstants.accentColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -867,9 +867,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
                 itemCount: bestsellingProducts.length,
+                physics: const BouncingScrollPhysics(),
+                addAutomaticKeepAlives: false,
+                addRepaintBoundaries: true,
                 itemBuilder: (context, index) {
+                  if (index < 0 || index >= bestsellingProducts.length) {
+                    return const SizedBox.shrink();
+                  }
                   final product = bestsellingProducts[index];
-                  return _buildHorizontalProductCard(product, isSmallScreen);
+                  return _buildHorizontalProductCard(product, isSmallScreen, index, 'bestselling');
                 },
               ),
             ),
@@ -929,9 +935,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
                 itemCount: trendingProducts.length,
+                physics: const BouncingScrollPhysics(),
+                addAutomaticKeepAlives: false,
+                addRepaintBoundaries: true,
                 itemBuilder: (context, index) {
+                  if (index < 0 || index >= trendingProducts.length) {
+                    return const SizedBox.shrink();
+                  }
                   final product = trendingProducts[index];
-                  return _buildHorizontalProductCard(product, isSmallScreen);
+                  return _buildHorizontalProductCard(product, isSmallScreen, index, 'trending');
                 },
               ),
             ),
@@ -941,20 +953,36 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHorizontalProductCard(Product product, bool isSmallScreen) {
-    return GestureDetector(
-      onTap: () async {
-        await _navigateToProductWithProvider(context, product);
-      },
-      child: Container(
-        width: isSmallScreen ? 160 : 180,
-        margin: EdgeInsets.only(right: isSmallScreen ? 12 : 16),
+  Widget _buildHorizontalProductCard(Product product, bool isSmallScreen, int index, String section) {
+    // Validate product data
+    if (product.name.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    // Ensure valid dimensions
+    final cardWidth = (isSmallScreen ? 160.0 : 180.0).clamp(100.0, 300.0);
+    final marginRight = (isSmallScreen ? 12.0 : 16.0).clamp(8.0, 24.0);
+    
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minWidth: 100,
+        maxWidth: 300,
+        minHeight: 150,
+        maxHeight: 400,
+      ),
+      child: GestureDetector(
+        onTap: () async {
+          await _navigateToProductWithProvider(context, product);
+        },
+        child: Container(
+          width: cardWidth,
+          margin: EdgeInsets.only(right: marginRight),
         decoration: BoxDecoration(
           color: AppConstants.surfaceColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
+              color: Colors.grey.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -980,7 +1008,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Icon(
                         Icons.spa_outlined,
                         size: isSmallScreen ? 32 : 40,
-                        color: AppConstants.accentColor.withValues(alpha: 0.5),
+                        color: AppConstants.accentColor.withOpacity(0.5),
                       ),
                     ),
                   ),
@@ -990,7 +1018,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: WishlistButton(
                       product: product,
                       size: isSmallScreen ? 14 : 18,
-                      heroTag: 'horizontal_wishlist_${product.id}',
+                      heroTag: 'horizontal_wishlist_${section}_${product.id}_$index',
                     ),
                   ),
                   // Beauty Points positioned at bottom-right of image
@@ -1001,11 +1029,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                          color: AppConstants.favoriteColor.withValues(alpha: 0.9),
+                          color: AppConstants.favoriteColor.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: Colors.black.withOpacity(0.1),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -1076,7 +1104,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppConstants.accentColor.withValues(alpha: 0.1),
+                            color: AppConstants.accentColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -1108,7 +1136,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildLoadingSection(String message, bool isSmallScreen) {
@@ -1205,7 +1233,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               Icons.spa_outlined,
               size: isSmallScreen ? 40 : 48,
-              color: AppConstants.textSecondary.withValues(alpha: 0.5),
+              color: AppConstants.textSecondary.withOpacity(0.5),
             ),
             SizedBox(height: isSmallScreen ? 12 : 16),
             Text(

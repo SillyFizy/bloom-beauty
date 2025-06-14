@@ -94,12 +94,12 @@ const SnackBar(
               color: AppConstants.surfaceColor,
               borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
               border: Border.all(
-                color: AppConstants.borderColor.withValues(alpha: 0.3),
+                color: AppConstants.borderColor.withOpacity(0.3),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppConstants.textSecondary.withValues(alpha: 0.1),
+                  color: AppConstants.textSecondary.withOpacity(0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -189,7 +189,7 @@ const SnackBar(
                 borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
                 boxShadow: [
                   BoxShadow(
-                    color: AppConstants.errorColor.withValues(alpha: 0.3),
+                    color: AppConstants.errorColor.withOpacity(0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -222,7 +222,7 @@ const SnackBar(
                 borderRadius: BorderRadius.circular(isMobile ? 10 : 12), // Increased border radius
                 boxShadow: [
                   BoxShadow(
-                    color: AppConstants.favoriteColor.withValues(alpha: 0.3),
+                    color: AppConstants.favoriteColor.withOpacity(0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -256,7 +256,7 @@ const SnackBar(
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
+                color: Colors.black.withOpacity(0.6),
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(isMobile ? 12 : 16),
                 ),
@@ -294,7 +294,7 @@ const SnackBar(
         child: Icon(
           Icons.spa_outlined,
           size: isMobile ? 32 : 40,
-          color: AppConstants.accentColor.withValues(alpha: 0.5),
+          color: AppConstants.accentColor.withOpacity(0.5),
         ),
       ),
     );
@@ -370,7 +370,7 @@ const SnackBar(
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppConstants.accentColor.withValues(alpha: 0.2),
+                                color: AppConstants.accentColor.withOpacity(0.2),
                                 blurRadius: 3, // Increased shadow
                                 offset: const Offset(0, 1),
                               ),
@@ -383,11 +383,11 @@ const SnackBar(
                               memCacheWidth: isCompactLayout ? 48 : (isMobile ? 56 : 64), // Increased cache sizes
                               memCacheHeight: isCompactLayout ? 48 : (isMobile ? 56 : 64),
                               placeholder: (context, url) => Shimmer.fromColors(
-                                baseColor: AppConstants.borderColor.withValues(alpha: 0.3),
+                                baseColor: AppConstants.borderColor.withOpacity(0.3),
                                 highlightColor: AppConstants.surfaceColor,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                    color: AppConstants.borderColor.withOpacity(0.3),
                                   ),
                                 ),
                               ),
@@ -396,8 +396,8 @@ const SnackBar(
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        AppConstants.accentColor.withValues(alpha: 0.6),
-                                        AppConstants.accentColor.withValues(alpha: 0.3),
+                                        AppConstants.accentColor.withOpacity(0.6),
+                                        AppConstants.accentColor.withOpacity(0.3),
                                       ],
                                     ),
                                   ),
@@ -509,10 +509,10 @@ const SizedBox(height: 2),
                         vertical: isCompactLayout ? 3 : (isMobile ? 4 : 5),
                       ),
                       decoration: BoxDecoration(
-                        color: AppConstants.accentColor.withValues(alpha: 0.1),
+                        color: AppConstants.accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(isCompactLayout ? 5 : (isMobile ? 6 : 8)),
                         border: Border.all(
-                          color: AppConstants.accentColor.withValues(alpha: 0.2),
+                          color: AppConstants.accentColor.withOpacity(0.2),
                           width: 1,
                         ),
                       ),

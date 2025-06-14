@@ -385,7 +385,7 @@ child: const Center(
           Container(
             height: 50,
             decoration: BoxDecoration(
-              color: AppConstants.borderColor.withValues(alpha: 0.3),
+              color: AppConstants.borderColor.withOpacity(0.3),
               borderRadius: BorderRadius.circular(25),
             ),
           ),
@@ -407,7 +407,7 @@ child: const Center(
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: AppConstants.borderColor.withValues(alpha: 0.3),
+                          color: AppConstants.borderColor.withOpacity(0.3),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -415,7 +415,7 @@ child: const Center(
                       Container(
                         height: 12,
                         decoration: BoxDecoration(
-                          color: AppConstants.borderColor.withValues(alpha: 0.3),
+                          color: AppConstants.borderColor.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
@@ -443,7 +443,7 @@ child: const Center(
                     color: AppConstants.surfaceColor,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                      color: AppConstants.borderColor.withOpacity(0.3),
                     ),
                   ),
                   child: Column(
@@ -452,7 +452,7 @@ child: const Center(
                         flex: 5,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: AppConstants.borderColor.withValues(alpha: 0.3),
+                            color: AppConstants.borderColor.withOpacity(0.3),
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                           ),
                         ),
@@ -467,7 +467,7 @@ child: const Center(
                               Expanded(
                                 child: Container(
                                 decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                  color: AppConstants.borderColor.withOpacity(0.3),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                 ),
@@ -479,7 +479,7 @@ child: const Center(
                                     width: 28,
                                     height: 28,
                                 decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                  color: AppConstants.borderColor.withOpacity(0.3),
                                       shape: BoxShape.circle,
                                 ),
                               ),
@@ -488,7 +488,7 @@ child: const Center(
                                     child: Container(
                                       height: 12,
                                 decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                  color: AppConstants.borderColor.withOpacity(0.3),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                     ),
@@ -580,7 +580,7 @@ child: const Center(
           Icon(
             Icons.search_off,
             size: isSmallScreen ? 64 : 80,
-            color: AppConstants.textSecondary.withValues(alpha: 0.5),
+            color: AppConstants.textSecondary.withOpacity(0.5),
           ),
           SizedBox(height: isSmallScreen ? 16 : 24),
           Text(
@@ -596,7 +596,7 @@ child: const Center(
             'Try adjusting your filters or search terms',
             style: TextStyle(
               fontSize: isSmallScreen ? 14 : 16,
-              color: AppConstants.textSecondary.withValues(alpha: 0.7),
+              color: AppConstants.textSecondary.withOpacity(0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -678,7 +678,7 @@ child: const Center(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (context) => Consumer<CelebrityPicksProvider>(
         builder: (context, celebrityProvider, child) => Container(
           width: MediaQuery.of(context).size.width, // Full width from beginning of screen
@@ -722,7 +722,7 @@ child: const Center(
                       },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        backgroundColor: AppConstants.accentColor.withValues(alpha: 0.1),
+                        backgroundColor: AppConstants.accentColor.withOpacity(0.1),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -775,7 +775,7 @@ child: const Center(
                   color: AppConstants.surfaceColor,
                   border: Border(
                     top: BorderSide(
-                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                      color: AppConstants.borderColor.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
@@ -892,10 +892,10 @@ child: const Center(
             vertical: isSmallScreen ? 10 : 12,
           ),
           decoration: BoxDecoration(
-            color: AppConstants.accentColor.withValues(alpha: 0.1),
+            color: AppConstants.accentColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: AppConstants.accentColor.withValues(alpha: 0.3),
+              color: AppConstants.accentColor.withOpacity(0.3),
               width: 1,
             ),
           ),
@@ -962,9 +962,9 @@ child: const Center(
                     overlayRadius: isSmallScreen ? 18 : 22,
                   ),
                   activeTrackColor: AppConstants.accentColor,
-                  inactiveTrackColor: AppConstants.borderColor.withValues(alpha: 0.3),
+                  inactiveTrackColor: AppConstants.borderColor.withOpacity(0.3),
                   thumbColor: AppConstants.accentColor,
-                  overlayColor: AppConstants.accentColor.withValues(alpha: 0.2),
+                  overlayColor: AppConstants.accentColor.withOpacity(0.2),
                 ),
                 child: RangeSlider(
                   values: RangeValues(
@@ -1044,10 +1044,10 @@ child: const Center(
         decoration: BoxDecoration(
           color: isSelected 
               ? AppConstants.accentColor 
-              : AppConstants.accentColor.withValues(alpha: 0.1),
+              : AppConstants.accentColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 24),
           border: Border.all(
-            color: AppConstants.accentColor.withValues(alpha: 0.3),
+            color: AppConstants.accentColor.withOpacity(0.3),
             width: 1,
           ),
         ),

@@ -150,13 +150,13 @@ class CategorySelector extends StatelessWidget {
                 border: Border.all(
                   color: isSelected 
                       ? AppConstants.accentColor 
-                      : AppConstants.borderColor.withValues(alpha: 0.3),
+                      : AppConstants.borderColor.withOpacity(0.3),
                   width: isSelected ? 3 : 2,
                 ),
                 boxShadow: isSelected 
                     ? [
                         BoxShadow(
-                          color: AppConstants.accentColor.withValues(alpha: 0.3),
+                          color: AppConstants.accentColor.withOpacity(0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -194,8 +194,8 @@ class CategorySelector extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppConstants.accentColor.withValues(alpha: 0.1),
-            AppConstants.accentColor.withValues(alpha: 0.05),
+            AppConstants.accentColor.withOpacity(0.1),
+            AppConstants.accentColor.withOpacity(0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

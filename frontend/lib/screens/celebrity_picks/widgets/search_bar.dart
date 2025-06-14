@@ -25,12 +25,12 @@ class CelebrityPicksSearchBar extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Search celebrity picks...',
           hintStyle: TextStyle(
-            color: AppConstants.textSecondary.withValues(alpha: 0.6),
+            color: AppConstants.textSecondary.withOpacity(0.6),
             fontSize: isSmallScreen ? 14 : 16,
           ),
           prefixIcon: Icon(
             Icons.search,
-            color: AppConstants.textSecondary.withValues(alpha: 0.6),
+            color: AppConstants.textSecondary.withOpacity(0.6),
             size: isSmallScreen ? 20 : 24,
           ),
           suffixIcon: controller.text.isNotEmpty
@@ -48,14 +48,14 @@ class CelebrityPicksSearchBar extends StatelessWidget {
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 25),
             borderSide: BorderSide(
-              color: AppConstants.borderColor.withValues(alpha: 0.3),
+              color: AppConstants.borderColor.withOpacity(0.3),
               width: 1,
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 25),
             borderSide: BorderSide(
-              color: AppConstants.borderColor.withValues(alpha: 0.3),
+              color: AppConstants.borderColor.withOpacity(0.3),
               width: 1,
             ),
           ),

@@ -167,7 +167,7 @@ class _SearchScreenState extends State<SearchScreen> {
         color: AppConstants.surfaceColor,
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withValues(alpha: 0.1),
+            color: AppConstants.textSecondary.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -185,7 +185,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 border: Border.all(
                   color: _searchFocusNode.hasFocus 
                       ? AppConstants.accentColor 
-                      : AppConstants.borderColor.withValues(alpha: 0.3),
+                      : AppConstants.borderColor.withOpacity(0.3),
                   width: _searchFocusNode.hasFocus ? 2 : 1,
                 ),
               ),
@@ -201,7 +201,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 decoration: InputDecoration(
                   hintText: 'Search products, brands, categories...',
                   hintStyle: TextStyle(
-                    color: AppConstants.textSecondary.withValues(alpha: 0.6),
+                    color: AppConstants.textSecondary.withOpacity(0.6),
                     fontSize: isSmallScreen ? 14 : 16,
                   ),
                   prefixIcon: Icon(
@@ -249,7 +249,7 @@ class _SearchScreenState extends State<SearchScreen> {
               border: Border.all(
                 color: searchProvider.hasActiveFilters 
                     ? AppConstants.accentColor 
-                    : AppConstants.borderColor.withValues(alpha: 0.3),
+                    : AppConstants.borderColor.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -381,7 +381,7 @@ class _SearchScreenState extends State<SearchScreen> {
             color: AppConstants.surfaceColor,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppConstants.borderColor.withValues(alpha: 0.3),
+              color: AppConstants.borderColor.withOpacity(0.3),
               width: 1,
             ),
           ),
@@ -440,7 +440,7 @@ class _SearchScreenState extends State<SearchScreen> {
               color: AppConstants.surfaceColor,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppConstants.borderColor.withValues(alpha: 0.3),
+                color: AppConstants.borderColor.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -683,7 +683,7 @@ const CircularProgressIndicator(
             Icon(
               Icons.search_off_rounded,
               size: isSmallScreen ? 64 : 80,
-              color: AppConstants.textSecondary.withValues(alpha: 0.5),
+              color: AppConstants.textSecondary.withOpacity(0.5),
             ),
             SizedBox(height: isSmallScreen ? 16 : 20),
             Text(
@@ -820,7 +820,7 @@ side: const BorderSide(color: AppConstants.accentColor),
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (context) => Consumer<SearchProvider>(
         builder: (context, provider, child) => Container(
           width: MediaQuery.of(context).size.width,
@@ -909,7 +909,7 @@ side: const BorderSide(color: AppConstants.accentColor),
                   color: AppConstants.surfaceColor,
                   border: Border(
                     top: BorderSide(
-                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                      color: AppConstants.borderColor.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
@@ -984,10 +984,10 @@ side: const BorderSide(color: AppConstants.accentColor),
                 decoration: BoxDecoration(
                   color: provider.selectedCategoryId == null
                       ? AppConstants.accentColor
-                      : AppConstants.accentColor.withValues(alpha: 0.1),
+                      : AppConstants.accentColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppConstants.accentColor.withValues(alpha: 0.3),
+                    color: AppConstants.accentColor.withOpacity(0.3),
                     width: 1,
                   ),
                 ),
@@ -1015,10 +1015,10 @@ side: const BorderSide(color: AppConstants.accentColor),
                 decoration: BoxDecoration(
                   color: provider.selectedCategoryId == category.id
                       ? AppConstants.accentColor
-                      : AppConstants.accentColor.withValues(alpha: 0.1),
+                      : AppConstants.accentColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppConstants.accentColor.withValues(alpha: 0.3),
+                    color: AppConstants.accentColor.withOpacity(0.3),
                     width: 1,
                   ),
                 ),
@@ -1075,10 +1075,10 @@ side: const BorderSide(color: AppConstants.accentColor),
             vertical: isSmallScreen ? 10 : 12,
           ),
           decoration: BoxDecoration(
-            color: AppConstants.accentColor.withValues(alpha: 0.1),
+            color: AppConstants.accentColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: AppConstants.accentColor.withValues(alpha: 0.3),
+              color: AppConstants.accentColor.withOpacity(0.3),
               width: 1,
             ),
           ),
@@ -1135,9 +1135,9 @@ side: const BorderSide(color: AppConstants.accentColor),
               overlayRadius: isSmallScreen ? 18 : 22,
             ),
             activeTrackColor: AppConstants.accentColor,
-            inactiveTrackColor: AppConstants.borderColor.withValues(alpha: 0.3),
+            inactiveTrackColor: AppConstants.borderColor.withOpacity(0.3),
             thumbColor: AppConstants.accentColor,
-            overlayColor: AppConstants.accentColor.withValues(alpha: 0.2),
+            overlayColor: AppConstants.accentColor.withOpacity(0.2),
           ),
           child: RangeSlider(
             values: RangeValues(
@@ -1209,10 +1209,10 @@ side: const BorderSide(color: AppConstants.accentColor),
         decoration: BoxDecoration(
           color: isSelected
               ? AppConstants.accentColor
-              : AppConstants.accentColor.withValues(alpha: 0.1),
+              : AppConstants.accentColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 24),
           border: Border.all(
-            color: AppConstants.accentColor.withValues(alpha: 0.3),
+            color: AppConstants.accentColor.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -1272,7 +1272,7 @@ side: const BorderSide(color: AppConstants.accentColor),
         width: 80 + (index * 20),
         height: isSmallScreen ? 32 : 36,
         decoration: BoxDecoration(
-          color: AppConstants.borderColor.withValues(alpha: 0.3),
+          color: AppConstants.borderColor.withOpacity(0.3),
           borderRadius: BorderRadius.circular(20),
         ),
       )),
@@ -1293,7 +1293,7 @@ side: const BorderSide(color: AppConstants.accentColor),
       itemBuilder: (context, index) {
         return Container(
           decoration: BoxDecoration(
-            color: AppConstants.borderColor.withValues(alpha: 0.3),
+            color: AppConstants.borderColor.withOpacity(0.3),
             borderRadius: BorderRadius.circular(12),
           ),
         );
