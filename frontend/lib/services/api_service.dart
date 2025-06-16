@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
@@ -51,6 +52,7 @@ class ApiService {
   static Future<Map<String, dynamic>> get(String endpoint,
       {int retryCount = 0}) async {
     try {
+      print('DEBUG: Making GET request to: $baseUrl$endpoint');
       final response = await http
           .get(
             Uri.parse('$baseUrl$endpoint'),
@@ -58,14 +60,20 @@ class ApiService {
           )
           .timeout(requestTimeout);
 
+      print('DEBUG: Response status: ${response.statusCode}');
       return _handleResponse(response);
-    } on SocketException {
-      throw ApiException('No internet connection');
-    } on http.ClientException {
-      throw ApiException('Request failed');
-    } on FormatException {
-      throw ApiException('Invalid response format');
+    } on SocketException catch (e) {
+      print('DEBUG: SocketException: $e');
+      throw ApiException('No internet connection: $e');
+    } on http.ClientException catch (e) {
+      print('DEBUG: ClientException: $e');
+      throw ApiException('Request failed: $e');
+    } on FormatException catch (e) {
+      print('DEBUG: FormatException: $e');
+      throw ApiException('Invalid response format: $e');
     } catch (e) {
+      print('DEBUG: Generic error: $e');
+      print('DEBUG: Error type: ${e.runtimeType}');
       if (retryCount < maxRetries) {
         debugPrint('Retrying request... Attempt ${retryCount + 1}');
         await Future.delayed(Duration(seconds: retryCount + 1));
@@ -109,9 +117,24 @@ class ApiService {
   static Map<String, dynamic> _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       try {
-        return json.decode(response.body);
+        print('DEBUG: Response body length: ${response.body.length}');
+        print(
+            'DEBUG: Response body preview: ${response.body.substring(0, math.min(200, response.body.length))}...');
+        final decoded = json.decode(response.body);
+        print('DEBUG: JSON decoded successfully, type: ${decoded.runtimeType}');
+        if (decoded is Map) {
+          return decoded as Map<String, dynamic>;
+        } else if (decoded is List) {
+          // If response is a list, wrap it in a map
+          return {'data': decoded};
+        } else {
+          throw ApiException(
+              'Unexpected response type: ${decoded.runtimeType}');
+        }
       } catch (e) {
-        throw ApiException('Invalid JSON response');
+        print('DEBUG: JSON decode error: $e');
+        print('DEBUG: Raw response body: ${response.body}');
+        throw ApiException('Invalid JSON response: $e');
       }
     } else {
       final errorMessage = _getErrorMessage(response);
@@ -169,9 +192,124 @@ class ApiService {
     }
   }
 
+  /// Get product detail by slug - includes images, variants, and full details
+  static Future<Product> getProductDetail(String slug) async {
+    try {
+      print('DEBUG: Fetching product detail for slug: $slug');
+      final response = await get('/v1/products/$slug/');
+
+      // Convert backend data format to match frontend model expectations
+      final productData = Map<String, dynamic>.from(response);
+
+      // Ensure we preserve the description from the backend database
+      // The description field comes directly from the products_product.description column
+      // It should already be in the response, but ensure it's not null or empty
+      if (productData['description'] == null ||
+          productData['description'].toString().trim().isEmpty) {
+        productData['description'] = 'Product description coming soon.';
+      }
+
+      // Add mock rating and beauty points since backend doesn't have them yet
+      final productId = int.tryParse(productData['id'].toString()) ?? 0;
+      productData['rating'] =
+          4.5 + (productId % 10) / 10.0; // Mock rating 4.5-5.4
+      productData['review_count'] =
+          50 + (productId % 200); // Mock review count 50-249
+
+      // Safe price conversion - handle both string and number formats
+      double price = 0.0;
+      if (productData['price'] != null) {
+        if (productData['price'] is String) {
+          price = double.tryParse(productData['price']) ?? 0.0;
+        } else if (productData['price'] is num) {
+          price = productData['price'].toDouble();
+        }
+      }
+      productData['price'] = price; // Ensure price is stored as double
+      productData['beauty_points'] =
+          (price * 0.1).round(); // 10% of price as beauty points
+
+      // Convert images array to proper format with better null handling
+      List<String> finalImages = [];
+
+      // First try to get images from the images array
+      if (productData['images'] != null && productData['images'] is List) {
+        final List<dynamic> imageObjects = productData['images'];
+        for (var imgObj in imageObjects) {
+          String? imageUrl;
+          if (imgObj is String) {
+            imageUrl = imgObj;
+          } else if (imgObj is Map && imgObj['image'] != null) {
+            imageUrl = imgObj['image'].toString();
+          }
+
+          if (imageUrl != null && imageUrl.isNotEmpty) {
+            finalImages.add(imageUrl);
+          }
+        }
+      }
+
+      // If no images found, try featured_image
+      if (finalImages.isEmpty && productData['featured_image'] != null) {
+        final featuredImage = productData['featured_image'].toString();
+        if (featuredImage.isNotEmpty) {
+          finalImages.add(featuredImage);
+        }
+      }
+
+      // If still no images, add a placeholder
+      if (finalImages.isEmpty) {
+        // You can add a default placeholder image URL here if needed
+        finalImages = [];
+      }
+
+      productData['images'] = finalImages;
+
+      // Convert variants if they exist
+      if (productData['variants'] != null) {
+        final List<dynamic> variants = productData['variants'];
+        productData['variants'] = variants.map((variant) {
+          return {
+            'id': variant['id'].toString(),
+            'name': variant['name'],
+            'color': variant['attributes']?.isNotEmpty == true
+                ? variant['attributes'][0]['value']
+                : 'Standard',
+            'images': [], // Will use product images for now
+            'price_adjustment': variant['price_adjustment'],
+          };
+        }).toList();
+      } else {
+        productData['variants'] = [];
+      }
+
+      // Safe sale_price conversion
+      if (productData['sale_price'] != null) {
+        if (productData['sale_price'] is String) {
+          productData['sale_price'] =
+              double.tryParse(productData['sale_price']) ?? 0.0;
+        } else if (productData['sale_price'] is num) {
+          productData['sale_price'] = productData['sale_price'].toDouble();
+        }
+      }
+
+      // Set default values for missing fields
+      productData['is_in_stock'] = (productData['stock'] ?? 0) > 0;
+      productData['ingredients'] = []; // Empty for now as per requirements
+      productData['reviews'] = []; // Empty for now as per requirements
+      productData['category_id'] = productData['category']?.toString() ?? '';
+      productData['brand'] = productData['brand_name'] ?? '';
+      productData['discount_price'] = productData['sale_price'];
+
+      return Product.fromJson(productData);
+    } catch (e) {
+      throw ApiException('Failed to load product detail: $e');
+    }
+  }
+
   static Future<List<Product>> getProductsByCategory(String categoryId) async {
     try {
-      final response = await get('/products/?category=$categoryId');
+      final response = await get('/v1/products/?category=$categoryId');
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
       return results.map((json) => Product.fromJson(json)).toList();
@@ -183,7 +321,7 @@ class ApiService {
   static Future<List<Product>> searchProducts(String query) async {
     try {
       final response =
-          await get('/products/?search=${Uri.encodeComponent(query)}');
+          await get('/v1/products/?search=${Uri.encodeComponent(query)}');
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
       return results.map((json) => Product.fromJson(json)).toList();
@@ -196,38 +334,21 @@ class ApiService {
   static Future<List<Product>> getNewArrivals(
       {int days = 30, int limit = 4}) async {
     try {
-      final response = await http
-          .get(
-            Uri.parse(
-                '$baseUrl/v1/products/new_arrivals/?days=$days&limit=$limit'),
-            headers: _headersWithAuth,
-          )
-          .timeout(requestTimeout);
+      final response =
+          await get('/v1/products/new_arrivals/?days=$days&limit=$limit');
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final responseBody = json.decode(response.body);
-
-        // Handle direct array response
-        List<dynamic> results;
-        if (responseBody is List) {
-          results = responseBody;
-        } else if (responseBody is Map && responseBody.containsKey('results')) {
-          results = responseBody['results'];
-        } else {
-          throw ApiException('Invalid response format for new arrivals');
-        }
-
-        return results.map((json) => Product.fromNewArrivalsApi(json)).toList();
+      // Handle response - the get method returns Map<String, dynamic>
+      List<dynamic> results;
+      if (response.containsKey('results')) {
+        results = response['results'];
+      } else if (response.containsKey('data')) {
+        results = response['data'];
       } else {
-        final errorMessage = _getErrorMessage(response);
-        throw ApiException('HTTP ${response.statusCode}: $errorMessage');
+        // If response is directly an array, handle it
+        results = response['data'] ?? [];
       }
-    } on SocketException {
-      throw ApiException('No internet connection');
-    } on http.ClientException {
-      throw ApiException('Request failed');
-    } on FormatException {
-      throw ApiException('Invalid response format');
+
+      return results.map((json) => Product.fromNewArrivalsApi(json)).toList();
     } catch (e) {
       throw ApiException('Failed to load new arrivals: $e');
     }
@@ -237,43 +358,25 @@ class ApiService {
   static Future<List<Product>> getBestsellingProducts(
       {int limit = 10, int? days}) async {
     try {
-      String endpoint = '$baseUrl/v1/products/bestselling/?limit=$limit';
+      String endpoint = '/v1/products/bestselling/?limit=$limit';
       if (days != null) {
         endpoint += '&days=$days';
       }
 
-      final response = await http
-          .get(
-            Uri.parse(endpoint),
-            headers: _headersWithAuth,
-          )
-          .timeout(requestTimeout);
+      final response = await get(endpoint);
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final responseBody = json.decode(response.body);
-
-        // Handle direct array response
-        List<dynamic> results;
-        if (responseBody is List) {
-          results = responseBody;
-        } else if (responseBody is Map && responseBody.containsKey('results')) {
-          results = responseBody['results'];
-        } else {
-          throw ApiException(
-              'Invalid response format for bestselling products');
-        }
-
-        return results.map((json) => Product.fromBestsellingApi(json)).toList();
+      // Handle response - the get method returns Map<String, dynamic>
+      List<dynamic> results;
+      if (response.containsKey('results')) {
+        results = response['results'];
+      } else if (response.containsKey('data')) {
+        results = response['data'];
       } else {
-        final errorMessage = _getErrorMessage(response);
-        throw ApiException('HTTP ${response.statusCode}: $errorMessage');
+        // If response is directly an array, handle it
+        results = response['data'] ?? [];
       }
-    } on SocketException {
-      throw ApiException('No internet connection');
-    } on http.ClientException {
-      throw ApiException('Request failed');
-    } on FormatException {
-      throw ApiException('Invalid response format');
+
+      return results.map((json) => Product.fromBestsellingApi(json)).toList();
     } catch (e) {
       throw ApiException('Failed to load bestselling products: $e');
     }
@@ -283,42 +386,25 @@ class ApiService {
   static Future<List<Product>> getTrendingProducts(
       {int limit = 10, int? days}) async {
     try {
-      String endpoint = '$baseUrl/v1/products/trending/?limit=$limit';
+      String endpoint = '/v1/products/trending/?limit=$limit';
       if (days != null) {
         endpoint += '&days=$days';
       }
 
-      final response = await http
-          .get(
-            Uri.parse(endpoint),
-            headers: _headersWithAuth,
-          )
-          .timeout(requestTimeout);
+      final response = await get(endpoint);
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final responseBody = json.decode(response.body);
-
-        // Handle direct array response
-        List<dynamic> results;
-        if (responseBody is List) {
-          results = responseBody;
-        } else if (responseBody is Map && responseBody.containsKey('results')) {
-          results = responseBody['results'];
-        } else {
-          throw ApiException('Invalid response format for trending products');
-        }
-
-        return results.map((json) => Product.fromTrendingApi(json)).toList();
+      // Handle response - the get method returns Map<String, dynamic>
+      List<dynamic> results;
+      if (response.containsKey('results')) {
+        results = response['results'];
+      } else if (response.containsKey('data')) {
+        results = response['data'];
       } else {
-        final errorMessage = _getErrorMessage(response);
-        throw ApiException('HTTP ${response.statusCode}: $errorMessage');
+        // If response is directly an array, handle it
+        results = response['data'] ?? [];
       }
-    } on SocketException {
-      throw ApiException('No internet connection');
-    } on http.ClientException {
-      throw ApiException('Request failed');
-    } on FormatException {
-      throw ApiException('Invalid response format');
+
+      return results.map((json) => Product.fromTrendingApi(json)).toList();
     } catch (e) {
       throw ApiException('Failed to load trending products: $e');
     }

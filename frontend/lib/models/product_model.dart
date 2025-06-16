@@ -181,19 +181,21 @@ class Product {
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      price: json['price'].toDouble(),
+      id: json['id'].toString(),
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      price: (json['price'] ?? 0).toDouble(),
       discountPrice: json['discount_price']?.toDouble(),
-      images: List<String>.from(json['images']),
-      categoryId: json['category_id'],
-      brand: json['brand'],
-      rating: json['rating'].toDouble(),
-      reviewCount: json['review_count'],
-      isInStock: json['is_in_stock'],
-      ingredients: List<String>.from(json['ingredients']),
-      beautyPoints: json['beauty_points'] ?? 0,
+      images: json['images'] != null ? List<String>.from(json['images']) : [],
+      categoryId: json['category_id']?.toString() ?? '',
+      brand: json['brand'] ?? '',
+      rating: (json['rating'] ?? 0).toDouble(),
+      reviewCount: (json['review_count'] ?? 0).toInt(), // Fix type conversion
+      isInStock: json['is_in_stock'] ?? true,
+      ingredients: json['ingredients'] != null
+          ? List<String>.from(json['ingredients'])
+          : [],
+      beautyPoints: (json['beauty_points'] ?? 0).toInt(), // Fix type conversion
       variants: json['variants'] != null
           ? (json['variants'] as List)
               .map((v) => ProductVariant.fromJson(v))
@@ -308,7 +310,8 @@ class Product {
     }
 
     return Product(
-      id: json['id'].toString(),
+      id: json['slug'] ??
+          json['id'].toString(), // Use slug as ID for proper navigation
       name: json['name'] ?? '',
       description: json['name'] ??
           '', // Using name as description since API doesn't provide description
@@ -406,7 +409,8 @@ class Product {
     }
 
     return Product(
-      id: json['id'].toString(),
+      id: json['slug'] ??
+          json['id'].toString(), // Use slug as ID for proper navigation
       name: json['name'] ?? '',
       description: json['name'] ??
           '', // Using name as description since API doesn't provide description
@@ -494,7 +498,9 @@ class Product {
       if (kDebugMode) {
         debugPrint('Trending Debug:');
         debugPrint('  Product ID: ${json['id']}');
+        debugPrint('  Product Slug: ${json['slug']}');
         debugPrint('  Product Name: ${json['name']}');
+        debugPrint('  All JSON keys: ${json.keys.toList()}');
         debugPrint('  Beauty Points: $beautyPoints');
         debugPrint('  Rating: $rating');
         debugPrint('  Review Count: $reviewCount');
@@ -506,7 +512,8 @@ class Product {
     }
 
     return Product(
-      id: json['id'].toString(),
+      id: json['slug'] ??
+          json['id'].toString(), // Use slug as ID for proper navigation
       name: json['name'] ?? '',
       description: json['name'] ??
           '', // Using name as description since API doesn't provide description

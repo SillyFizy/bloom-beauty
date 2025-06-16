@@ -13,75 +13,139 @@ class CelebrityProvider with ChangeNotifier {
   List<Map<String, dynamic>> _celebrityPicks = [];
   List<Celebrity> _trendingCelebrities = [];
   List<Celebrity> _searchResults = [];
-  
+
   Celebrity? _selectedCelebrity;
   CelebrityStatistics? _celebrityStatistics;
-  
+
   bool _isLoading = false;
   bool _isSearching = false;
   String? _error;
-  
+
   String _currentSearchQuery = '';
   Map<String, List<Product>> _celebrityProducts = {};
   Map<String, Map<String, String>> _celebritySocialMedia = {};
 
+  // Cache management
+  DateTime? _lastCelebritiesUpdate;
+  DateTime? _lastCelebrityPicksUpdate;
+  bool _isInitialized = false;
+  static const Duration _cacheExpiry = Duration(minutes: 20);
+
   // Getters
   List<Celebrity> get celebrities => List.unmodifiable(_celebrities);
-  List<Map<String, dynamic>> get celebrityPicks => List.unmodifiable(_celebrityPicks);
-  List<Celebrity> get trendingCelebrities => List.unmodifiable(_trendingCelebrities);
+  List<Map<String, dynamic>> get celebrityPicks =>
+      List.unmodifiable(_celebrityPicks);
+  List<Celebrity> get trendingCelebrities =>
+      List.unmodifiable(_trendingCelebrities);
   List<Celebrity> get searchResults => List.unmodifiable(_searchResults);
-  
+
   Celebrity? get selectedCelebrity => _selectedCelebrity;
   CelebrityStatistics? get celebrityStatistics => _celebrityStatistics;
-  
+
   bool get isLoading => _isLoading;
   bool get isSearching => _isSearching;
   String? get error => _error;
   bool get hasError => _error != null;
-  
-  String get currentSearchQuery => _currentSearchQuery;
-  Map<String, List<Product>> get celebrityProducts => Map.unmodifiable(_celebrityProducts);
-  Map<String, Map<String, String>> get celebritySocialMedia => Map.unmodifiable(_celebritySocialMedia);
 
-  /// Initialize and load all celebrity data
-  Future<void> initialize() async {
-    await loadCelebrities();
-    await loadCelebrityPicks();
-    await loadTrendingCelebrities();
-    await loadCelebrityStatistics();
+  String get currentSearchQuery => _currentSearchQuery;
+  Map<String, List<Product>> get celebrityProducts =>
+      Map.unmodifiable(_celebrityProducts);
+  Map<String, Map<String, String>> get celebritySocialMedia =>
+      Map.unmodifiable(_celebritySocialMedia);
+
+  /// Check if cache is still valid for specific data type
+  bool _isCacheValid(DateTime? lastUpdate) {
+    if (lastUpdate == null) return false;
+    return DateTime.now().difference(lastUpdate) < _cacheExpiry;
   }
 
-  /// Load all celebrities
-  Future<void> loadCelebrities({bool forceRefresh = false}) async {
+  /// Initialize and load all celebrity data with smart caching
+  Future<void> initialize() async {
+    if (_isInitialized && _hasValidCache()) {
+      debugPrint(
+          'CelebrityProvider: Using cached data, skipping initialization');
+      return;
+    }
+
+    debugPrint('CelebrityProvider: Initializing with fresh data');
+    await loadCelebrities(showLoading: false);
+    await loadCelebrityPicks(showLoading: false);
+    await loadTrendingCelebrities();
+    await loadCelebrityStatistics();
+    _isInitialized = true;
+  }
+
+  /// Check if we have valid cache for essential data
+  bool _hasValidCache() {
+    final hasValidTimestamps = _isCacheValid(_lastCelebritiesUpdate) &&
+        _isCacheValid(_lastCelebrityPicksUpdate);
+
+    final hasData = _celebrities.isNotEmpty && _celebrityPicks.isNotEmpty;
+
+    debugPrint(
+        'CelebrityProvider: Cache validation - timestamps: $hasValidTimestamps, data: $hasData');
+    return hasValidTimestamps && hasData;
+  }
+
+  /// Load all celebrities with caching
+  Future<void> loadCelebrities(
+      {bool forceRefresh = false, bool showLoading = true}) async {
+    if (!forceRefresh &&
+        _isCacheValid(_lastCelebritiesUpdate) &&
+        _celebrities.isNotEmpty) {
+      debugPrint('CelebrityProvider: Using cached celebrities');
+      return;
+    }
+
     try {
-      debugPrint('Loading celebrities...');
-      _setLoading(true);
+      debugPrint('CelebrityProvider: Fetching fresh celebrities');
+      if (showLoading) {
+        _setLoading(true);
+      }
       _clearError();
-      
-      _celebrities = await _celebrityService.getAllCelebrities(forceRefresh: forceRefresh);
-      
+
+      _celebrities =
+          await _celebrityService.getAllCelebrities(forceRefresh: forceRefresh);
+      _lastCelebritiesUpdate = DateTime.now();
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading celebrities: $e');
       _setError('Failed to load celebrities');
     } finally {
-      _setLoading(false);
+      if (showLoading) {
+        _setLoading(false);
+      }
     }
   }
 
-  /// Load celebrity picks data
-  Future<void> loadCelebrityPicks({bool forceRefresh = false}) async {
+  /// Load celebrity picks data with caching
+  Future<void> loadCelebrityPicks(
+      {bool forceRefresh = false, bool showLoading = true}) async {
+    if (!forceRefresh &&
+        _isCacheValid(_lastCelebrityPicksUpdate) &&
+        _celebrityPicks.isNotEmpty) {
+      debugPrint('CelebrityProvider: Using cached celebrity picks');
+      return;
+    }
+
     try {
-      debugPrint('Loading celebrity picks...');
-      _setLoading(true);
-      final picks = await _celebrityService.getCelebrityPicks(forceRefresh: forceRefresh);
+      debugPrint('CelebrityProvider: Fetching fresh celebrity picks');
+      if (showLoading) {
+        _setLoading(true);
+      }
+      final picks =
+          await _celebrityService.getCelebrityPicks(forceRefresh: forceRefresh);
       _celebrityPicks = picks;
+      _lastCelebrityPicksUpdate = DateTime.now();
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading celebrity picks: $e');
       _setError('Failed to load celebrity picks');
     } finally {
-      _setLoading(false);
+      if (showLoading) {
+        _setLoading(false);
+      }
     }
   }
 
@@ -120,14 +184,15 @@ class CelebrityProvider with ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
-      
-      _selectedCelebrity = await _celebrityService.getCelebrityByName(celebrityName);
-      
+
+      _selectedCelebrity =
+          await _celebrityService.getCelebrityByName(celebrityName);
+
       if (_selectedCelebrity != null) {
         // Load additional celebrity data
         await _loadCelebrityDetails(celebrityName);
       }
-      
+
       _setLoading(false);
       notifyListeners();
     } catch (e) {
@@ -146,10 +211,10 @@ class CelebrityProvider with ChangeNotifier {
         _celebrityService.getCelebrityMorningRoutine(celebrityName),
         _celebrityService.getCelebrityEveningRoutine(celebrityName),
       ]);
-      
+
       _celebrityProducts[celebrityName] = futures[0] as List<Product>;
       _celebritySocialMedia[celebrityName] = futures[1] as Map<String, String>;
-      
+
       // Additional products are available if needed for specific functionality
     } catch (e) {
       debugPrint('Failed to load celebrity details: $e');
@@ -168,13 +233,13 @@ class CelebrityProvider with ChangeNotifier {
       _setSearching(true);
       _clearError();
       _currentSearchQuery = query;
-      
+
       if (query.isEmpty) {
         _searchResults = [];
       } else {
         _searchResults = await _celebrityService.searchCelebrities(query);
       }
-      
+
       _setSearching(false);
       notifyListeners();
     } catch (e) {
@@ -194,7 +259,8 @@ class CelebrityProvider with ChangeNotifier {
   /// Get celebrities by product category
   Future<List<Celebrity>> getCelebritiesByCategory(String categoryId) async {
     try {
-      return await _celebrityService.getCelebritiesByProductCategory(categoryId);
+      return await _celebrityService
+          .getCelebritiesByProductCategory(categoryId);
     } catch (e) {
       debugPrint('Failed to get celebrities by category: $e');
       return [];
@@ -204,7 +270,8 @@ class CelebrityProvider with ChangeNotifier {
   /// Get celebrities by social media platform
   Future<List<Celebrity>> getCelebritiesBySocialMedia(String platform) async {
     try {
-      return await _celebrityService.getCelebritiesBySocialMediaPlatform(platform);
+      return await _celebrityService
+          .getCelebritiesBySocialMediaPlatform(platform);
     } catch (e) {
       debugPrint('Failed to get celebrities by social media: $e');
       return [];
@@ -212,9 +279,11 @@ class CelebrityProvider with ChangeNotifier {
   }
 
   /// Get celebrity's recommended products
-  Future<List<Product>> getCelebrityRecommendedProducts(String celebrityName) async {
+  Future<List<Product>> getCelebrityRecommendedProducts(
+      String celebrityName) async {
     try {
-      return await _celebrityService.getCelebrityRecommendedProducts(celebrityName);
+      return await _celebrityService
+          .getCelebrityRecommendedProducts(celebrityName);
     } catch (e) {
       debugPrint('Failed to get celebrity recommended products: $e');
       return [];
@@ -242,7 +311,8 @@ class CelebrityProvider with ChangeNotifier {
   }
 
   /// Get celebrity's social media links
-  Future<Map<String, String>> getCelebritySocialMedia(String celebrityName) async {
+  Future<Map<String, String>> getCelebritySocialMedia(
+      String celebrityName) async {
     try {
       return await _celebrityService.getCelebritySocialMedia(celebrityName);
     } catch (e) {
@@ -262,7 +332,8 @@ class CelebrityProvider with ChangeNotifier {
   }
 
   /// Get celebrity data for product endorsement
-  Future<Map<String, dynamic>> getCelebrityDataForProduct(String celebrityName) async {
+  Future<Map<String, dynamic>> getCelebrityDataForProduct(
+      String celebrityName) async {
     try {
       final celebrity = _celebrities.firstWhere(
         (celeb) => celeb.name == celebrityName,
@@ -293,7 +364,8 @@ class CelebrityProvider with ChangeNotifier {
       return await _celebrityService.validateCelebrityData();
     } catch (e) {
       debugPrint('Failed to validate celebrity data: $e');
-      return CelebrityValidationResult(isValid: false, issues: ['Validation failed']);
+      return CelebrityValidationResult(
+          isValid: false, issues: ['Validation failed']);
     }
   }
 
@@ -329,11 +401,10 @@ class CelebrityProvider with ChangeNotifier {
       ].length;
       return {'celebrity': celebrity, 'count': productCount};
     }).toList();
-    
-    celebritiesWithCounts.sort((a, b) => 
-      (b['count'] as int).compareTo(a['count'] as int)
-    );
-    
+
+    celebritiesWithCounts
+        .sort((a, b) => (b['count'] as int).compareTo(a['count'] as int));
+
     return celebritiesWithCounts
         .map((item) => item['celebrity'] as Celebrity)
         .toList();
@@ -341,23 +412,25 @@ class CelebrityProvider with ChangeNotifier {
 
   /// Check if celebrity has products in category
   bool celebrityHasProductsInCategory(String celebrityName, String categoryId) {
-    final celebrity = _celebrities.where((c) => c.name == celebrityName).firstOrNull;
+    final celebrity =
+        _celebrities.where((c) => c.name == celebrityName).firstOrNull;
     if (celebrity == null) return false;
-    
+
     final allProducts = [
       ...celebrity.recommendedProducts,
       ...celebrity.morningRoutineProducts,
       ...celebrity.eveningRoutineProducts,
     ];
-    
+
     return allProducts.any((product) => product.categoryId == categoryId);
   }
 
   /// Get celebrity product count
   int getCelebrityProductCount(String celebrityName) {
-    final celebrity = _celebrities.where((c) => c.name == celebrityName).firstOrNull;
+    final celebrity =
+        _celebrities.where((c) => c.name == celebrityName).firstOrNull;
     if (celebrity == null) return 0;
-    
+
     return [
       ...celebrity.recommendedProducts,
       ...celebrity.morningRoutineProducts,
@@ -415,18 +488,22 @@ class CelebrityProvider with ChangeNotifier {
   }
 
   /// Get complete celebrity data for navigation (called from product cards)
-  Future<Map<String, dynamic>> getCelebrityDataForNavigation(String celebrityName) async {
+  Future<Map<String, dynamic>> getCelebrityDataForNavigation(
+      String celebrityName) async {
     try {
       debugPrint('Getting celebrity data for navigation: $celebrityName');
-      
+
       // Use the service method for comprehensive data loading
-      final celebrityData = await _celebrityService.getCelebrityDataForNavigation(celebrityName);
-      
+      final celebrityData =
+          await _celebrityService.getCelebrityDataForNavigation(celebrityName);
+
       // Update local state with the loaded data
       _selectedCelebrity = celebrityData['celebrity'] as Celebrity?;
-      _celebrityProducts[celebrityName] = celebrityData['recommendedProducts'] as List<Product>;
-      _celebritySocialMedia[celebrityName] = celebrityData['socialMediaLinks'] as Map<String, String>;
-      
+      _celebrityProducts[celebrityName] =
+          celebrityData['recommendedProducts'] as List<Product>;
+      _celebritySocialMedia[celebrityName] =
+          celebrityData['socialMediaLinks'] as Map<String, String>;
+
       // Notify listeners of state change
       notifyListeners();
 
@@ -454,4 +531,4 @@ class CelebrityProvider with ChangeNotifier {
     _celebrityService.dispose();
     super.dispose();
   }
-} 
+}

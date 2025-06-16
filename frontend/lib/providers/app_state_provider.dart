@@ -10,40 +10,61 @@ class AppStateProvider with ChangeNotifier {
   bool _isOnline = true;
   bool _isInitialized = false;
   String? _globalError;
-  
+
   // Connectivity monitoring
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
-  
+
+  // Theme and UI state
+  bool _isDarkMode = false;
+  double _textScaleFactor = 1.0;
+
+  // Navigation state
+  String _currentRoute = '/home';
+  String _previousRoute = '/';
+  bool _isReturningFromProductDetail = false;
+
+  // App initialization state
+  bool _isAppInitialized = false;
+  bool _isFirstLaunch = true;
+
   // Getters
   bool get isGlobalLoading => _isGlobalLoading;
   bool get isOnline => _isOnline;
   bool get isInitialized => _isInitialized;
   String? get globalError => _globalError;
   bool get hasGlobalError => _globalError != null;
+  bool get isDarkMode => _isDarkMode;
+  double get textScaleFactor => _textScaleFactor;
+  String get currentRoute => _currentRoute;
+  String get previousRoute => _previousRoute;
+  bool get isReturningFromProductDetail => _isReturningFromProductDetail;
+  bool get isAppInitialized => _isAppInitialized;
+  bool get isFirstLaunch => _isFirstLaunch;
+  bool get isLoading => _isGlobalLoading;
 
   /// Initialize the app state provider
   Future<void> initialize() async {
     try {
       _setGlobalLoading(true);
       _clearGlobalError();
-      
+
       // Check initial connectivity status
       final connectivityResult = await Connectivity().checkConnectivity();
       _isOnline = connectivityResult != ConnectivityResult.none;
-      
+
       // Listen to connectivity changes
       _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
         (ConnectivityResult result) {
           final wasOnline = _isOnline;
           _isOnline = result != ConnectivityResult.none;
-          
+
           // Notify listeners if connectivity status changed
           if (wasOnline != _isOnline) {
             notifyListeners();
           }
         },
       );
-      
+
       _isInitialized = true;
       _setGlobalLoading(false);
     } catch (e) {
@@ -73,7 +94,7 @@ class AppStateProvider with ChangeNotifier {
       final connectivityResult = await Connectivity().checkConnectivity();
       final wasOnline = _isOnline;
       _isOnline = connectivityResult != ConnectivityResult.none;
-      
+
       if (wasOnline != _isOnline) {
         notifyListeners();
       }
@@ -95,6 +116,56 @@ class AppStateProvider with ChangeNotifier {
       _setGlobalLoading(false);
       rethrow;
     }
+  }
+
+  /// Update current route and track navigation
+  void updateRoute(String newRoute) {
+    _previousRoute = _currentRoute;
+    _currentRoute = newRoute;
+
+    // Check if we're returning from product detail to home
+    _isReturningFromProductDetail =
+        _previousRoute.contains('/product') && newRoute == '/home';
+
+    debugPrint(
+        'AppStateProvider: Navigation - Previous: $_previousRoute, Current: $_currentRoute');
+    debugPrint(
+        'AppStateProvider: Returning from product detail: $_isReturningFromProductDetail');
+
+    notifyListeners();
+  }
+
+  /// Reset navigation flags
+  void resetNavigationFlags() {
+    _isReturningFromProductDetail = false;
+    notifyListeners();
+  }
+
+  /// Toggle dark mode
+  void toggleDarkMode() {
+    _isDarkMode = !_isDarkMode;
+    notifyListeners();
+  }
+
+  /// Set text scale factor
+  void setTextScaleFactor(double scale) {
+    _textScaleFactor = scale.clamp(0.8, 1.5);
+    notifyListeners();
+  }
+
+  /// Mark app as initialized
+  void setAppInitialized(bool initialized) {
+    _isAppInitialized = initialized;
+    if (initialized) {
+      _isFirstLaunch = false;
+    }
+    notifyListeners();
+  }
+
+  /// Set online status
+  void setOnlineStatus(bool online) {
+    _isOnline = online;
+    notifyListeners();
   }
 
   // Private helper methods
@@ -124,4 +195,4 @@ class AppStateProvider with ChangeNotifier {
     _connectivitySubscription?.cancel();
     super.dispose();
   }
-} 
+}

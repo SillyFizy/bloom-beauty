@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../widgets/product/celebrity_pick_card.dart';
@@ -23,9 +24,14 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive =>
+      true; // Keep the state alive to prevent re-initialization
   final PageController _bannerController = PageController();
   int _currentBannerIndex = 0;
+  static bool _hasInitialized = false; // Global flag to track initialization
 
   // Sample data for banner
   final List<String> _bannerImages = [
@@ -37,9 +43,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Load data when screen initializes
+    // Load data when screen initializes, with proper routing support
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
+      // Only load data if not already initialized
+      if (!_hasInitialized) {
+        debugPrint('HomeScreen: First time initialization');
+        _loadData();
+        _hasInitialized = true;
+      } else {
+        debugPrint('HomeScreen: Already initialized, using cached data');
+      }
     });
   }
 
@@ -47,18 +60,54 @@ class _HomeScreenState extends State<HomeScreen> {
     final productProvider = context.read<ProductProvider>();
     final celebrityProvider = context.read<CelebrityProvider>();
 
-    // Only refresh if data is not already loaded
-    if (productProvider.products.isEmpty) {
-      productProvider.loadProducts();
-      productProvider.loadBestsellingProducts();
-      productProvider.loadNewArrivals();
-      productProvider.loadTrendingProducts();
+    // Only initialize if providers don't have cached data
+    debugPrint('HomeScreen: Checking if data needs loading...');
+    debugPrint(
+        'HomeScreen: ProductProvider isInitialized: ${productProvider.isInitialized}');
+    debugPrint(
+        'HomeScreen: CelebrityProvider has data: ${celebrityProvider.celebrities.isNotEmpty}');
+
+    // Double-check with provider state and data availability
+    final productNeedsInit = !productProvider.isInitialized ||
+        productProvider.products.isEmpty ||
+        productProvider.newArrivals.isEmpty ||
+        productProvider.bestsellingProducts.isEmpty ||
+        productProvider.trendingProducts.isEmpty;
+
+    final celebrityNeedsInit = celebrityProvider.celebrities.isEmpty;
+
+    if (productNeedsInit) {
+      debugPrint('HomeScreen: Product data missing, initializing...');
+      productProvider.initialize();
+    } else {
+      debugPrint(
+          'HomeScreen: Product data already cached, skipping initialization');
     }
 
-    if (celebrityProvider.celebrities.isEmpty) {
-      celebrityProvider.loadCelebrities();
-      celebrityProvider.loadCelebrityPicks();
+    if (celebrityNeedsInit) {
+      debugPrint('HomeScreen: Celebrity data missing, initializing...');
+      celebrityProvider.initialize();
+    } else {
+      debugPrint(
+          'HomeScreen: Celebrity data already cached, skipping initialization');
     }
+  }
+
+  Future<void> _refreshData() async {
+    final productProvider = context.read<ProductProvider>();
+    final celebrityProvider = context.read<CelebrityProvider>();
+
+    debugPrint(
+        'HomeScreen: Manual refresh triggered - resetting initialization flag');
+    _hasInitialized = false; // Reset flag to allow fresh initialization
+
+    await Future.wait([
+      productProvider.refreshAllData(),
+      celebrityProvider
+          .initialize(), // Celebrity provider doesn't have refreshAllData yet
+    ]);
+
+    _hasInitialized = true; // Set flag back after refresh
   }
 
   // Helper function to format price in IQD
@@ -111,44 +160,35 @@ class _HomeScreenState extends State<HomeScreen> {
         // Add to recently viewed
         await productProvider.addToRecentlyViewed(productToNavigate);
 
-        // Navigate to product detail
+        // Navigate to product detail using GoRouter
         if (context.mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  ProductDetailScreen(product: productToNavigate),
-            ),
-          );
+          context.pushNamed('product-detail', pathParameters: {
+            'slug': productToNavigate.id,
+          });
         }
       } else {
-        // Fallback to original product if service fails
+        // Fallback to using slug if service fails
         debugPrint('Error fetching fresh product data');
         if (context.mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProductDetailScreen(product: product),
-            ),
-          );
+          context.pushNamed('product-detail', pathParameters: {
+            'slug': product.id,
+          });
         }
       }
     } catch (e) {
-      // Error handling - fallback to original product
+      // Error handling - use slug to fetch proper data
       debugPrint('Error fetching fresh product data: $e');
       if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(product: product),
-          ),
-        );
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return LayoutBuilder(
       builder: (context, constraints) {
         // Determine screen size
@@ -159,30 +199,36 @@ class _HomeScreenState extends State<HomeScreen> {
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
           body: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  _buildHeader(isSmallScreen),
+            child: RefreshIndicator(
+              onRefresh: _refreshData,
+              color: AppConstants.accentColor,
+              backgroundColor: Colors.white,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    _buildHeader(isSmallScreen),
 
-                  // Banner Section
-                  _buildBannerSection(isSmallScreen),
+                    // Banner Section
+                    _buildBannerSection(isSmallScreen),
 
-                  // Celebrity Beauty Picks
-                  _buildCelebritySection(isSmallScreen, isMediumScreen),
+                    // Celebrity Beauty Picks
+                    _buildCelebritySection(isSmallScreen, isMediumScreen),
 
-                  // New Arrivals
-                  _buildNewArrivalsSection(isSmallScreen, isMediumScreen),
+                    // New Arrivals
+                    _buildNewArrivalsSection(isSmallScreen, isMediumScreen),
 
-                  // Bestselling Skincare
-                  _buildBestsellingSection(isSmallScreen, isMediumScreen),
+                    // Bestselling Skincare
+                    _buildBestsellingSection(isSmallScreen, isMediumScreen),
 
-                  // Trending Makeup
-                  _buildTrendingSection(isSmallScreen, isMediumScreen),
+                    // Trending Makeup
+                    _buildTrendingSection(isSmallScreen, isMediumScreen),
 
-                  const SizedBox(height: 40), // Bottom padding for nav bar
-                ],
+                    const SizedBox(height: 40), // Bottom padding for nav bar
+                  ],
+                ),
               ),
             ),
           ),
@@ -457,15 +503,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Opacity(
                                     opacity: buttonValue,
                                     child: GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const CelebrityPicksScreen(),
-                                          ),
-                                        );
-                                      },
+                                      onTap: null, // Disabled for now
+                                      // onTap: () {
+                                      //   Navigator.push(
+                                      //     context,
+                                      //     MaterialPageRoute(
+                                      //       builder: (context) =>
+                                      //           const CelebrityPicksScreen(),
+                                      //     ),
+                                      //   );
+                                      // },
                                       child: Container(
                                         padding: EdgeInsets.symmetric(
                                           horizontal: isSmallScreen ? 12 : 16,
@@ -474,16 +521,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             colors: [
-                                              AppConstants.accentColor
+                                              AppConstants.textSecondary
                                                   .withValues(alpha: 0.1),
-                                              AppConstants.accentColor
+                                              AppConstants.textSecondary
                                                   .withValues(alpha: 0.05),
                                             ],
                                           ),
                                           borderRadius:
                                               BorderRadius.circular(20),
                                           border: Border.all(
-                                            color: AppConstants.accentColor
+                                            color: AppConstants.textSecondary
                                                 .withValues(alpha: 0.3),
                                             width: 1,
                                           ),
@@ -497,7 +544,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 fontSize:
                                                     isSmallScreen ? 12 : 14,
                                                 fontWeight: FontWeight.w600,
-                                                color: AppConstants.accentColor,
+                                                color:
+                                                    AppConstants.textSecondary,
                                               ),
                                             ),
                                             SizedBox(
@@ -505,7 +553,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             Icon(
                                               Icons.arrow_forward_ios,
                                               size: isSmallScreen ? 12 : 14,
-                                              color: AppConstants.accentColor,
+                                              color: AppConstants.textSecondary,
                                             ),
                                           ],
                                         ),
@@ -567,17 +615,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   as List<Product>? ??
                                               [],
                                       index: index,
-                                      onTap: () async {
-                                        await _navigateToProductWithProvider(
-                                          context,
-                                          pick['product'] as Product,
-                                          celebrityName: pick['name'] as String,
-                                          celebrityImage:
-                                              pick['image'] as String,
-                                          testimonial:
-                                              pick['testimonial'] as String?,
-                                        );
-                                      },
+                                      onTap: null, // Disabled for now
+                                      // onTap: () async {
+                                      //   await _navigateToProductWithProvider(
+                                      //     context,
+                                      //     pick['product'] as Product,
+                                      //     celebrityName: pick['name'] as String,
+                                      //     celebrityImage:
+                                      //         pick['image'] as String,
+                                      //     testimonial:
+                                      //         pick['testimonial'] as String?,
+                                      //   );
+                                      // },
                                     ),
                                   ),
                                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:async';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
@@ -29,10 +30,10 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
     super.initState();
     _scrollController = ScrollController();
     _searchController = TextEditingController();
-    
+
     // Add scroll listener for infinite scroll
     _scrollController.addListener(_onScroll);
-    
+
     // Initialize the provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CelebrityPicksProvider>().initialize();
@@ -49,7 +50,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= 
+    if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       // Load more products when near the bottom
       context.read<CelebrityPicksProvider>().loadMoreProducts();
@@ -73,37 +74,28 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
     try {
       final productProvider = context.read<ProductProvider>();
       final freshProduct = await productProvider.getProductById(product.id);
-      
+
       if (freshProduct != null) {
         await productProvider.addToRecentlyViewed(freshProduct);
-        
+
         if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProductDetailScreen(product: freshProduct),
-            ),
-          );
+          context.pushNamed('product-detail', pathParameters: {
+            'slug': freshProduct.id,
+          });
         }
       } else {
         if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProductDetailScreen(product: product),
-            ),
-          );
+          context.pushNamed('product-detail', pathParameters: {
+            'slug': product.id,
+          });
         }
       }
     } catch (e) {
       debugPrint('Error navigating to product: $e');
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(product: product),
-          ),
-        );
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
       }
     }
   }
@@ -113,7 +105,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
-        
+
         // Define screen categories for better responsiveness
         final isVerySmall = screenWidth < 400;
         final isSmall = screenWidth >= 400 && screenWidth < 600;
@@ -121,7 +113,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
         final isLarge = screenWidth >= 900 && screenWidth < 1200;
         // Legacy compatibility
         final isSmallScreen = screenWidth < 600;
-        
+
         // Determine grid columns with more granular breakpoints
         int crossAxisCount;
         if (isVerySmall) {
@@ -161,15 +153,18 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
             actions: [
               Consumer<CelebrityPicksProvider>(
                 builder: (context, celebrityProvider, child) {
-                  final hasActiveFilters = celebrityProvider.minPriceFilter > celebrityProvider.getMinPrice() ||
-                                          celebrityProvider.maxPriceFilter < celebrityProvider.getMaxPrice() ||
-                                          celebrityProvider.minRatingFilter > 0;
+                  final hasActiveFilters = celebrityProvider.minPriceFilter >
+                          celebrityProvider.getMinPrice() ||
+                      celebrityProvider.maxPriceFilter <
+                          celebrityProvider.getMaxPrice() ||
+                      celebrityProvider.minRatingFilter > 0;
 
                   return Row(
                     children: [
                       // Sort button
                       IconButton(
-                        onPressed: () => _showSortOptions(context, celebrityProvider, isSmallScreen),
+                        onPressed: () => _showSortOptions(
+                            context, celebrityProvider, isSmallScreen),
                         icon: Icon(
                           Icons.sort_rounded,
                           color: AppConstants.textPrimary,
@@ -177,15 +172,20 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                         ),
                         tooltip: 'Sort',
                       ),
-                      
+
                       // Filter button with indicator
                       Stack(
                         children: [
                           IconButton(
-                            onPressed: () => _showFilterOptions(context, celebrityProvider, isSmallScreen),
+                            onPressed: () => _showFilterOptions(
+                                context, celebrityProvider, isSmallScreen),
                             icon: Icon(
-                              hasActiveFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
-                              color: hasActiveFilters ? AppConstants.accentColor : AppConstants.textPrimary,
+                              hasActiveFilters
+                                  ? Icons.filter_alt
+                                  : Icons.filter_alt_outlined,
+                              color: hasActiveFilters
+                                  ? AppConstants.accentColor
+                                  : AppConstants.textPrimary,
                               size: isSmallScreen ? 22 : 24,
                             ),
                             tooltip: 'Filter',
@@ -197,8 +197,7 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
                               child: Container(
                                 width: 8,
                                 height: 8,
-decoration: const BoxDecoration(
-
+                                decoration: const BoxDecoration(
                                   color: AppConstants.accentColor,
                                   shape: BoxShape.circle,
                                 ),
@@ -240,7 +239,7 @@ decoration: const BoxDecoration(
                         },
                       ),
                     ),
-                    
+
                     // Celebrity Selector or Category Selector
                     SliverToBoxAdapter(
                       child: Consumer<CelebrityPicksProvider>(
@@ -255,17 +254,16 @@ decoration: const BoxDecoration(
                         },
                       ),
                     ),
-                    
+
                     // Products Grid
                     _buildProductsGrid(provider, crossAxisCount, isSmallScreen),
-                    
+
                     // Loading indicator for infinite scroll
                     if (provider.isLoadingMore)
                       SliverToBoxAdapter(
                         child: Container(
                           padding: const EdgeInsets.all(16),
-child: const Center(
-
+                          child: const Center(
                             child: CircularProgressIndicator(
                               color: AppConstants.accentColor,
                             ),
@@ -282,7 +280,8 @@ child: const Center(
     );
   }
 
-  Widget _buildProductsGrid(CelebrityPicksProvider provider, int crossAxisCount, bool isSmallScreen) {
+  Widget _buildProductsGrid(
+      CelebrityPicksProvider provider, int crossAxisCount, bool isSmallScreen) {
     if (provider.displayProducts.isEmpty) {
       return SliverToBoxAdapter(
         child: _buildEmptyState(isSmallScreen),
@@ -290,19 +289,19 @@ child: const Center(
     }
 
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     // Define screen categories
     final isVerySmall = screenWidth < 400;
     final isSmall = screenWidth >= 400 && screenWidth < 600;
     final isMedium = screenWidth >= 600 && screenWidth < 900;
     final isLarge = screenWidth >= 900 && screenWidth < 1200;
 
-
     // Calculate aspect ratio based on screen size for optimal card proportions
     // Higher values = wider cards, lower values = taller cards
     double childAspectRatio;
     if (isVerySmall) {
-      childAspectRatio = 0.5; // Taller cards for more content space on very small screens
+      childAspectRatio =
+          0.5; // Taller cards for more content space on very small screens
     } else if (isSmall) {
       childAspectRatio = 0.55; // Slightly more space for small screens
     } else if (isMedium) {
@@ -390,7 +389,7 @@ child: const Center(
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Celebrity selector skeleton
           SizedBox(
             height: 80,
@@ -407,7 +406,8 @@ child: const Center(
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: AppConstants.borderColor.withValues(alpha: 0.3),
+                          color:
+                              AppConstants.borderColor.withValues(alpha: 0.3),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -415,7 +415,8 @@ child: const Center(
                       Container(
                         height: 12,
                         decoration: BoxDecoration(
-                          color: AppConstants.borderColor.withValues(alpha: 0.3),
+                          color:
+                              AppConstants.borderColor.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
@@ -426,7 +427,7 @@ child: const Center(
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Product grid skeleton
           Expanded(
             child: GridView.builder(
@@ -452,8 +453,10 @@ child: const Center(
                         flex: 5,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: AppConstants.borderColor.withValues(alpha: 0.3),
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                            color:
+                                AppConstants.borderColor.withValues(alpha: 0.3),
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(16)),
                           ),
                         ),
                       ),
@@ -466,8 +469,9 @@ child: const Center(
                             children: [
                               Expanded(
                                 child: Container(
-                                decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                  decoration: BoxDecoration(
+                                    color: AppConstants.borderColor
+                                        .withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                 ),
@@ -475,24 +479,26 @@ child: const Center(
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                              Container(
+                                  Container(
                                     width: 28,
                                     height: 28,
-                                decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                    decoration: BoxDecoration(
+                                      color: AppConstants.borderColor
+                                          .withValues(alpha: 0.3),
                                       shape: BoxShape.circle,
-                                ),
-                              ),
+                                    ),
+                                  ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Container(
                                       height: 12,
-                                decoration: BoxDecoration(
-                                  color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                      decoration: BoxDecoration(
+                                        color: AppConstants.borderColor
+                                            .withValues(alpha: 0.3),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                     ),
-                                ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -633,7 +639,8 @@ child: const Center(
   }
 
   /// Show sort options (matching category screen implementation)
-  void _showSortOptions(BuildContext context, CelebrityPicksProvider provider, bool isSmallScreen) {
+  void _showSortOptions(BuildContext context, CelebrityPicksProvider provider,
+      bool isSmallScreen) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppConstants.surfaceColor,
@@ -655,16 +662,14 @@ child: const Center(
               ),
             ),
             const SizedBox(height: 16),
-            
             ...CelebrityPicksSortOption.values.map((option) => _buildSortOption(
-              context,
-              provider,
-              option,
-              _getSortOptionLabel(option),
-              _getSortOptionIcon(option),
-              isSmallScreen,
-            )),
-            
+                  context,
+                  provider,
+                  option,
+                  _getSortOptionLabel(option),
+                  _getSortOptionIcon(option),
+                  isSmallScreen,
+                )),
             const SizedBox(height: 8),
           ],
         ),
@@ -673,7 +678,8 @@ child: const Center(
   }
 
   /// Show filter options (matching category screen implementation exactly)
-  void _showFilterOptions(BuildContext context, CelebrityPicksProvider provider, bool isSmallScreen) {
+  void _showFilterOptions(BuildContext context, CelebrityPicksProvider provider,
+      bool isSmallScreen) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -681,8 +687,11 @@ child: const Center(
       barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (context) => Consumer<CelebrityPicksProvider>(
         builder: (context, celebrityProvider, child) => Container(
-          width: MediaQuery.of(context).size.width, // Full width from beginning of screen
-          height: MediaQuery.of(context).size.height * 0.7, // Increased height for better space
+          width: MediaQuery.of(context)
+              .size
+              .width, // Full width from beginning of screen
+          height: MediaQuery.of(context).size.height *
+              0.7, // Increased height for better space
           decoration: const BoxDecoration(
             color: AppConstants.surfaceColor,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -701,10 +710,11 @@ child: const Center(
                   ),
                 ),
               ),
-              
+
               // Title and Clear All
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -721,8 +731,10 @@ child: const Center(
                         celebrityProvider.clearFilters();
                       },
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        backgroundColor: AppConstants.accentColor.withValues(alpha: 0.1),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        backgroundColor:
+                            AppConstants.accentColor.withValues(alpha: 0.1),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -739,9 +751,9 @@ child: const Center(
                   ],
                 ),
               ),
-              
+
               const Divider(height: 1),
-              
+
               // Scrollable Filter Content
               Expanded(
                 child: SingleChildScrollView(
@@ -750,26 +762,29 @@ child: const Center(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Price Range Filter
-                      _buildResponsivePriceFilter(celebrityProvider, isSmallScreen),
-                      
+                      _buildResponsivePriceFilter(
+                          celebrityProvider, isSmallScreen),
+
                       SizedBox(height: isSmallScreen ? 20 : 24),
-                      
+
                       // Rating Filter
-                      _buildResponsiveRatingFilter(celebrityProvider, isSmallScreen),
-                      
+                      _buildResponsiveRatingFilter(
+                          celebrityProvider, isSmallScreen),
+
                       SizedBox(height: isSmallScreen ? 16 : 20),
                     ],
                   ),
                 ),
               ),
-              
+
               // Fixed Apply Button at Bottom
               Container(
                 padding: EdgeInsets.fromLTRB(
                   isSmallScreen ? 16 : 20,
                   isSmallScreen ? 12 : 16,
                   isSmallScreen ? 16 : 20,
-                  MediaQuery.of(context).padding.bottom + (isSmallScreen ? 12 : 16),
+                  MediaQuery.of(context).padding.bottom +
+                      (isSmallScreen ? 12 : 16),
                 ),
                 decoration: BoxDecoration(
                   color: AppConstants.surfaceColor,
@@ -824,11 +839,12 @@ child: const Center(
     bool isSmallScreen,
   ) {
     final isSelected = provider.sortOption == option;
-    
+
     return ListTile(
       leading: Icon(
         icon,
-        color: isSelected ? AppConstants.accentColor : AppConstants.textSecondary,
+        color:
+            isSelected ? AppConstants.accentColor : AppConstants.textSecondary,
         size: isSmallScreen ? 20 : 22,
       ),
       title: Text(
@@ -836,7 +852,8 @@ child: const Center(
         style: TextStyle(
           fontSize: isSmallScreen ? 14 : 16,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          color: isSelected ? AppConstants.accentColor : AppConstants.textPrimary,
+          color:
+              isSelected ? AppConstants.accentColor : AppConstants.textPrimary,
         ),
       ),
       trailing: isSelected
@@ -854,10 +871,11 @@ child: const Center(
   }
 
   /// Responsive Price Range Filter (matching category screen)
-  Widget _buildResponsivePriceFilter(CelebrityPicksProvider provider, bool isSmallScreen) {
+  Widget _buildResponsivePriceFilter(
+      CelebrityPicksProvider provider, bool isSmallScreen) {
     final minPrice = provider.getMinPrice();
     final maxPrice = provider.getMaxPrice();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -883,12 +901,12 @@ child: const Center(
           ],
         ),
         SizedBox(height: isSmallScreen ? 12 : 16),
-        
+
         // Current selection display
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(
-            horizontal: isSmallScreen ? 12 : 16, 
+            horizontal: isSmallScreen ? 12 : 16,
             vertical: isSmallScreen ? 10 : 12,
           ),
           decoration: BoxDecoration(
@@ -914,7 +932,7 @@ child: const Center(
               ),
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 8 : 12, 
+                  horizontal: isSmallScreen ? 8 : 12,
                   vertical: isSmallScreen ? 2 : 4,
                 ),
                 decoration: BoxDecoration(
@@ -944,9 +962,9 @@ child: const Center(
             ],
           ),
         ),
-        
+
         SizedBox(height: isSmallScreen ? 16 : 20),
-        
+
         // Price Range Slider
         Container(
           padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 16),
@@ -962,7 +980,8 @@ child: const Center(
                     overlayRadius: isSmallScreen ? 18 : 22,
                   ),
                   activeTrackColor: AppConstants.accentColor,
-                  inactiveTrackColor: AppConstants.borderColor.withValues(alpha: 0.3),
+                  inactiveTrackColor:
+                      AppConstants.borderColor.withValues(alpha: 0.3),
                   thumbColor: AppConstants.accentColor,
                   overlayColor: AppConstants.accentColor.withValues(alpha: 0.2),
                 ),
@@ -987,7 +1006,8 @@ child: const Center(
   }
 
   /// Responsive Rating Filter (matching category screen)
-  Widget _buildResponsiveRatingFilter(CelebrityPicksProvider provider, bool isSmallScreen) {
+  Widget _buildResponsiveRatingFilter(
+      CelebrityPicksProvider provider, bool isSmallScreen) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1013,7 +1033,7 @@ child: const Center(
           ],
         ),
         SizedBox(height: isSmallScreen ? 12 : 16),
-        
+
         // Rating Buttons (exactly like category screen)
         Wrap(
           spacing: isSmallScreen ? 8 : 12,
@@ -1031,9 +1051,10 @@ child: const Center(
     );
   }
 
-  Widget _buildRatingButton(CelebrityPicksProvider provider, double rating, String label, bool isSmallScreen) {
+  Widget _buildRatingButton(CelebrityPicksProvider provider, double rating,
+      String label, bool isSmallScreen) {
     final isSelected = provider.minRatingFilter == rating;
-    
+
     return GestureDetector(
       onTap: () => provider.applyRatingFilter(rating),
       child: Container(
@@ -1042,8 +1063,8 @@ child: const Center(
           vertical: isSmallScreen ? 8 : 10,
         ),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? AppConstants.accentColor 
+          color: isSelected
+              ? AppConstants.accentColor
               : AppConstants.accentColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 24),
           border: Border.all(
@@ -1056,9 +1077,7 @@ child: const Center(
           style: TextStyle(
             fontSize: isSmallScreen ? 13 : 15,
             fontWeight: FontWeight.w600,
-            color: isSelected 
-                ? Colors.white 
-                : AppConstants.accentColor,
+            color: isSelected ? Colors.white : AppConstants.accentColor,
           ),
         ),
       ),
@@ -1094,4 +1113,4 @@ child: const Center(
         return Icons.local_fire_department_rounded;
     }
   }
-} 
+}

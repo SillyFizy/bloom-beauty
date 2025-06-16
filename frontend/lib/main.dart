@@ -6,6 +6,7 @@ import 'screens/auth/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/products/product_list_screen.dart';
+import 'screens/products/product_detail_screen.dart';
 import 'screens/cart/cart_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/search/search_screen.dart';
@@ -281,6 +282,25 @@ final GoRouter _router = GoRouter(
           },
         ),
       ],
+    ),
+
+    // Product Detail Screen (outside shell route to overlay properly)
+    GoRoute(
+      path: '/product/:slug',
+      name: 'product-detail',
+      pageBuilder: (context, state) {
+        final slug = state.pathParameters['slug']!;
+        return CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: ProductDetailScreen(slug: slug),
+          transitionDuration: const Duration(milliseconds: 400),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            // Slide up from bottom for product detail
+            return _buildSlideTransition(animation, secondaryAnimation, child,
+                SlideDirection.fromBottom);
+          },
+        );
+      },
     ),
   ],
 );
