@@ -1,0 +1,2 @@
+C:/PROJECTS/x2/bloom-beauty-master (3)/bloom-beauty-master/frontend/android/app/.cxx/Debug/3x19536y/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/PROJECTS/x2/bloom-beauty-master (3)/bloom-beauty-master/frontend/android/app/.cxx/Debug/3x19536y/armeabi-v7a/CMakeFiles/rebuild_cache.dir

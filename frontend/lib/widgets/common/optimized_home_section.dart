@@ -33,7 +33,6 @@ class OptimizedHomeSection extends StatefulWidget {
 
 class _OptimizedHomeSectionState extends State<OptimizedHomeSection>
     with AutomaticKeepAliveClientMixin {
-  bool _isVisible = false;
   bool _hasBeenVisible = false;
   bool _isContentBuilt = false;
   Widget? _builtContent;
@@ -48,13 +47,13 @@ class _OptimizedHomeSectionState extends State<OptimizedHomeSection>
     return VisibilityDetector(
       key: Key('optimized_section_${widget.sectionKey}'),
       onVisibilityChanged: (info) {
-        if (info.visibleFraction > widget.visibilityThreshold && !_hasBeenVisible) {
+        if (info.visibleFraction > widget.visibilityThreshold &&
+            !_hasBeenVisible) {
           setState(() {
-            _isVisible = true;
             _hasBeenVisible = true;
           });
           widget.onVisible?.call();
-          
+
           // Build content in next frame to avoid blocking current frame
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted && !_isContentBuilt) {
@@ -92,7 +91,7 @@ class _OptimizedHomeSectionState extends State<OptimizedHomeSection>
               child: Center(
                 child: Text(
                   'Loading ${widget.sectionKey}...',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppConstants.textSecondary,
                     fontSize: 12,
                   ),
@@ -123,8 +122,9 @@ class _OptimizedHomeSectionState extends State<OptimizedHomeSection>
           // Content shimmer
           Expanded(
             child: Row(
-              children: List.generate(3, (index) => 
-                Expanded(
+              children: List.generate(
+                3,
+                (index) => Expanded(
                   child: Container(
                     margin: const EdgeInsets.only(right: 12),
                     decoration: BoxDecoration(
@@ -206,4 +206,4 @@ class PerformanceMonitor extends StatelessWidget {
       child: child,
     );
   }
-} 
+}

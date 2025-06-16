@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Q, F, Count, Avg, Sum, Min, Max
+from django.db.models import Q, F, Count, Avg, Sum, Min, Max, Case, When, Value, IntegerField
 from rest_framework import viewsets, permissions, filters, status, mixins
 from rest_framework.decorators import action, throttle_classes
 from rest_framework.response import Response
@@ -11,6 +11,7 @@ from django.views.decorators.cache import cache_page
 from django.core.cache import cache
 from django.conf import settings
 import datetime
+from datetime import timedelta
 
 from .models import (
     Product, Category, ProductImage, Brand, 
@@ -224,14 +225,13 @@ class ProductViewSet(viewsets.ModelViewSet):
     def featured(self, request):
         """Get featured products"""
         limit = int(request.query_params.get('limit', 10))
-        featured_products = Product.objects.filter(is_featured=True, is_active=True)[:limit]
         
-        # Apply sorting
+        # Apply sorting BEFORE slicing
         sort_by = request.query_params.get('sort_by', 'created_at')
         sort_dir = request.query_params.get('sort_dir', 'desc')
         
         order_field = '-' + sort_by if sort_dir == 'desc' else sort_by
-        featured_products = featured_products.order_by(order_field)
+        featured_products = Product.objects.filter(is_featured=True, is_active=True).order_by(order_field)[:limit]
         
         page = self.paginate_queryset(featured_products)
         if page is not None:
@@ -426,6 +426,192 @@ class ProductViewSet(viewsets.ModelViewSet):
         ).order_by('-created_at')[:limit]
         
         serializer = ProductListSerializer(new_products, many=True, context={'request': request})
+        return Response(serializer.data)
+    
+    @method_decorator(cache_page(60*30))  # Cache for 30 minutes
+    @action(detail=False, methods=['get'])
+    def bestselling(self, request):
+        """
+        Get best selling products from recent past period (default: 30 days, offset by 7 days)
+        Uses two-step approach: 1) Get sales data from OrderItem, 2) Get fresh product data from Product
+        """
+        from orders.models import OrderItem
+        
+        limit = int(request.query_params.get('limit', 10))
+        days = int(request.query_params.get('days', 30))  # Period length
+        offset = int(request.query_params.get('offset', 7))  # Start offset (proven winners from past)
+        
+        # Calculate date thresholds for offset period
+        end_date = datetime.datetime.now() - timedelta(days=offset)      # 7 days ago
+        start_date = end_date - timedelta(days=days)                     # 37 days ago
+        
+        # STEP 1: Get sales analytics from OrderItem table (historical sales data)
+        bestselling_sales = OrderItem.objects.filter(
+            order__created_at__gte=start_date,
+            order__created_at__lt=end_date,
+            product__isnull=False,  # Only items with products (not variants)
+            product__is_active=True  # Only active products
+        ).values('product_id').annotate(
+            total_sold=Sum('quantity')
+        ).order_by('-total_sold')[:limit]
+        
+        # Extract product IDs from sales data
+        bestselling_product_ids = [item['product_id'] for item in bestselling_sales]
+        
+        # STEP 2: Get fresh product details from Product table
+        if bestselling_product_ids:
+            # Get products and preserve the bestselling order
+            bestselling_products = Product.objects.filter(
+                id__in=bestselling_product_ids,
+                is_active=True
+            ).select_related('category', 'brand')
+            
+            # Create a dict for fast lookup and preserve order
+            products_dict = {p.id: p for p in bestselling_products}
+            initial_results = [products_dict[pid] for pid in bestselling_product_ids if pid in products_dict]
+        else:
+            initial_results = []
+        
+        # If we have enough bestselling products, return them
+        if len(initial_results) >= limit:
+            page = self.paginate_queryset(initial_results[:limit])
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            serializer = self.get_serializer(initial_results[:limit], many=True)
+            return Response(serializer.data)
+        
+        # FALLBACK SYSTEM: Get trending IDs to exclude them from bestselling fallbacks
+        trending_threshold = datetime.datetime.now() - timedelta(days=7)
+        trending_sales = OrderItem.objects.filter(
+            order__created_at__gte=trending_threshold,
+            product__isnull=False,
+            product__is_active=True
+        ).values('product_id').annotate(
+            total_sold=Sum('quantity')
+        ).order_by('-total_sold')[:10]
+        
+        trending_ids = set(item['product_id'] for item in trending_sales)
+        
+        # If no trending from sales, add newest products to trending exclusion
+        if len(trending_ids) < 10:
+            newest_trending_ids = set(Product.objects.filter(
+                is_active=True,
+                price__gt=0,
+                stock__gt=0
+            ).exclude(
+                id__in=trending_ids
+            ).order_by('-created_at')[:(10 - len(trending_ids))].values_list('id', flat=True))
+            trending_ids.update(newest_trending_ids)
+        
+        # Get excluded IDs (already selected + trending)
+        excluded_ids = set(p.id for p in initial_results) | trending_ids
+        remaining_needed = limit - len(initial_results)
+        
+        # Get fallback products with current data only
+        fallback_products = list(Product.objects.filter(
+            is_active=True,
+            price__gt=0,  # Only products with valid current pricing
+            stock__gt=0   # Only products with current stock
+        ).exclude(
+            id__in=excluded_ids
+        ).select_related('category', 'brand').annotate(
+            # Add scoring for better fallback selection
+            score=Case(
+                When(is_featured=True, then=Value(3)),
+                When(sale_price__isnull=False, then=Value(2)),
+                default=Value(1),
+                output_field=IntegerField()
+            )
+        ).order_by('-score', '-created_at')[:remaining_needed])
+        
+        # Combine results
+        final_results = initial_results + fallback_products
+        
+        # If still not enough, get remaining products (last resort)
+        if len(final_results) < limit:
+            still_needed = limit - len(final_results)
+            final_excluded_ids = set(p.id for p in final_results) | trending_ids
+            
+            last_resort = list(Product.objects.filter(
+                is_active=True
+            ).exclude(
+                id__in=final_excluded_ids
+            ).select_related('category', 'brand').order_by('?')[:still_needed])
+            
+            final_results.extend(last_resort)
+        
+        # Ensure we don't exceed the limit
+        final_results = final_results[:limit]
+        
+        page = self.paginate_queryset(final_results)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(final_results, many=True)
+        return Response(serializer.data)
+    
+    @method_decorator(cache_page(60*15))  # Cache for 15 minutes (shorter for trending)
+    @action(detail=False, methods=['get'])
+    def trending(self, request):
+        """
+        Get trending products based on recent sales activity (default: last 7 days from now)
+        Uses two-step approach: 1) Get sales data from OrderItem, 2) Get fresh product data from Product
+        """
+        from orders.models import OrderItem
+        
+        limit = int(request.query_params.get('limit', 10))
+        days = int(request.query_params.get('days', 7))  # Default to 7 days for trending
+        
+        # Calculate date threshold (no offset - current period)
+        threshold_date = datetime.datetime.now() - timedelta(days=days)
+        
+        # STEP 1: Get sales analytics from OrderItem table (recent sales data)
+        trending_sales = OrderItem.objects.filter(
+            order__created_at__gte=threshold_date,
+            product__isnull=False,  # Only items with products (not variants)
+            product__is_active=True  # Only active products
+        ).values('product_id').annotate(
+            total_sold=Sum('quantity')
+        ).order_by('-total_sold')[:limit]
+        
+        # Extract product IDs from sales data
+        trending_product_ids = [item['product_id'] for item in trending_sales]
+        
+        # STEP 2: Get fresh product details from Product table
+        if trending_product_ids:
+            # Get products and preserve the trending order
+            trending_products = Product.objects.filter(
+                id__in=trending_product_ids,
+                is_active=True
+            ).select_related('category', 'brand')
+            
+            # Create a dict for fast lookup and preserve order
+            products_dict = {p.id: p for p in trending_products}
+            results = [products_dict[pid] for pid in trending_product_ids if pid in products_dict]
+        else:
+            results = []
+        
+        # Fallback if no recent sales data (development/new site scenario)
+        if len(results) < limit:
+            remaining_needed = limit - len(results)
+            
+            # Add newest products as trending fallback with current valid data
+            newest_products = Product.objects.filter(
+                is_active=True,
+                price__gt=0,  # Only products with valid current pricing
+                stock__gt=0   # Only products with current stock
+            ).select_related('category', 'brand').exclude(
+                id__in=[p.id for p in results]
+            ).order_by('-created_at')[:remaining_needed]
+            
+            results.extend(list(newest_products))
+        
+        page = self.paginate_queryset(results)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(results, many=True)
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])

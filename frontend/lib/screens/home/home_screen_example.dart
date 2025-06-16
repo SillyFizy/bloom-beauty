@@ -44,8 +44,9 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmallScreen = constraints.maxWidth < 600;
-        final isMediumScreen = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
-        
+        final isMediumScreen =
+            constraints.maxWidth >= 600 && constraints.maxWidth < 900;
+
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
           body: SafeArea(
@@ -103,7 +104,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
   Widget _buildBannerSection(bool isSmallScreen) {
     final bannerImages = [
       'Cosmetics Collection 1',
-      'Cosmetics Collection 2', 
+      'Cosmetics Collection 2',
       'Cosmetics Collection 3',
     ];
 
@@ -190,12 +191,13 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
     return CelebrityConsumer(
       builder: (context, celebrityProvider, child) {
         if (celebrityProvider.isLoading) {
-          return _buildLoadingSection('Loading Celebrity Picks...', isSmallScreen);
+          return _buildLoadingSection(
+              'Loading Celebrity Picks...', isSmallScreen);
         }
 
         if (celebrityProvider.hasError) {
           return _buildErrorSection(
-            'Failed to load celebrity picks', 
+            'Failed to load celebrity picks',
             () => celebrityProvider.refresh(),
             isSmallScreen,
           );
@@ -204,7 +206,8 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
         final celebrityPicks = celebrityProvider.celebrityPicks;
 
         if (celebrityPicks.isEmpty) {
-          return _buildEmptySection('No celebrity picks available', isSmallScreen);
+          return _buildEmptySection(
+              'No celebrity picks available', isSmallScreen);
         }
 
         return TweenAnimationBuilder<double>(
@@ -229,13 +232,15 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 12 : 16),
                         itemCount: celebrityPicks.length,
                         itemBuilder: (context, index) {
                           final pick = celebrityPicks[index];
                           return TweenAnimationBuilder<double>(
                             tween: Tween<double>(begin: 0.0, end: 1.0),
-                            duration: Duration(milliseconds: 250 + (index * 50)),
+                            duration:
+                                Duration(milliseconds: 250 + (index * 50)),
                             curve: Curves.easeOutCubic,
                             builder: (context, itemValue, child) {
                               return Transform.translate(
@@ -244,22 +249,28 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
                                   opacity: itemValue,
                                   child: Container(
                                     width: isSmallScreen ? 180 : 200,
-                                    margin: EdgeInsets.only(right: isSmallScreen ? 12 : 16),
+                                    margin: EdgeInsets.only(
+                                        right: isSmallScreen ? 12 : 16),
                                     child: CelebrityPickCard(
                                       product: pick['product'],
                                       celebrityName: pick['name'],
                                       celebrityImage: pick['image'],
                                       testimonial: pick['testimonial'],
-                                      socialMediaLinks: pick['socialMediaLinks'] ?? {},
-                                      recommendedProducts: pick['recommendedProducts'] ?? [],
-                                      morningRoutineProducts: pick['morningRoutineProducts'] ?? [],
-                                      eveningRoutineProducts: pick['eveningRoutineProducts'] ?? [],
+                                      socialMediaLinks:
+                                          pick['socialMediaLinks'] ?? {},
+                                      recommendedProducts:
+                                          pick['recommendedProducts'] ?? [],
+                                      morningRoutineProducts:
+                                          pick['morningRoutineProducts'] ?? [],
+                                      eveningRoutineProducts:
+                                          pick['eveningRoutineProducts'] ?? [],
                                       index: index,
                                       onTap: () {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => ProductDetailScreen(
+                                            builder: (context) =>
+                                                ProductDetailScreen(
                                               product: pick['product'],
                                             ),
                                           ),
@@ -299,15 +310,24 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
           children: [
             _buildSectionTitle('NEW ARRIVALS', '', isSmallScreen),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
+              padding:
+                  EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
               child: GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: isSmallScreen ? 2 : isMediumScreen ? 3 : 4,
+                  crossAxisCount: isSmallScreen
+                      ? 2
+                      : isMediumScreen
+                          ? 3
+                          : 4,
                   crossAxisSpacing: isSmallScreen ? 8 : 12,
                   mainAxisSpacing: isSmallScreen ? 8 : 12,
-                  childAspectRatio: isSmallScreen ? 0.7 : isMediumScreen ? 0.75 : 0.8,
+                  childAspectRatio: isSmallScreen
+                      ? 0.7
+                      : isMediumScreen
+                          ? 0.75
+                          : 0.8,
                 ),
                 itemCount: newArrivals.length,
                 itemBuilder: (context, index) {
@@ -331,12 +351,13 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle('BESTSELLING SKINCARE', '', isSmallScreen),
+            _buildSectionTitle('BESTSELLING PRODUCTS', '', isSmallScreen),
             SizedBox(
               height: isSmallScreen ? 240 : 260,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
+                padding:
+                    EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
                 itemCount: bestsellingProducts.length,
                 itemBuilder: (context, index) {
                   final product = bestsellingProducts[index];
@@ -359,12 +380,13 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle('TRENDING MAKEUP', '', isSmallScreen),
+            _buildSectionTitle('TRENDING PRODUCTS', '', isSmallScreen),
             SizedBox(
               height: isSmallScreen ? 240 : 260,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
+                padding:
+                    EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
                 itemCount: trendingProducts.length,
                 itemBuilder: (context, index) {
                   final product = trendingProducts[index];
@@ -383,11 +405,10 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
   Widget _buildSectionTitle(String title, String subtitle, bool isSmallScreen) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        isSmallScreen ? 12 : 16, 
-        isSmallScreen ? 24 : 32, 
-        isSmallScreen ? 12 : 16, 
-        isSmallScreen ? 16 : 20
-      ),
+          isSmallScreen ? 12 : 16,
+          isSmallScreen ? 24 : 32,
+          isSmallScreen ? 12 : 16,
+          isSmallScreen ? 16 : 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -424,9 +445,9 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-const CircularProgressIndicator(
-
-              valueColor: AlwaysStoppedAnimation<Color>(AppConstants.accentColor),
+            const CircularProgressIndicator(
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(AppConstants.accentColor),
             ),
             const SizedBox(height: 16),
             Text(
@@ -442,7 +463,8 @@ const CircularProgressIndicator(
     );
   }
 
-  Widget _buildErrorSection(String message, VoidCallback onRetry, bool isSmallScreen) {
+  Widget _buildErrorSection(
+      String message, VoidCallback onRetry, bool isSmallScreen) {
     return Container(
       height: isSmallScreen ? 200 : 250,
       margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
@@ -496,7 +518,7 @@ const CircularProgressIndicator(
       onTap: () {
         // Add to recently viewed when tapping product
         context.productProvider.addToRecentlyViewed(product);
-        
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -524,9 +546,8 @@ const CircularProgressIndicator(
               flex: 3,
               child: Container(
                 width: double.infinity,
-decoration: const BoxDecoration(
+                decoration: const BoxDecoration(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-
                   color: AppConstants.backgroundColor,
                 ),
                 child: Center(
@@ -606,7 +627,7 @@ decoration: const BoxDecoration(
       onTap: () {
         // Add to recently viewed when tapping product
         context.productProvider.addToRecentlyViewed(product);
-        
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -636,9 +657,8 @@ decoration: const BoxDecoration(
               flex: 3,
               child: Container(
                 width: double.infinity,
-decoration: const BoxDecoration(
+                decoration: const BoxDecoration(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-
                   color: AppConstants.backgroundColor,
                 ),
                 child: Center(
@@ -712,4 +732,4 @@ decoration: const BoxDecoration(
       ),
     );
   }
-} 
+}

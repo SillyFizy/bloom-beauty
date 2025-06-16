@@ -45,8 +45,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-const Text(
-
+            const Text(
               'Sort By',
               style: TextStyle(
                 fontSize: 18,
@@ -56,28 +55,34 @@ const Text(
             ),
             const SizedBox(height: 16),
             ...WishlistSortOption.values.map((option) => ListTile(
-              leading: Icon(
-                _getSortIcon(option),
-                color: _sortOption == option ? AppConstants.accentColor : AppConstants.textSecondary,
-              ),
-              title: Text(
-                _getSortLabel(option),
-                style: TextStyle(
-                  fontWeight: _sortOption == option ? FontWeight.w600 : FontWeight.w500,
-                  color: _sortOption == option ? AppConstants.accentColor : AppConstants.textPrimary,
-                ),
-              ),
-              trailing: _sortOption == option
-? const Icon(Icons.check_circle, color: AppConstants.accentColor)
-
-                  : null,
-              onTap: () {
-                setState(() {
-                  _sortOption = option;
-                });
-                Navigator.pop(context);
-              },
-            )),
+                  leading: Icon(
+                    _getSortIcon(option),
+                    color: _sortOption == option
+                        ? AppConstants.accentColor
+                        : AppConstants.textSecondary,
+                  ),
+                  title: Text(
+                    _getSortLabel(option),
+                    style: TextStyle(
+                      fontWeight: _sortOption == option
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: _sortOption == option
+                          ? AppConstants.accentColor
+                          : AppConstants.textPrimary,
+                    ),
+                  ),
+                  trailing: _sortOption == option
+                      ? const Icon(Icons.check_circle,
+                          color: AppConstants.accentColor)
+                      : null,
+                  onTap: () {
+                    setState(() {
+                      _sortOption = option;
+                    });
+                    Navigator.pop(context);
+                  },
+                )),
           ],
         ),
       ),
@@ -89,7 +94,7 @@ const Text(
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmallScreen = constraints.maxWidth < 600;
-        
+
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
           appBar: AppBar(
@@ -116,7 +121,7 @@ const Text(
               Consumer<WishlistProvider>(
                 builder: (context, wishlistProvider, child) {
                   if (wishlistProvider.isEmpty) return const SizedBox.shrink();
-                  
+
                   return Row(
                     children: [
                       IconButton(
@@ -135,26 +140,24 @@ const Text(
                           size: isSmallScreen ? 22 : 24,
                         ),
                         itemBuilder: (context) => [
-const PopupMenuItem(
-
+                          const PopupMenuItem(
                             value: 'clear',
                             child: Row(
                               children: [
-                                Icon(Icons.clear_all, color: AppConstants.errorColor),
-SizedBox(width: 8),
-
+                                Icon(Icons.clear_all,
+                                    color: AppConstants.errorColor),
+                                SizedBox(width: 8),
                                 Text('Clear Wishlist'),
                               ],
                             ),
                           ),
-const PopupMenuItem(
-
+                          const PopupMenuItem(
                             value: 'refresh',
                             child: Row(
                               children: [
-                                Icon(Icons.refresh, color: AppConstants.accentColor),
-SizedBox(width: 8),
-
+                                Icon(Icons.refresh,
+                                    color: AppConstants.accentColor),
+                                SizedBox(width: 8),
                                 Text('Refresh'),
                               ],
                             ),
@@ -200,7 +203,7 @@ SizedBox(width: 8),
                   // Search bar
                   if (wishlistProvider.itemCount > 3)
                     _buildSearchBar(isSmallScreen),
-                  
+
                   // Wishlist count
                   Container(
                     width: double.infinity,
@@ -218,7 +221,7 @@ SizedBox(width: 8),
                       ),
                     ),
                   ),
-                  
+
                   // Products list
                   Expanded(
                     child: RefreshIndicator(
@@ -231,7 +234,8 @@ SizedBox(width: 8),
                         itemCount: filteredProducts.length,
                         itemBuilder: (context, index) {
                           final product = filteredProducts[index];
-                          return _buildWishlistItem(product, wishlistProvider, isSmallScreen);
+                          return _buildWishlistItem(
+                              product, wishlistProvider, isSmallScreen);
                         },
                       ),
                     ),
@@ -257,8 +261,8 @@ SizedBox(width: 8),
         },
         decoration: InputDecoration(
           hintText: 'Search wishlist...',
-prefixIcon: const Icon(Icons.search, color: AppConstants.textSecondary),
-
+          prefixIcon:
+              const Icon(Icons.search, color: AppConstants.textSecondary),
           filled: true,
           fillColor: AppConstants.backgroundColor,
           border: OutlineInputBorder(
@@ -274,7 +278,8 @@ prefixIcon: const Icon(Icons.search, color: AppConstants.textSecondary),
     );
   }
 
-  Widget _buildWishlistItem(Product product, WishlistProvider wishlistProvider, bool isSmallScreen) {
+  Widget _buildWishlistItem(
+      Product product, WishlistProvider wishlistProvider, bool isSmallScreen) {
     return Container(
       margin: EdgeInsets.only(bottom: isSmallScreen ? 12 : 16),
       decoration: BoxDecoration(
@@ -315,9 +320,9 @@ prefixIcon: const Icon(Icons.search, color: AppConstants.textSecondary),
                   ),
                 ),
               ),
-              
+
               SizedBox(width: isSmallScreen ? 12 : 16),
-              
+
               // Product details
               Expanded(
                 child: Column(
@@ -334,9 +339,9 @@ prefixIcon: const Icon(Icons.search, color: AppConstants.textSecondary),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    
+
                     SizedBox(height: isSmallScreen ? 4 : 6),
-                    
+
                     Text(
                       product.brand,
                       style: TextStyle(
@@ -345,9 +350,9 @@ prefixIcon: const Icon(Icons.search, color: AppConstants.textSecondary),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    
+
                     SizedBox(height: isSmallScreen ? 8 : 12),
-                    
+
                     Row(
                       children: [
                         Row(
@@ -371,9 +376,9 @@ prefixIcon: const Icon(Icons.search, color: AppConstants.textSecondary),
                         ),
                       ],
                     ),
-                    
+
                     SizedBox(height: isSmallScreen ? 8 : 12),
-                    
+
                     // Beauty Points section
                     if (product.beautyPoints > 0) ...[
                       Row(
@@ -396,7 +401,7 @@ prefixIcon: const Icon(Icons.search, color: AppConstants.textSecondary),
                       ),
                       SizedBox(height: isSmallScreen ? 8 : 12),
                     ],
-                    
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -408,7 +413,6 @@ prefixIcon: const Icon(Icons.search, color: AppConstants.textSecondary),
                             color: AppConstants.textPrimary,
                           ),
                         ),
-                        
                         WishlistButton(
                           product: product,
                           size: isSmallScreen ? 20 : 24,
@@ -431,8 +435,7 @@ prefixIcon: const Icon(Icons.search, color: AppConstants.textSecondary),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-const CircularProgressIndicator(color: AppConstants.accentColor),
-
+          const CircularProgressIndicator(color: AppConstants.accentColor),
           SizedBox(height: isSmallScreen ? 16 : 20),
           Text(
             'Loading your wishlist...',
@@ -571,20 +574,18 @@ const CircularProgressIndicator(color: AppConstants.accentColor),
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppConstants.surfaceColor,
-title: const Text(
+        title: const Text(
           'Clear Wishlist',
           style: TextStyle(color: AppConstants.textPrimary),
         ),
         content: const Text(
-
           'Are you sure you want to remove all items from your wishlist?',
           style: TextStyle(color: AppConstants.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-child: const Text(
-
+            child: const Text(
               'Cancel',
               style: TextStyle(color: AppConstants.textSecondary),
             ),
@@ -592,7 +593,7 @@ child: const Text(
           ElevatedButton(
             onPressed: () async {
               await wishlistProvider.clearWishlist();
-              if (mounted) Navigator.pop(context);
+              if (mounted && context.mounted) Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppConstants.errorColor,
@@ -622,12 +623,12 @@ child: const Text(
 
   List<Product> _getFilteredProducts(List<Product> products) {
     if (_searchQuery.isEmpty) return products;
-    
+
     return products.where((product) {
       final query = _searchQuery.toLowerCase();
       return product.name.toLowerCase().contains(query) ||
-             product.brand.toLowerCase().contains(query) ||
-             product.description.toLowerCase().contains(query);
+          product.brand.toLowerCase().contains(query) ||
+          product.description.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -668,4 +669,4 @@ enum WishlistSortOption {
   name,
   priceLow,
   priceHigh,
-} 
+}

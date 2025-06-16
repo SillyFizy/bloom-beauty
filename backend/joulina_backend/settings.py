@@ -19,7 +19,12 @@ SECRET_KEY = 'django-insecure-replace-this-with-your-actual-secret-key-in-produc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '10.0.2.2',  # Android emulator gateway
+    '10.0.2.16', # Your device IP
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -91,28 +96,28 @@ WSGI_APPLICATION = 'joulina_backend.wsgi.application'
 
 # PostgreSQL configuration (default)
 # Make sure to create the database and user first
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'bloom_beauty'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', '832021'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-        'OPTIONS': {
-            'sslmode': 'prefer',
-        },
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.environ.get('DB_NAME', 'bloom_beauty'),
+#         'USER': os.environ.get('DB_USER', 'postgres'),
+#         'PASSWORD': os.environ.get('DB_PASSWORD', '832021'),
+#         'HOST': os.environ.get('DB_HOST', 'localhost'),
+#         'PORT': os.environ.get('DB_PORT', '5432'),
+#         'OPTIONS': {
+#             'sslmode': 'prefer',
+#         },
+#     }
+# }
 
 # SQLite fallback (for development when PostgreSQL is not available)
 # Uncomment the following lines and comment out the PostgreSQL config above to use SQLite
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 # For production, consider PostgreSQL
 # DATABASES = {

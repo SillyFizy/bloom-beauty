@@ -92,17 +92,17 @@ class _WishlistButtonState extends State<WishlistButton>
 
     try {
       final wishlistProvider = context.read<WishlistProvider>();
-      
+
       final success = await wishlistProvider.toggleWishlist(widget.product);
-      
-      if (success && mounted) {
-        final isNowInWishlist = wishlistProvider.isInWishlist(widget.product.id);
-        
+
+      if (success && mounted && context.mounted) {
+        final isNowInWishlist =
+            wishlistProvider.isInWishlist(widget.product.id);
+
         // Show feedback message
-        final message = isNowInWishlist
-            ? 'Added to wishlist'
-            : 'Removed from wishlist';
-        
+        final message =
+            isNowInWishlist ? 'Added to wishlist' : 'Removed from wishlist';
+
         final snackBarColor = isNowInWishlist
             ? AppConstants.favoriteColor
             : AppConstants.textSecondary;
@@ -140,7 +140,7 @@ class _WishlistButtonState extends State<WishlistButton>
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error updating wishlist: $e'),
@@ -185,13 +185,15 @@ class _WishlistButtonState extends State<WishlistButton>
                           ? BoxDecoration(
                               color: widget.backgroundColor ??
                                   (isInWishlist
-                                      ? AppConstants.favoriteColor.withValues(alpha: 0.1)
+                                      ? AppConstants.favoriteColor
+                                          .withValues(alpha: 0.1)
                                       : Colors.white.withValues(alpha: 0.9)),
                               shape: BoxShape.circle,
                               boxShadow: widget.showShadow
                                   ? [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
+                                        color:
+                                            Colors.black.withValues(alpha: 0.1),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),
@@ -207,17 +209,22 @@ class _WishlistButtonState extends State<WishlistButton>
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    widget.activeColor ?? AppConstants.favoriteColor,
+                                    widget.activeColor ??
+                                        AppConstants.favoriteColor,
                                   ),
                                 ),
                               ),
                             )
                           : Icon(
-                              isInWishlist ? Icons.favorite : Icons.favorite_border,
+                              isInWishlist
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
                               size: buttonSize,
                               color: isInWishlist
-                                  ? (widget.activeColor ?? AppConstants.favoriteColor)
-                                  : (widget.inactiveColor ?? AppConstants.textSecondary),
+                                  ? (widget.activeColor ??
+                                      AppConstants.favoriteColor)
+                                  : (widget.inactiveColor ??
+                                      AppConstants.textSecondary),
                             ),
                     ),
                   ),
@@ -275,9 +282,8 @@ class FloatingWishlistButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<WishlistProvider>(
       builder: (context, wishlistProvider, child) {
-        final isInWishlist = wishlistProvider.isInWishlist(product.id);
         final isSmallScreen = MediaQuery.of(context).size.width < 600;
-        
+
         return Container(
           width: isSmallScreen ? 44 : 52,
           height: isSmallScreen ? 44 : 52,
@@ -288,18 +294,18 @@ class FloatingWishlistButton extends StatelessWidget {
               color: AppConstants.borderColor.withValues(alpha: 0.3),
               width: 1,
             ),
-                         boxShadow: [
-               BoxShadow(
-                 color: AppConstants.textSecondary.withValues(alpha: 0.15),
-                 blurRadius: 12,
-                 offset: const Offset(0, 4),
-               ),
-               BoxShadow(
-                 color: Colors.white.withValues(alpha: 0.05),
-                 blurRadius: 1,
-                 offset: const Offset(0, 1),
-               ),
-             ],
+            boxShadow: [
+              BoxShadow(
+                color: AppConstants.textSecondary.withValues(alpha: 0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.05),
+                blurRadius: 1,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
@@ -321,4 +327,4 @@ class FloatingWishlistButton extends StatelessWidget {
       },
     );
   }
-} 
+}

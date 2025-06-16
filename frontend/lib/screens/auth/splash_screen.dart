@@ -17,19 +17,19 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _logoAnimation;
   late Animation<double> _textAnimation;
   late Animation<double> _fadeAnimation;
-  
+
   bool _isInitializing = false;
   String _loadingText = 'Loading...';
 
   @override
   void initState() {
     super.initState();
-    
+
     _logoController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _textController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -65,19 +65,19 @@ class _SplashScreenState extends State<SplashScreen>
   void _startAnimations() async {
     await Future.delayed(const Duration(milliseconds: 200));
     _logoController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 400));
     _textController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 600));
-    
+
     // Initialize providers after animations
     await _initializeApp();
   }
 
   Future<void> _initializeApp() async {
     if (_isInitializing) return;
-    
+
     setState(() {
       _isInitializing = true;
       _loadingText = 'Loading products...';
@@ -86,13 +86,13 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       // Initialize all providers
       await AppProviders.initializeProviders(context);
-      
+
       setState(() {
         _loadingText = 'Ready!';
       });
-      
+
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       if (mounted) {
         context.go('/home');
       }
@@ -101,7 +101,7 @@ class _SplashScreenState extends State<SplashScreen>
       setState(() {
         _loadingText = 'Loading failed, retrying...';
       });
-      
+
       // Retry after a delay
       await Future.delayed(const Duration(milliseconds: 1000));
       await _initializeApp();
@@ -125,8 +125,8 @@ class _SplashScreenState extends State<SplashScreen>
             end: Alignment.bottomRight,
             colors: [
               AppConstants.accentColor,
-                              AppConstants.accentColor.withValues(alpha: 0.8),
-                AppConstants.accentColor.withValues(alpha: 0.6),
+              AppConstants.accentColor.withValues(alpha: 0.8),
+              AppConstants.accentColor.withValues(alpha: 0.6),
               AppConstants.backgroundColor,
             ],
             stops: const [0.0, 0.3, 0.7, 1.0],
@@ -151,7 +151,7 @@ class _SplashScreenState extends State<SplashScreen>
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                                                              color: Colors.black.withValues(alpha: 0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -166,9 +166,9 @@ class _SplashScreenState extends State<SplashScreen>
                     );
                   },
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Animated App Name
                 AnimatedBuilder(
                   animation: _textAnimation,
@@ -210,9 +210,9 @@ class _SplashScreenState extends State<SplashScreen>
                     );
                   },
                 ),
-                
+
                 const SizedBox(height: 60),
-                
+
                 // Loading indicator
                 AnimatedBuilder(
                   animation: _fadeAnimation,

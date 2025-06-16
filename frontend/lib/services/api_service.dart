@@ -7,7 +7,15 @@ import '../models/celebrity_model.dart';
 
 /// Enhanced API service with proper error handling and backend integration
 class ApiService {
-  static const String baseUrl = 'http://localhost:8000/api'; // Django backend
+  // Use 10.0.2.2 for Android emulator to reach host machine
+  static String get baseUrl {
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000/api'; // Android emulator special IP
+    } else {
+      return 'http://127.0.0.1:8000/api'; // iOS simulator and other platforms
+    }
+  }
+
   static const Duration requestTimeout = Duration(seconds: 30);
   static const int maxRetries = 3;
 
@@ -19,17 +27,17 @@ class ApiService {
 
   /// Authentication token storage
   static String? _authToken;
-  
+
   /// Set authentication token for API requests
   static void setAuthToken(String token) {
     _authToken = token;
   }
-  
+
   /// Clear authentication token
   static void clearAuthToken() {
     _authToken = null;
   }
-  
+
   /// Get headers with authentication if available
   static Map<String, String> get _headersWithAuth {
     final headers = Map<String, String>.from(_headers);
@@ -40,13 +48,16 @@ class ApiService {
   }
 
   /// Generic GET request with error handling and retries
-  static Future<Map<String, dynamic>> get(String endpoint, {int retryCount = 0}) async {
+  static Future<Map<String, dynamic>> get(String endpoint,
+      {int retryCount = 0}) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl$endpoint'),
-        headers: _headersWithAuth,
-      ).timeout(requestTimeout);
-      
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl$endpoint'),
+            headers: _headersWithAuth,
+          )
+          .timeout(requestTimeout);
+
       return _handleResponse(response);
     } on SocketException {
       throw ApiException('No internet connection');
@@ -63,16 +74,20 @@ class ApiService {
       throw ApiException('Request failed after $maxRetries retries: $e');
     }
   }
-  
+
   /// Generic POST request with error handling and retries
-  static Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> data, {int retryCount = 0}) async {
+  static Future<Map<String, dynamic>> post(
+      String endpoint, Map<String, dynamic> data,
+      {int retryCount = 0}) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl$endpoint'),
-        headers: _headersWithAuth,
-        body: json.encode(data),
-      ).timeout(requestTimeout);
-      
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl$endpoint'),
+            headers: _headersWithAuth,
+            body: json.encode(data),
+          )
+          .timeout(requestTimeout);
+
       return _handleResponse(response);
     } on SocketException {
       throw ApiException('No internet connection');
@@ -116,7 +131,7 @@ class ApiService {
     } catch (e) {
       // If JSON parsing fails, return the raw body or default message
     }
-    
+
     switch (response.statusCode) {
       case 400:
         return 'Bad request';
@@ -137,7 +152,8 @@ class ApiService {
   static Future<List<Product>> getProducts() async {
     try {
       final response = await get('/products/');
-      final List<dynamic> results = response['results'] ?? response['data'] ?? [];
+      final List<dynamic> results =
+          response['results'] ?? response['data'] ?? [];
       return results.map((json) => Product.fromJson(json)).toList();
     } catch (e) {
       throw ApiException('Failed to load products: $e');
@@ -156,7 +172,8 @@ class ApiService {
   static Future<List<Product>> getProductsByCategory(String categoryId) async {
     try {
       final response = await get('/products/?category=$categoryId');
-      final List<dynamic> results = response['results'] ?? response['data'] ?? [];
+      final List<dynamic> results =
+          response['results'] ?? response['data'] ?? [];
       return results.map((json) => Product.fromJson(json)).toList();
     } catch (e) {
       throw ApiException('Failed to load category products: $e');
@@ -165,11 +182,145 @@ class ApiService {
 
   static Future<List<Product>> searchProducts(String query) async {
     try {
-      final response = await get('/products/?search=${Uri.encodeComponent(query)}');
-      final List<dynamic> results = response['results'] ?? response['data'] ?? [];
+      final response =
+          await get('/products/?search=${Uri.encodeComponent(query)}');
+      final List<dynamic> results =
+          response['results'] ?? response['data'] ?? [];
       return results.map((json) => Product.fromJson(json)).toList();
     } catch (e) {
       throw ApiException('Failed to search products: $e');
+    }
+  }
+
+  /// Get new arrivals from the real API
+  static Future<List<Product>> getNewArrivals(
+      {int days = 30, int limit = 4}) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(
+                '$baseUrl/v1/products/new_arrivals/?days=$days&limit=$limit'),
+            headers: _headersWithAuth,
+          )
+          .timeout(requestTimeout);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseBody = json.decode(response.body);
+
+        // Handle direct array response
+        List<dynamic> results;
+        if (responseBody is List) {
+          results = responseBody;
+        } else if (responseBody is Map && responseBody.containsKey('results')) {
+          results = responseBody['results'];
+        } else {
+          throw ApiException('Invalid response format for new arrivals');
+        }
+
+        return results.map((json) => Product.fromNewArrivalsApi(json)).toList();
+      } else {
+        final errorMessage = _getErrorMessage(response);
+        throw ApiException('HTTP ${response.statusCode}: $errorMessage');
+      }
+    } on SocketException {
+      throw ApiException('No internet connection');
+    } on http.ClientException {
+      throw ApiException('Request failed');
+    } on FormatException {
+      throw ApiException('Invalid response format');
+    } catch (e) {
+      throw ApiException('Failed to load new arrivals: $e');
+    }
+  }
+
+  /// Get bestselling products from the real API
+  static Future<List<Product>> getBestsellingProducts(
+      {int limit = 10, int? days}) async {
+    try {
+      String endpoint = '$baseUrl/v1/products/bestselling/?limit=$limit';
+      if (days != null) {
+        endpoint += '&days=$days';
+      }
+
+      final response = await http
+          .get(
+            Uri.parse(endpoint),
+            headers: _headersWithAuth,
+          )
+          .timeout(requestTimeout);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseBody = json.decode(response.body);
+
+        // Handle direct array response
+        List<dynamic> results;
+        if (responseBody is List) {
+          results = responseBody;
+        } else if (responseBody is Map && responseBody.containsKey('results')) {
+          results = responseBody['results'];
+        } else {
+          throw ApiException(
+              'Invalid response format for bestselling products');
+        }
+
+        return results.map((json) => Product.fromBestsellingApi(json)).toList();
+      } else {
+        final errorMessage = _getErrorMessage(response);
+        throw ApiException('HTTP ${response.statusCode}: $errorMessage');
+      }
+    } on SocketException {
+      throw ApiException('No internet connection');
+    } on http.ClientException {
+      throw ApiException('Request failed');
+    } on FormatException {
+      throw ApiException('Invalid response format');
+    } catch (e) {
+      throw ApiException('Failed to load bestselling products: $e');
+    }
+  }
+
+  /// Get trending products from the real API
+  static Future<List<Product>> getTrendingProducts(
+      {int limit = 10, int? days}) async {
+    try {
+      String endpoint = '$baseUrl/v1/products/trending/?limit=$limit';
+      if (days != null) {
+        endpoint += '&days=$days';
+      }
+
+      final response = await http
+          .get(
+            Uri.parse(endpoint),
+            headers: _headersWithAuth,
+          )
+          .timeout(requestTimeout);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseBody = json.decode(response.body);
+
+        // Handle direct array response
+        List<dynamic> results;
+        if (responseBody is List) {
+          results = responseBody;
+        } else if (responseBody is Map && responseBody.containsKey('results')) {
+          results = responseBody['results'];
+        } else {
+          throw ApiException('Invalid response format for trending products');
+        }
+
+        return results.map((json) => Product.fromTrendingApi(json)).toList();
+      } else {
+        final errorMessage = _getErrorMessage(response);
+        throw ApiException('HTTP ${response.statusCode}: $errorMessage');
+      }
+    } on SocketException {
+      throw ApiException('No internet connection');
+    } on http.ClientException {
+      throw ApiException('Request failed');
+    } on FormatException {
+      throw ApiException('Invalid response format');
+    } catch (e) {
+      throw ApiException('Failed to load trending products: $e');
     }
   }
 
@@ -177,7 +328,8 @@ class ApiService {
   static Future<List<Celebrity>> getCelebrities() async {
     try {
       final response = await get('/celebrities/');
-      final List<dynamic> results = response['results'] ?? response['data'] ?? [];
+      final List<dynamic> results =
+          response['results'] ?? response['data'] ?? [];
       return results.map((json) => Celebrity.fromJson(json)).toList();
     } catch (e) {
       throw ApiException('Failed to load celebrities: $e');
@@ -194,7 +346,8 @@ class ApiService {
   }
 
   // Cart API endpoints
-  static Future<Map<String, dynamic>> addToCart(String productId, int quantity) async {
+  static Future<Map<String, dynamic>> addToCart(
+      String productId, int quantity) async {
     try {
       return await post('/cart/add/', {
         'product_id': productId,
@@ -234,7 +387,8 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> removeFromWishlist(String productId) async {
+  static Future<Map<String, dynamic>> removeFromWishlist(
+      String productId) async {
     try {
       return await post('/wishlist/remove/', {
         'product_id': productId,
@@ -253,7 +407,8 @@ class ApiService {
   }
 
   // Review API endpoints
-  static Future<Map<String, dynamic>> submitReview(String productId, Map<String, dynamic> reviewData) async {
+  static Future<Map<String, dynamic>> submitReview(
+      String productId, Map<String, dynamic> reviewData) async {
     try {
       return await post('/products/$productId/reviews/', reviewData);
     } catch (e) {
@@ -261,10 +416,12 @@ class ApiService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getProductReviews(String productId) async {
+  static Future<List<Map<String, dynamic>>> getProductReviews(
+      String productId) async {
     try {
       final response = await get('/products/$productId/reviews/');
-      final List<dynamic> results = response['results'] ?? response['data'] ?? [];
+      final List<dynamic> results =
+          response['results'] ?? response['data'] ?? [];
       return results.cast<Map<String, dynamic>>();
     } catch (e) {
       throw ApiException('Failed to load reviews: $e');
@@ -275,7 +432,8 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getCategories() async {
     try {
       final response = await get('/categories/');
-      final List<dynamic> results = response['results'] ?? response['data'] ?? [];
+      final List<dynamic> results =
+          response['results'] ?? response['data'] ?? [];
       return results.cast<Map<String, dynamic>>();
     } catch (e) {
       throw ApiException('Failed to load categories: $e');
@@ -283,7 +441,8 @@ class ApiService {
   }
 
   // Authentication endpoints
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+      String email, String password) async {
     try {
       return await post('/auth/login/', {
         'email': email,
@@ -294,7 +453,8 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> register(Map<String, String> userData) async {
+  static Future<Map<String, dynamic>> register(
+      Map<String, String> userData) async {
     try {
       return await post('/auth/register/', userData);
     } catch (e) {
@@ -327,7 +487,8 @@ class ApiService {
       final response = await post('/products/batch/', {
         'product_ids': productIds,
       });
-      final List<dynamic> results = response['results'] ?? response['data'] ?? [];
+      final List<dynamic> results =
+          response['results'] ?? response['data'] ?? [];
       return results.map((json) => Product.fromJson(json)).toList();
     } catch (e) {
       throw ApiException('Failed to load products batch: $e');
@@ -343,7 +504,8 @@ class ApiException implements Exception {
   ApiException(this.message, [this.statusCode]);
 
   @override
-  String toString() => 'ApiException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
+  String toString() =>
+      'ApiException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
 }
 
 /// Network state management

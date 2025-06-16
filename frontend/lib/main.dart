@@ -16,10 +16,10 @@ import 'services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize local storage
   await StorageService.init();
-  
+
   runApp(const MyApp());
 }
 
@@ -68,22 +68,26 @@ class MyApp extends StatelessWidget {
             color: AppConstants.surfaceColor,
             elevation: AppConstants.cardElevation,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
+              borderRadius:
+                  BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
             ),
           ),
           inputDecorationTheme: const InputDecorationTheme(
             filled: true,
             fillColor: AppConstants.backgroundColor,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
+              borderRadius:
+                  BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
               borderSide: BorderSide(color: AppConstants.borderColor),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
+              borderRadius:
+                  BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
               borderSide: BorderSide(color: AppConstants.borderColor),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
+              borderRadius:
+                  BorderRadius.all(Radius.circular(AppConstants.borderRadius)),
               borderSide: BorderSide(color: AppConstants.accentColor, width: 2),
             ),
           ),
@@ -121,13 +125,13 @@ class MyApp extends StatelessWidget {
 class NavigationState {
   static int previousTab = 0;
   static int currentTab = 0;
-  
+
   static SlideDirection getDirectionForTransition(int from, int to) {
     // Horizontal navigation (left-right based on tab order)
     if (to > from) {
       return SlideDirection.fromRight; // Moving right in tab order
     } else {
-      return SlideDirection.fromLeft;  // Moving left in tab order
+      return SlideDirection.fromLeft; // Moving left in tab order
     }
   }
 }
@@ -148,7 +152,7 @@ final GoRouter _router = GoRouter(
             FadeTransition(opacity: animation, child: child),
       ),
     ),
-    
+
     // Login Screen
     GoRoute(
       path: '/login',
@@ -161,7 +165,7 @@ final GoRouter _router = GoRouter(
             FadeTransition(opacity: animation, child: child),
       ),
     ),
-    
+
     // Main App Shell with Bottom Navigation and Smooth Transitions
     ShellRoute(
       builder: (context, state, child) {
@@ -179,17 +183,17 @@ final GoRouter _router = GoRouter(
               key: state.pageKey,
               child: const HomeScreen(),
               transitionDuration: const Duration(milliseconds: 300),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 final direction = NavigationState.getDirectionForTransition(
-                  NavigationState.previousTab, 
-                  NavigationState.currentTab
-                );
-                return _buildSlideTransition(animation, secondaryAnimation, child, direction);
+                    NavigationState.previousTab, NavigationState.currentTab);
+                return _buildSlideTransition(
+                    animation, secondaryAnimation, child, direction);
               },
             );
           },
         ),
-        
+
         // Categories
         GoRoute(
           path: '/categories',
@@ -201,17 +205,17 @@ final GoRouter _router = GoRouter(
               key: state.pageKey,
               child: const ProductListScreen(),
               transitionDuration: const Duration(milliseconds: 300),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 final direction = NavigationState.getDirectionForTransition(
-                  NavigationState.previousTab, 
-                  NavigationState.currentTab
-                );
-                return _buildSlideTransition(animation, secondaryAnimation, child, direction);
+                    NavigationState.previousTab, NavigationState.currentTab);
+                return _buildSlideTransition(
+                    animation, secondaryAnimation, child, direction);
               },
             );
           },
         ),
-        
+
         // Search
         GoRoute(
           path: '/search',
@@ -223,17 +227,17 @@ final GoRouter _router = GoRouter(
               key: state.pageKey,
               child: const SearchScreen(),
               transitionDuration: const Duration(milliseconds: 300),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 final direction = NavigationState.getDirectionForTransition(
-                  NavigationState.previousTab, 
-                  NavigationState.currentTab
-                );
-                return _buildSlideTransition(animation, secondaryAnimation, child, direction);
+                    NavigationState.previousTab, NavigationState.currentTab);
+                return _buildSlideTransition(
+                    animation, secondaryAnimation, child, direction);
               },
             );
           },
         ),
-        
+
         // Cart
         GoRoute(
           path: '/cart',
@@ -245,14 +249,16 @@ final GoRouter _router = GoRouter(
               key: state.pageKey,
               child: const CartScreen(),
               transitionDuration: const Duration(milliseconds: 300),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 // Cart slides up from bottom for a more natural feeling
-                return _buildSlideTransition(animation, secondaryAnimation, child, SlideDirection.fromBottom);
+                return _buildSlideTransition(animation, secondaryAnimation,
+                    child, SlideDirection.fromBottom);
               },
             );
           },
         ),
-        
+
         // Profile
         GoRoute(
           path: '/profile',
@@ -264,12 +270,12 @@ final GoRouter _router = GoRouter(
               key: state.pageKey,
               child: const ProfileScreen(),
               transitionDuration: const Duration(milliseconds: 300),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 final direction = NavigationState.getDirectionForTransition(
-                  NavigationState.previousTab, 
-                  NavigationState.currentTab
-                );
-                return _buildSlideTransition(animation, secondaryAnimation, child, direction);
+                    NavigationState.previousTab, NavigationState.currentTab);
+                return _buildSlideTransition(
+                    animation, secondaryAnimation, child, direction);
               },
             );
           },
@@ -291,7 +297,7 @@ Widget _buildSlideTransition(
 ) {
   late Offset begin;
   const end = Offset.zero;
-  
+
   switch (direction) {
     case SlideDirection.fromLeft:
       begin = const Offset(-1.0, 0.0);
@@ -306,20 +312,20 @@ Widget _buildSlideTransition(
       begin = const Offset(0.0, 1.0);
       break;
   }
-  
+
   // Use a more refined curve for better feel
   const curve = Curves.easeOutCubic;
   const reverseCurve = Curves.easeInCubic;
-  
+
   final slideAnimation = Tween<Offset>(begin: begin, end: end).animate(
     CurvedAnimation(parent: animation, curve: curve),
   );
-  
+
   // Scale animation for subtle depth effect
   final scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
     CurvedAnimation(parent: animation, curve: curve),
   );
-  
+
   // Secondary animation for exiting screen
   final secondarySlideAnimation = Tween<Offset>(
     begin: Offset.zero,
@@ -327,11 +333,11 @@ Widget _buildSlideTransition(
   ).animate(
     CurvedAnimation(parent: secondaryAnimation, curve: reverseCurve),
   );
-  
+
   final secondaryFadeAnimation = Tween<double>(begin: 1.0, end: 0.8).animate(
     CurvedAnimation(parent: secondaryAnimation, curve: reverseCurve),
   );
-  
+
   return SlideTransition(
     position: secondarySlideAnimation,
     child: FadeTransition(
@@ -360,7 +366,7 @@ class MainNavigationWrapper extends StatefulWidget {
   State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
 }
 
-class _MainNavigationWrapperState extends State<MainNavigationWrapper> 
+class _MainNavigationWrapperState extends State<MainNavigationWrapper>
     with TickerProviderStateMixin {
   int _selectedIndex = 0;
   late AnimationController _tabAnimationController;
@@ -382,10 +388,10 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
 
   void _onItemTapped(int index) {
     if (_selectedIndex == index) return; // Don't navigate to same tab
-    
+
     // Add haptic feedback
     HapticFeedback.selectionClick();
-    
+
     setState(() {
       _selectedIndex = index;
     });
@@ -443,11 +449,12 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
           final isSmallScreen = screenWidth < 600;
           final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
           final isLargeScreen = screenWidth >= 900;
-          
+
           // Responsive sizing
-          final navHeight = isSmallScreen ? 80.0 : (isMediumScreen ? 90.0 : 100.0);
+          final navHeight =
+              isSmallScreen ? 80.0 : (isMediumScreen ? 90.0 : 100.0);
           final maxNavWidth = isLargeScreen ? 800.0 : double.infinity;
-          
+
           return Container(
             height: navHeight,
             decoration: BoxDecoration(
@@ -527,30 +534,33 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
     required bool isMediumScreen,
   }) {
     final bool isSelected = _selectedIndex == index;
-    
+
     // Responsive sizing with proper height management
-    final iconSize = isSelected 
+    final iconSize = isSelected
         ? (isSmallScreen ? 24.0 : (isMediumScreen ? 26.0 : 28.0))
         : (isSmallScreen ? 22.0 : (isMediumScreen ? 24.0 : 26.0));
-    
-    final fontSize = isSelected 
+
+    final fontSize = isSelected
         ? (isSmallScreen ? 12.0 : (isMediumScreen ? 13.0 : 14.0))
         : (isSmallScreen ? 11.0 : (isMediumScreen ? 12.0 : 13.0));
-    
+
     // Reduced padding to prevent overflow
     final verticalPadding = isSmallScreen ? 2.0 : (isMediumScreen ? 3.0 : 4.0);
     final borderRadius = isSmallScreen ? 12.0 : (isMediumScreen ? 14.0 : 16.0);
-    
+
     // Optimized spacing to fit within navigation height
     final spacingHeight = isSmallScreen ? 1.0 : (isMediumScreen ? 1.5 : 2.0);
-    final indicatorWidth = isSelected ? (isSmallScreen ? 20.0 : (isMediumScreen ? 24.0 : 28.0)) : 0.0;
-    final indicatorHeight = 2.0; // Fixed height for consistency
-    final indicatorTopMargin = isSmallScreen ? 1.0 : (isMediumScreen ? 1.5 : 2.0);
-    
+    final indicatorWidth = isSelected
+        ? (isSmallScreen ? 20.0 : (isMediumScreen ? 24.0 : 28.0))
+        : 0.0;
+    const indicatorHeight = 2.0; // Fixed height for consistency
+    final indicatorTopMargin =
+        isSmallScreen ? 1.0 : (isMediumScreen ? 1.5 : 2.0);
+
     // Badge sizing for cart
     final badgeMinSize = isSmallScreen ? 16.0 : (isMediumScreen ? 18.0 : 20.0);
     final badgeFontSize = isSmallScreen ? 10.0 : (isMediumScreen ? 11.0 : 12.0);
-    
+
     return Expanded(
       child: GestureDetector(
         onTap: () => _onItemTapped(index),
@@ -560,7 +570,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
           padding: EdgeInsets.symmetric(vertical: verticalPadding),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(borderRadius),
-            color: isSelected 
+            color: isSelected
                 ? AppConstants.accentColor.withValues(alpha: 0.1)
                 : Colors.transparent,
           ),
@@ -574,7 +584,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Special handling for cart icon to show badge
-                    if (index == 3) 
+                    if (index == 3)
                       Selector<CartProvider, int>(
                         selector: (context, cart) => cart.itemCount,
                         builder: (context, itemCount, child) {
@@ -587,7 +597,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                                   child: Icon(
                                     isSelected ? activeIcon : icon,
                                     key: ValueKey('cart_icon_$isSelected'),
-                                    color: isSelected 
+                                    color: isSelected
                                         ? AppConstants.accentColor
                                         : AppConstants.textSecondary,
                                     size: iconSize,
@@ -599,7 +609,8 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                                     top: 0,
                                     child: AnimatedScale(
                                       scale: isSelected ? 1.1 : 1.0,
-                                      duration: const Duration(milliseconds: 200),
+                                      duration:
+                                          const Duration(milliseconds: 200),
                                       child: Container(
                                         padding: const EdgeInsets.all(2),
                                         decoration: BoxDecoration(
@@ -611,7 +622,9 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                                           minHeight: badgeMinSize,
                                         ),
                                         child: Text(
-                                          itemCount > 99 ? '99+' : itemCount.toString(),
+                                          itemCount > 99
+                                              ? '99+'
+                                              : itemCount.toString(),
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: badgeFontSize,
@@ -633,7 +646,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                         child: Icon(
                           isSelected ? activeIcon : icon,
                           key: ValueKey('${label}_icon_$isSelected'),
-                          color: isSelected 
+                          color: isSelected
                               ? AppConstants.accentColor
                               : AppConstants.textSecondary,
                           size: iconSize,
@@ -644,11 +657,12 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
                     AnimatedDefaultTextStyle(
                       duration: const Duration(milliseconds: 200),
                       style: TextStyle(
-                        color: isSelected 
+                        color: isSelected
                             ? AppConstants.accentColor
                             : AppConstants.textSecondary,
                         fontSize: fontSize,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.normal,
                         height: 1.0, // Constrain line height
                       ),
                       child: Text(
@@ -680,4 +694,3 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper>
     );
   }
 }
-

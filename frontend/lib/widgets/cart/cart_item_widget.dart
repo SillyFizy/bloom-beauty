@@ -38,13 +38,13 @@ class CartItemWidget extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmallScreen = constraints.maxWidth < 400;
-        final isMediumScreen = constraints.maxWidth >= 400 && constraints.maxWidth < 600;
-        
+        final isMediumScreen =
+            constraints.maxWidth >= 400 && constraints.maxWidth < 600;
+
         return Card(
           margin: EdgeInsets.symmetric(
-            horizontal: isSmallScreen ? 8 : 12, 
-            vertical: isSmallScreen ? 4 : 6
-          ),
+              horizontal: isSmallScreen ? 8 : 12,
+              vertical: isSmallScreen ? 4 : 6),
           child: Padding(
             padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
             child: Row(
@@ -67,9 +67,9 @@ class CartItemWidget extends StatelessWidget {
                     color: AppConstants.textSecondary,
                   ),
                 ),
-                
+
                 SizedBox(width: isSmallScreen ? 8 : 12),
-                
+
                 // Product Details - Flexible to prevent overflow
                 Expanded(
                   child: Column(
@@ -87,34 +87,37 @@ class CartItemWidget extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      
+
                       SizedBox(height: isSmallScreen ? 2 : 4),
-                      
+
                       // Product Name
                       Text(
                         name,
                         style: TextStyle(
-                          fontSize: isSmallScreen ? 13 : (isMediumScreen ? 14 : 16),
+                          fontSize:
+                              isSmallScreen ? 13 : (isMediumScreen ? 14 : 16),
                           fontWeight: FontWeight.w600,
                           color: AppConstants.textPrimary,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      
+
                       // Variant (if exists)
                       if (variant != null && variant!.isNotEmpty) ...[
                         SizedBox(height: isSmallScreen ? 2 : 4),
                         Container(
                           padding: EdgeInsets.symmetric(
-                            horizontal: isSmallScreen ? 6 : 8, 
-                            vertical: isSmallScreen ? 2 : 4
-                          ),
+                              horizontal: isSmallScreen ? 6 : 8,
+                              vertical: isSmallScreen ? 2 : 4),
                           decoration: BoxDecoration(
-                            color: AppConstants.accentColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
+                            color:
+                                AppConstants.accentColor.withValues(alpha: 0.1),
+                            borderRadius:
+                                BorderRadius.circular(isSmallScreen ? 8 : 12),
                             border: Border.all(
-                              color: AppConstants.accentColor.withValues(alpha: 0.3),
+                              color: AppConstants.accentColor
+                                  .withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
@@ -130,7 +133,7 @@ class CartItemWidget extends StatelessWidget {
                           ),
                         ),
                       ],
-                      
+
                       // Beauty Points (if exists)
                       if (beautyPoints > 0) ...[
                         SizedBox(height: isSmallScreen ? 2 : 4),
@@ -154,9 +157,9 @@ class CartItemWidget extends StatelessWidget {
                           ],
                         ),
                       ],
-                      
+
                       SizedBox(height: isSmallScreen ? 4 : 8),
-                      
+
                       // Price Info
                       if (isSmallScreen)
                         // For small screens, stack vertically to save space
@@ -168,8 +171,7 @@ class CartItemWidget extends StatelessWidget {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 '${_formatPrice(price)} × $quantity',
-style: const TextStyle(
-
+                                style: const TextStyle(
                                   fontSize: 11,
                                   color: AppConstants.textSecondary,
                                   fontWeight: FontWeight.w500,
@@ -245,9 +247,9 @@ style: const TextStyle(
                     ],
                   ),
                 ),
-                
+
                 SizedBox(width: isSmallScreen ? 4 : 8),
-                
+
                 // Action Buttons - Responsive layout
                 Container(
                   constraints: BoxConstraints(
@@ -275,14 +277,15 @@ style: const TextStyle(
                           constraints: const BoxConstraints(),
                         ),
                       ),
-                      
+
                       SizedBox(height: isSmallScreen ? 6 : 8),
-                      
+
                       // Quantity Controls
                       Container(
                         decoration: BoxDecoration(
                           color: AppConstants.backgroundColor,
-                          borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 8),
+                          borderRadius:
+                              BorderRadius.circular(isSmallScreen ? 6 : 8),
                           border: Border.all(
                             color: AppConstants.borderColor,
                             width: 1,
@@ -292,15 +295,15 @@ style: const TextStyle(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             // Decrease Button
-                            Container(
+                            SizedBox(
                               width: isSmallScreen ? 24 : 30,
                               height: isSmallScreen ? 24 : 30,
                               child: IconButton(
                                 onPressed: quantity > 1 ? onDecrement : null,
                                 icon: Icon(
                                   Icons.remove,
-                                  color: quantity > 1 
-                                      ? AppConstants.textPrimary 
+                                  color: quantity > 1
+                                      ? AppConstants.textPrimary
                                       : AppConstants.textSecondary,
                                   size: isSmallScreen ? 12 : 16,
                                 ),
@@ -308,15 +311,14 @@ style: const TextStyle(
                                 constraints: const BoxConstraints(),
                               ),
                             ),
-                            
+
                             // Quantity Display
                             Container(
                               constraints: BoxConstraints(
                                 minWidth: isSmallScreen ? 20 : 24,
                               ),
                               padding: EdgeInsets.symmetric(
-                                horizontal: isSmallScreen ? 2 : 4
-                              ),
+                                  horizontal: isSmallScreen ? 2 : 4),
                               child: Text(
                                 quantity.toString(),
                                 style: TextStyle(
@@ -329,9 +331,9 @@ style: const TextStyle(
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            
+
                             // Increase Button
-                            Container(
+                            SizedBox(
                               width: isSmallScreen ? 24 : 30,
                               height: isSmallScreen ? 24 : 30,
                               child: IconButton(
