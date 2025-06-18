@@ -7,10 +7,17 @@ class SafeAnimatedWidget extends StatelessWidget {
   final String debugLabel;
 
   const SafeAnimatedWidget({
+<<<<<<< HEAD
     super.key,
     required this.child,
     this.debugLabel = 'SafeAnimatedWidget',
   });
+=======
+    Key? key,
+    required this.child,
+    this.debugLabel = 'SafeAnimatedWidget',
+  }) : super(key: key);
+>>>>>>> 145d54e63697f91782690f9152aa753729607d8e
 
   @override
   Widget build(BuildContext context) {
@@ -36,26 +43,39 @@ class SafeTransform extends StatelessWidget {
   final Alignment alignment;
 
   const SafeTransform({
+<<<<<<< HEAD
     super.key,
+=======
+    Key? key,
+>>>>>>> 145d54e63697f91782690f9152aa753729607d8e
     required this.child,
     this.transform,
     this.translation,
     this.scale,
     this.rotation,
     this.alignment = Alignment.center,
+<<<<<<< HEAD
   });
+=======
+  }) : super(key: key);
+>>>>>>> 145d54e63697f91782690f9152aa753729607d8e
 
   @override
   Widget build(BuildContext context) {
     try {
       Matrix4? safeTransform;
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> 145d54e63697f91782690f9152aa753729607d8e
       if (transform != null) {
         // Validate the provided transform matrix
         safeTransform = _validateMatrix4(transform!);
       } else {
         // Build transform from individual parameters
         safeTransform = Matrix4.identity();
+<<<<<<< HEAD
 
         if (translation != null) {
           final safeTranslation = _validateOffset(translation!);
@@ -63,11 +83,27 @@ class SafeTransform extends StatelessWidget {
               safeTranslation.dx, safeTranslation.dy, 0.0);
         }
 
+=======
+        
+        if (translation != null) {
+          final safeTranslation = _validateOffset(translation!);
+          safeTransform = Matrix4.translationValues(
+            safeTranslation.dx, 
+            safeTranslation.dy, 
+            0.0
+          );
+        }
+        
+>>>>>>> 145d54e63697f91782690f9152aa753729607d8e
         if (scale != null) {
           final safeScale = _validateScale(scale!);
           safeTransform.scale(safeScale);
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 145d54e63697f91782690f9152aa753729607d8e
         if (rotation != null) {
           final safeRotation = _validateRotation(rotation!);
           safeTransform.rotateZ(safeRotation);
@@ -80,8 +116,12 @@ class SafeTransform extends StatelessWidget {
         child: child,
       );
     } catch (e) {
+<<<<<<< HEAD
       debugPrint(
           'SafeTransform: Caught error, returning child without transform: $e');
+=======
+      debugPrint('SafeTransform: Caught error, returning child without transform: $e');
+>>>>>>> 145d54e63697f91782690f9152aa753729607d8e
       return child;
     }
   }
@@ -124,4 +164,8 @@ class SafeTransform extends StatelessWidget {
     }
     return rotation.clamp(-6.28, 6.28); // ±2π radians
   }
+<<<<<<< HEAD
 }
+=======
+} 
+>>>>>>> 145d54e63697f91782690f9152aa753729607d8e

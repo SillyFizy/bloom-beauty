@@ -106,7 +106,7 @@ class _CustomButtonState extends State<CustomButton> {
   Widget _buildPrimaryButton() {
     final backgroundColor = widget.isEnabled
         ? _primaryColor
-        : AppConstants.textSecondary.withValues(alpha: 0.3);
+        : AppConstants.textSecondary.withOpacity(0.3);
     final textColor = widget.textColor ?? Colors.white;
 
     return Container(
@@ -117,7 +117,7 @@ class _CustomButtonState extends State<CustomButton> {
         boxShadow: widget.isEnabled
             ? [
                 BoxShadow(
-                  color: _primaryColor.withValues(alpha: 0.3),
+                  color: _primaryColor.withOpacity(0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -131,7 +131,7 @@ class _CustomButtonState extends State<CustomButton> {
   Widget _buildSecondaryButton() {
     final backgroundColor = widget.isEnabled
         ? AppConstants.surfaceColor
-        : AppConstants.textSecondary.withValues(alpha: 0.1);
+        : AppConstants.textSecondary.withOpacity(0.1);
     final textColor = widget.textColor ?? AppConstants.textPrimary;
 
     return Container(
@@ -193,7 +193,7 @@ class _CustomButtonState extends State<CustomButton> {
           Text(
             widget.text,
             style: TextStyle(
-              color: textColor.withValues(alpha: 0.7),
+              color: textColor.withOpacity(0.7),
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),

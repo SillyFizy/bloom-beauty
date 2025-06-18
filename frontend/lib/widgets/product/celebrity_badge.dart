@@ -32,7 +32,7 @@ class CelebrityBadge extends StatelessWidget {
           gradient: LinearGradient(
             colors: [
               AppConstants.accentColor,
-              AppConstants.accentColor.withValues(alpha: 0.8),
+              AppConstants.accentColor.withOpacity(0.8),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -40,7 +40,7 @@ class CelebrityBadge extends StatelessWidget {
           borderRadius: BorderRadius.circular(isSmallScreen ? 16 : 18),
           boxShadow: [
             BoxShadow(
-              color: AppConstants.accentColor.withValues(alpha: 0.3),
+              color: AppConstants.accentColor.withOpacity(0.3),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -131,7 +131,7 @@ class CelebrityBadgeSimple extends StatelessWidget {
           gradient: LinearGradient(
             colors: [
               AppConstants.accentColor,
-              AppConstants.accentColor.withValues(alpha: 0.8),
+              AppConstants.accentColor.withOpacity(0.8),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -139,7 +139,7 @@ class CelebrityBadgeSimple extends StatelessWidget {
           borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
           boxShadow: [
             BoxShadow(
-              color: AppConstants.accentColor.withValues(alpha: 0.3),
+              color: AppConstants.accentColor.withOpacity(0.3),
               blurRadius: 3,
               offset: const Offset(0, 1),
             ),

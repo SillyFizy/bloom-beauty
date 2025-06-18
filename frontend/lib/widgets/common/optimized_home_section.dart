@@ -87,7 +87,7 @@ class _OptimizedHomeSectionState extends State<OptimizedHomeSection>
       height: widget.placeholderHeight,
       child: kDebugMode
           ? Container(
-              color: AppConstants.borderColor.withValues(alpha: 0.1),
+              color: AppConstants.borderColor.withOpacity(0.1),
               child: Center(
                 child: Text(
                   'Loading ${widget.sectionKey}...',
@@ -114,7 +114,7 @@ class _OptimizedHomeSectionState extends State<OptimizedHomeSection>
             width: 200,
             height: 20,
             decoration: BoxDecoration(
-              color: AppConstants.borderColor.withValues(alpha: 0.3),
+              color: AppConstants.borderColor.withOpacity(0.3),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -128,7 +128,7 @@ class _OptimizedHomeSectionState extends State<OptimizedHomeSection>
                   child: Container(
                     margin: const EdgeInsets.only(right: 12),
                     decoration: BoxDecoration(
-                      color: AppConstants.borderColor.withValues(alpha: 0.2),
+                      color: AppConstants.borderColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),

@@ -83,7 +83,7 @@ class OptimizedImage extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      color: AppConstants.borderColor.withValues(alpha: 0.1),
+      color: AppConstants.borderColor.withOpacity(0.1),
       child: const Center(
         child: Icon(
           Icons.image_outlined,
@@ -98,7 +98,7 @@ class OptimizedImage extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      color: AppConstants.borderColor.withValues(alpha: 0.1),
+      color: AppConstants.borderColor.withOpacity(0.1),
       child: const Center(
         child: Icon(
           Icons.broken_image_outlined,

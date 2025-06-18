@@ -79,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withValues(alpha: 0.1),
+            color: AppConstants.textSecondary.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -92,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: isSmallScreen ? 60 : 80,
             height: isSmallScreen ? 60 : 80,
             decoration: BoxDecoration(
-              color: AppConstants.accentColor.withValues(alpha: 0.1),
+              color: AppConstants.accentColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(isSmallScreen ? 30 : 40),
             ),
             child: Icon(
@@ -152,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.textSecondary.withValues(alpha: 0.1),
+            color: AppConstants.textSecondary.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -301,7 +301,7 @@ const SnackBar(
             Container(
               padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
               decoration: BoxDecoration(
-                color: AppConstants.accentColor.withValues(alpha: 0.1),
+                color: AppConstants.accentColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(

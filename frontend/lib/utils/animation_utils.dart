@@ -40,4 +40,8 @@ class AnimationUtils {
     final safeValue = safeAnimationValue(animationValue);
     return Offset(multiplierX * safeValue, multiplierY * safeValue);
   }
+<<<<<<< HEAD
 } 
+=======
+} 
+>>>>>>> 145d54e63697f91782690f9152aa753729607d8e
