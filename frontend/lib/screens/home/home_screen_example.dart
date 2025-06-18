@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/app_providers.dart';
 import '../../constants/app_constants.dart';
-import '../products/product_detail_screen.dart';
 import '../../widgets/product/celebrity_pick_card.dart';
 import 'package:intl/intl.dart';
 
@@ -266,15 +266,10 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
                                           pick['eveningRoutineProducts'] ?? [],
                                       index: index,
                                       onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                ProductDetailScreen(
-                                              product: pick['product'],
-                                            ),
-                                          ),
-                                        );
+                                        context.pushNamed('product-detail',
+                                            pathParameters: {
+                                              'slug': pick['product'].id,
+                                            });
                                       },
                                     ),
                                   ),
@@ -519,12 +514,9 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
         // Add to recently viewed when tapping product
         context.productProvider.addToRecentlyViewed(product);
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(product: product),
-          ),
-        );
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
       },
       child: Container(
         decoration: BoxDecoration(
@@ -628,12 +620,9 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
         // Add to recently viewed when tapping product
         context.productProvider.addToRecentlyViewed(product);
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(product: product),
-          ),
-        );
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
       },
       child: Container(
         width: isSmallScreen ? 160 : 180,

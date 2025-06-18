@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
@@ -10,7 +9,13 @@ import '../models/celebrity_model.dart';
 class ApiService {
   // Use 10.0.2.2 for Android emulator to reach host machine
   static String get baseUrl {
-    if (Platform.isAndroid) {
+    // For web, always use localhost
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000/api';
+    }
+
+    // For mobile platforms, use conditional logic without importing Platform on web
+    if (defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:8000/api'; // Android emulator special IP
     } else {
       return 'http://127.0.0.1:8000/api'; // iOS simulator and other platforms
@@ -62,9 +67,18 @@ class ApiService {
 
       print('DEBUG: Response status: ${response.statusCode}');
       return _handleResponse(response);
-    } on SocketException catch (e) {
-      print('DEBUG: SocketException: $e');
-      throw ApiException('No internet connection: $e');
+    } on Exception catch (e) {
+      // Handle network-related exceptions
+      if (e.runtimeType.toString() == 'SocketException') {
+        print('DEBUG: SocketException: $e');
+        throw ApiException('No internet connection: $e');
+      } else if (e is http.ClientException) {
+        print('DEBUG: ClientException: $e');
+        throw ApiException('Request failed: $e');
+      } else {
+        print('DEBUG: Other Exception: $e');
+        throw ApiException('Request failed: $e');
+      }
     } on http.ClientException catch (e) {
       print('DEBUG: ClientException: $e');
       throw ApiException('Request failed: $e');
@@ -97,8 +111,15 @@ class ApiService {
           .timeout(requestTimeout);
 
       return _handleResponse(response);
-    } on SocketException {
-      throw ApiException('No internet connection');
+    } on Exception catch (e) {
+      // Handle network-related exceptions
+      if (e.runtimeType.toString() == 'SocketException') {
+        throw ApiException('No internet connection');
+      } else if (e is http.ClientException) {
+        throw ApiException('Request failed');
+      } else {
+        throw ApiException('Request failed: $e');
+      }
     } on http.ClientException {
       throw ApiException('Request failed');
     } on FormatException {
@@ -183,6 +204,57 @@ class ApiService {
     }
   }
 
+  /// Get all products from backend API with pagination handling
+  static Future<List<Product>> getAllProductsFromBackend({int? limit}) async {
+    try {
+      List<Product> allProducts = [];
+      String? nextUrl = '/v1/products/';
+
+      while (nextUrl != null) {
+        print('DEBUG: Fetching products from: $nextUrl');
+        final response = await get(
+            nextUrl.startsWith('/') ? nextUrl : '/v1/products/$nextUrl');
+
+        final List<dynamic> results = response['results'] ?? [];
+        final List<Product> pageProducts = results
+            .map((json) => Product.fromBackendApi(json as Map<String, dynamic>))
+            .where((product) =>
+                product.isInStock) // Filter out out of stock products
+            .toList();
+
+        allProducts.addAll(pageProducts);
+
+        // Handle pagination
+        nextUrl = response['next'];
+        if (nextUrl != null) {
+          // Extract just the query part from the full URL
+          final uri = Uri.parse(nextUrl);
+          // Remove the /api part since baseUrl already includes it
+          String path = uri.path;
+          if (path.startsWith('/api/')) {
+            path = path.substring(4); // Remove '/api'
+          }
+          nextUrl = '$path?${uri.query}';
+        }
+
+        // Apply limit if specified
+        if (limit != null && allProducts.length >= limit) {
+          allProducts = allProducts.take(limit).toList();
+          break;
+        }
+
+        print(
+            'DEBUG: Loaded ${pageProducts.length} products, total: ${allProducts.length}');
+      }
+
+      print('DEBUG: Final product count: ${allProducts.length}');
+      return allProducts;
+    } catch (e) {
+      print('DEBUG: Error loading products from backend: $e');
+      throw ApiException('Failed to load products from backend: $e');
+    }
+  }
+
   static Future<Product> getProduct(String id) async {
     try {
       final response = await get('/products/$id/');
@@ -209,7 +281,7 @@ class ApiService {
         productData['description'] = 'Product description coming soon.';
       }
 
-      // Add mock rating and beauty points since backend doesn't have them yet
+      // Add mock rating and review count (beauty points come from backend)
       final productId = int.tryParse(productData['id'].toString()) ?? 0;
       productData['rating'] =
           4.5 + (productId % 10) / 10.0; // Mock rating 4.5-5.4
@@ -226,8 +298,10 @@ class ApiService {
         }
       }
       productData['price'] = price; // Ensure price is stored as double
-      productData['beauty_points'] =
-          (price * 0.1).round(); // 10% of price as beauty points
+
+      // Use beauty points from backend (no more mock data)
+      // The beauty_points field should be included in the backend response
+      print('DEBUG: Backend beauty_points: ${productData['beauty_points']}');
 
       // Convert images array to proper format with better null handling
       List<String> finalImages = [];
@@ -257,10 +331,41 @@ class ApiService {
         }
       }
 
-      // If still no images, add a placeholder
+      // If still no images, use random image from backend media
       if (finalImages.isEmpty) {
-        // You can add a default placeholder image URL here if needed
-        finalImages = [];
+        // Use platform-aware URL for images
+        final baseImageUrl = _getImageBaseUrl();
+        final fallbackImages = [
+          'tiana-eyeshadow-palette_1_product_33_20250507_195811.jpg',
+          'riding-solo-single-shadow_1_product_312_20250508_214207.jpg',
+          'tease-me-shadow-palette_1_product_460_20250509_210720.jpg',
+          'tease-me-shadow-palette_3_product_462_20250509_210720.jpg',
+          'nude-x-shadow-palette_1_product_283_20250508_212340.jpg',
+          'yerimua-bad-lip-duo_1_product_350_20250508_220246.jpg',
+          'must-be-cindy-lip-kits_1_product_10_20250507_194300.jpg',
+          'nude-x-soft-matte-lipstick_1_product_464_20250509_212000.jpg',
+          'volumizing-mascara_1_product_456_20250509_205844.jpg',
+          'volumizing-mascara_3_product_458_20250509_205845.jpg',
+          'stay-blushing-cute-lip-and-cheek-balm_1_product_299_20250508_213502.jpg',
+          'rosy-mcmichael-vol-2-pink-dream-blushes_5_product_292_20250508_212928.jpg',
+          'final-finish-baked-highlighter_1_product_173_20250508_162654.jpg',
+          'loose-powder_2_product_99_20250508_151153.jpg',
+          'sand-snatchural-palette_1_product_445_20250509_204951.jpg',
+          'sand-snatchural-palette_2_product_450_20250509_205245.jpg',
+          'nude-x-12-piece-brush-set_1_product_125_20250508_153613.jpg',
+          'eyebrow-911-essentials-various-shades_1_product_441_20250509_204423.jpg',
+          'flawless-stay-powder-foundation_6_product_225_20250508_203603.jpg',
+          'loose-powder_1_product_94_20250508_151043.jpg',
+        ];
+
+        // Use product ID to select a consistent random image
+        final imageIndex = productId % fallbackImages.length;
+        final fallbackImage = fallbackImages[imageIndex];
+        final imageUrl = '$baseImageUrl/media/products/$fallbackImage';
+        finalImages.add(imageUrl);
+
+        print(
+            'DEBUG: Product ${productData['name']} has no images, using fallback: $imageUrl');
       }
 
       productData['images'] = finalImages;
@@ -318,13 +423,53 @@ class ApiService {
     }
   }
 
-  static Future<List<Product>> searchProducts(String query) async {
+  static Future<Map<String, dynamic>> searchProducts(
+    String query, {
+    int? page,
+    int? pageSize,
+    String? category,
+    String? brand,
+    double? priceMin,
+    double? priceMax,
+    String? sortBy,
+    String? sortDir,
+    bool? inStock,
+  }) async {
     try {
-      final response =
-          await get('/v1/products/?search=${Uri.encodeComponent(query)}');
-      final List<dynamic> results =
-          response['results'] ?? response['data'] ?? [];
-      return results.map((json) => Product.fromJson(json)).toList();
+      // Build query parameters
+      final queryParams = <String, String>{
+        'search': query,
+      };
+
+      if (page != null) queryParams['page'] = page.toString();
+      if (pageSize != null) queryParams['page_size'] = pageSize.toString();
+      if (category != null) queryParams['category'] = category;
+      if (brand != null) queryParams['brand'] = brand;
+      if (priceMin != null) queryParams['price_min'] = priceMin.toString();
+      if (priceMax != null) queryParams['price_max'] = priceMax.toString();
+      if (sortBy != null) queryParams['sort_by'] = sortBy;
+      if (sortDir != null) queryParams['sort_dir'] = sortDir;
+      if (inStock != null) queryParams['in_stock'] = inStock.toString();
+
+      // Build URL with query parameters
+      final uri =
+          Uri.parse('/v1/products/').replace(queryParameters: queryParams);
+      final response = await get(uri.toString());
+
+      final List<dynamic> results = response['results'] ?? [];
+      final products = results
+          .map((json) => Product.fromBackendApi(json as Map<String, dynamic>))
+          .where((product) =>
+              product.isInStock) // Filter out out of stock products
+          .toList();
+
+      // Return pagination info along with products
+      return {
+        'results': products,
+        'count': response['count'] ?? products.length,
+        'next': response['next'],
+        'previous': response['previous'],
+      };
     } catch (e) {
       throw ApiException('Failed to search products: $e');
     }
@@ -578,6 +723,21 @@ class ApiService {
       return results.map((json) => Product.fromJson(json)).toList();
     } catch (e) {
       throw ApiException('Failed to load products batch: $e');
+    }
+  }
+
+  /// Get platform-aware base URL for images
+  static String _getImageBaseUrl() {
+    // For web, always use localhost
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000';
+    }
+
+    // For mobile platforms, use conditional logic without importing Platform on web
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000'; // Android emulator special IP
+    } else {
+      return 'http://127.0.0.1:8000'; // iOS simulator and other platforms
     }
   }
 }

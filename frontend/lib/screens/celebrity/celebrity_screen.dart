@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/celebrity_provider.dart';
-import '../products/product_detail_screen.dart';
 
 class CelebrityScreen extends StatefulWidget {
   final String celebrityName;
@@ -14,7 +14,8 @@ class CelebrityScreen extends StatefulWidget {
   final String? testimonial;
   final List<String> routineProducts;
   final List<Product> recommendedProducts;
-  final Map<String, String> socialMediaLinks; // New field for social media links
+  final Map<String, String>
+      socialMediaLinks; // New field for social media links
   final List<Product> morningRoutineProducts; // New field for morning routine
   final List<Product> eveningRoutineProducts; // New field for evening routine
 
@@ -45,7 +46,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    
+
     // Initialize title animation controller
     _titleAnimationController = AnimationController(
       duration: const Duration(milliseconds: 250),
@@ -58,7 +59,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
       parent: _titleAnimationController,
       curve: Curves.easeInOut,
     ));
-    
+
     // Add scroll listener for title appearance
     _scrollController.addListener(_onScroll);
 
@@ -78,13 +79,14 @@ class _CelebrityScreenState extends State<CelebrityScreen>
 
   void _onScroll() {
     // Show title when scrolled past the celebrity image (approximately 200px)
-    final shouldShow = _scrollController.hasClients && _scrollController.offset > 200;
-    
+    final shouldShow =
+        _scrollController.hasClients && _scrollController.offset > 200;
+
     if (shouldShow != _showTitle) {
       setState(() {
         _showTitle = shouldShow;
       });
-      
+
       if (shouldShow) {
         _titleAnimationController.forward();
       } else {
@@ -144,75 +146,24 @@ class _CelebrityScreenState extends State<CelebrityScreen>
 
   Future<void> _navigateToProduct(BuildContext context, Product product) async {
     try {
-      // Get the latest product data from the service to ensure accuracy
       final productProvider = context.read<ProductProvider>();
-      final freshProduct = await productProvider.getProductById(product.id);
-      
-      if (freshProduct != null) {
-        // Create an updated product with correct celebrity endorsement if needed
-        Product productToNavigate = freshProduct;
-        
-        // If the product doesn't have celebrity endorsement but should have it,
-        // create a copy with the correct endorsement
-        if (freshProduct.celebrityEndorsement == null || 
-            freshProduct.celebrityEndorsement!.celebrityName != widget.celebrityName) {
-          productToNavigate = Product(
-            id: freshProduct.id,
-            name: freshProduct.name,
-            description: freshProduct.description,
-            price: freshProduct.price,
-            discountPrice: freshProduct.discountPrice,
-            images: freshProduct.images,
-            categoryId: freshProduct.categoryId,
-            brand: freshProduct.brand,
-            rating: freshProduct.rating,
-            reviewCount: freshProduct.reviewCount,
-            isInStock: freshProduct.isInStock,
-            ingredients: freshProduct.ingredients,
-            beautyPoints: freshProduct.beautyPoints,
-            variants: freshProduct.variants,
-            reviews: freshProduct.reviews,
-            celebrityEndorsement: CelebrityEndorsement(
-              celebrityName: widget.celebrityName,
-              celebrityImage: widget.celebrityImage,
-              testimonial: widget.testimonial,
-            ),
-          );
-        }
-        
-        // Add to recently viewed
-        await productProvider.addToRecentlyViewed(productToNavigate);
-        
-        // Navigate to product detail
-        if (context.mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProductDetailScreen(product: productToNavigate),
-            ),
-          );
-        }
-      } else {
-        // Fallback to original product if service fails
-        if (context.mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProductDetailScreen(product: product),
-            ),
-          );
-        }
+
+      // Add to recently viewed using current product data
+      await productProvider.addToRecentlyViewed(product);
+
+      // Navigate with only ID - product detail will fetch fresh data
+      if (context.mounted) {
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
       }
     } catch (e) {
-      // Error handling - fallback to original product
-      debugPrint('Error fetching fresh product data: $e');
+      debugPrint('Error navigating to product: $e');
+      // Even if adding to recently viewed fails, still navigate
       if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(product: product),
-          ),
-        );
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
       }
     }
   }
@@ -233,7 +184,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
       builder: (context, constraints) {
         // Determine if we're on a small, medium, or large screen
         final isSmallScreen = constraints.maxWidth < 600;
-        final isMediumScreen = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
+        final isMediumScreen =
+            constraints.maxWidth >= 600 && constraints.maxWidth < 900;
 
         return Scaffold(
           backgroundColor: AppConstants.backgroundColor,
@@ -246,12 +198,12 @@ class _CelebrityScreenState extends State<CelebrityScreen>
 
               // Show error state if there's an error
               if (celebrityProvider.hasError) {
-                return _buildErrorState(celebrityProvider.error!, isSmallScreen);
+                return _buildErrorState(
+                    celebrityProvider.error!, isSmallScreen);
               }
 
               return Container(
-decoration: const BoxDecoration(
-
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
@@ -259,8 +211,7 @@ decoration: const BoxDecoration(
                       AppConstants.backgroundColor,
                       AppConstants.surfaceColor,
                     ],
-stops: [0.0, 0.3],
-
+                    stops: [0.0, 0.3],
                   ),
                 ),
                 child: CustomScrollView(
@@ -268,7 +219,7 @@ stops: [0.0, 0.3],
                   slivers: [
                     // Responsive App Bar with animated title
                     _buildResponsiveSliverAppBar(isSmallScreen),
-                    
+
                     // Celebrity content
                     SliverToBoxAdapter(
                       child: Container(
@@ -281,34 +232,39 @@ stops: [0.0, 0.3],
                         ),
                         child: Padding(
                           padding: EdgeInsets.symmetric(
-                            horizontal: isSmallScreen ? 12 : (isMediumScreen ? 20 : 32),
+                            horizontal:
+                                isSmallScreen ? 12 : (isMediumScreen ? 20 : 32),
                           ),
                           child: Column(
                             children: [
                               const SizedBox(height: 30),
-                              
+
                               // Celebrity header
                               _buildCelebrityHeader(isSmallScreen),
-                              
+
                               // Testimonial section
-                              if (widget.testimonial != null && widget.testimonial!.isNotEmpty)
+                              if (widget.testimonial != null &&
+                                  widget.testimonial!.isNotEmpty)
                                 _buildTestimonial(isSmallScreen),
-                              
+
                               // Morning and Evening routine - FIRST
-                              if (widget.morningRoutineProducts.isNotEmpty || widget.eveningRoutineProducts.isNotEmpty)
-                                _buildResponsiveRoutineSection(context, isSmallScreen, isMediumScreen),
-                              
-                              // Recommended products - SECOND  
+                              if (widget.morningRoutineProducts.isNotEmpty ||
+                                  widget.eveningRoutineProducts.isNotEmpty)
+                                _buildResponsiveRoutineSection(
+                                    context, isSmallScreen, isMediumScreen),
+
+                              // Recommended products - SECOND
                               if (widget.recommendedProducts.isNotEmpty)
-                                _buildResponsiveRecommendedProducts(context, isSmallScreen, isMediumScreen),
-                              
+                                _buildResponsiveRecommendedProducts(
+                                    context, isSmallScreen, isMediumScreen),
+
                               // Beauty secrets video - THIRD
                               _buildBeautySecrets(isSmallScreen),
-                              
+
                               // Social media - LAST (Connect with Celebrity section)
                               if (widget.socialMediaLinks.isNotEmpty)
                                 _buildResponsiveSocialMedia(isSmallScreen),
-                              
+
                               const SizedBox(height: 40),
                             ],
                           ),
@@ -349,8 +305,7 @@ stops: [0.0, 0.3],
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-const CircularProgressIndicator(
-
+            const CircularProgressIndicator(
               color: AppConstants.accentColor,
             ),
             SizedBox(height: isSmallScreen ? 16 : 20),
@@ -497,7 +452,7 @@ const CircularProgressIndicator(
                 ),
               ),
             ),
-            
+
             // Decorative background elements
             Positioned(
               top: -50,
@@ -523,7 +478,7 @@ const CircularProgressIndicator(
                 ),
               ),
             ),
-            
+
             // Celebrity image container
             SafeArea(
               child: Center(
@@ -551,12 +506,14 @@ const CircularProgressIndicator(
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppConstants.favoriteColor.withValues(alpha: 0.4),
+                          color:
+                              AppConstants.favoriteColor.withValues(alpha: 0.4),
                           blurRadius: 25,
                           offset: const Offset(0, 8),
                         ),
                         BoxShadow(
-                          color: AppConstants.favoriteColor.withValues(alpha: 0.2),
+                          color:
+                              AppConstants.favoriteColor.withValues(alpha: 0.2),
                           blurRadius: 15,
                           offset: const Offset(0, 4),
                         ),
@@ -572,9 +529,11 @@ const CircularProgressIndicator(
                               errorBuilder: (context, error, stackTrace) {
                                 return _buildFallbackImage(isSmallScreen);
                               },
-                              loadingBuilder: (context, child, loadingProgress) {
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
-                                return _buildLoadingImage(isSmallScreen, loadingProgress);
+                                return _buildLoadingImage(
+                                    isSmallScreen, loadingProgress);
                               },
                             )
                           : _buildFallbackImage(isSmallScreen),
@@ -628,7 +587,8 @@ const CircularProgressIndicator(
     );
   }
 
-  Widget _buildLoadingImage(bool isSmallScreen, ImageChunkEvent loadingProgress) {
+  Widget _buildLoadingImage(
+      bool isSmallScreen, ImageChunkEvent loadingProgress) {
     return Container(
       width: isSmallScreen ? 164 : 204,
       height: isSmallScreen ? 164 : 204,
@@ -671,9 +631,7 @@ const CircularProgressIndicator(
   Widget _buildCelebrityHeader(bool isSmallScreen) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 20 : 30, 
-        vertical: 20
-      ),
+          horizontal: isSmallScreen ? 20 : 30, vertical: 20),
       child: Column(
         children: [
           Text(
@@ -702,8 +660,7 @@ const CircularProgressIndicator(
                 width: 1,
               ),
             ),
-child: const Text(
-
+            child: const Text(
               'Beauty Influencer',
               style: TextStyle(
                 fontSize: 14,
@@ -731,9 +688,7 @@ child: const Text(
   Widget _buildTestimonial(bool isSmallScreen) {
     return Container(
       margin: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 8 : 20, 
-        vertical: 20
-      ),
+          horizontal: isSmallScreen ? 8 : 20, vertical: 20),
       padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -782,12 +737,11 @@ child: const Text(
     );
   }
 
-  Widget _buildResponsiveRoutineSection(BuildContext context, bool isSmallScreen, bool isMediumScreen) {
+  Widget _buildResponsiveRoutineSection(
+      BuildContext context, bool isSmallScreen, bool isMediumScreen) {
     return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 0 : 0, 
-        vertical: 20
-      ),
+      margin:
+          EdgeInsets.symmetric(horizontal: isSmallScreen ? 0 : 0, vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -800,14 +754,16 @@ child: const Text(
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Responsive layout: Stack vertically on small screens, side by side on larger screens
           if (isSmallScreen)
             Column(
               children: [
-                _buildRoutineSection(context, 'Morning', widget.morningRoutineProducts, isSmallScreen),
+                _buildRoutineSection(context, 'Morning',
+                    widget.morningRoutineProducts, isSmallScreen),
                 const SizedBox(height: 20),
-                _buildRoutineSection(context, 'Evening', widget.eveningRoutineProducts, isSmallScreen),
+                _buildRoutineSection(context, 'Evening',
+                    widget.eveningRoutineProducts, isSmallScreen),
               ],
             )
           else
@@ -816,11 +772,13 @@ child: const Text(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: _buildRoutineSection(context, 'Morning', widget.morningRoutineProducts, isSmallScreen),
+                    child: _buildRoutineSection(context, 'Morning',
+                        widget.morningRoutineProducts, isSmallScreen),
                   ),
                   const SizedBox(width: 20),
                   Expanded(
-                    child: _buildRoutineSection(context, 'Evening', widget.eveningRoutineProducts, isSmallScreen),
+                    child: _buildRoutineSection(context, 'Evening',
+                        widget.eveningRoutineProducts, isSmallScreen),
                   ),
                 ],
               ),
@@ -830,7 +788,8 @@ child: const Text(
     );
   }
 
-  Widget _buildRoutineSection(BuildContext context, String title, List<Product> products, bool isSmallScreen) {
+  Widget _buildRoutineSection(BuildContext context, String title,
+      List<Product> products, bool isSmallScreen) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -853,14 +812,14 @@ child: const Text(
           ],
         ),
         const SizedBox(height: 12),
-        
         if (products.isNotEmpty)
           ...products.asMap().entries.map((entry) {
             final index = entry.key;
             final product = entry.value;
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
-              child: _buildRoutineProductCard(context, product, index + 1, isSmallScreen),
+              child: _buildRoutineProductCard(
+                  context, product, index + 1, isSmallScreen),
             );
           })
         else
@@ -869,7 +828,8 @@ child: const Text(
     );
   }
 
-  Widget _buildRoutineProductCard(BuildContext context, Product product, int step, bool isSmallScreen) {
+  Widget _buildRoutineProductCard(
+      BuildContext context, Product product, int step, bool isSmallScreen) {
     return GestureDetector(
       onTap: () => _navigateToProduct(context, product),
       child: Container(
@@ -896,8 +856,7 @@ child: const Text(
               Container(
                 width: isSmallScreen ? 22 : 28,
                 height: isSmallScreen ? 22 : 28,
-decoration: const BoxDecoration(
-
+                decoration: const BoxDecoration(
                   color: AppConstants.accentColor,
                   shape: BoxShape.circle,
                 ),
@@ -912,9 +871,9 @@ decoration: const BoxDecoration(
                   ),
                 ),
               ),
-              
+
               SizedBox(width: isSmallScreen ? 10 : 12),
-              
+
               // Product image
               Container(
                 width: isSmallScreen ? 35 : 50,
@@ -953,9 +912,9 @@ decoration: const BoxDecoration(
                         ),
                 ),
               ),
-              
+
               SizedBox(width: isSmallScreen ? 8 : 12),
-              
+
               // Product details - Flexible to prevent overflow
               Expanded(
                 child: Column(
@@ -987,7 +946,7 @@ decoration: const BoxDecoration(
                   ],
                 ),
               ),
-              
+
               // Tap indicator
               Padding(
                 padding: EdgeInsets.only(left: isSmallScreen ? 4 : 8),
@@ -1008,9 +967,7 @@ decoration: const BoxDecoration(
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
-        horizontal: 16, 
-        vertical: isSmallScreen ? 16 : 20
-      ),
+          horizontal: 16, vertical: isSmallScreen ? 16 : 20),
       decoration: BoxDecoration(
         color: AppConstants.backgroundColor.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
@@ -1040,12 +997,13 @@ decoration: const BoxDecoration(
     );
   }
 
-  Widget _buildResponsiveRecommendedProducts(BuildContext context, bool isSmallScreen, bool isMediumScreen) {
+  Widget _buildResponsiveRecommendedProducts(
+      BuildContext context, bool isSmallScreen, bool isMediumScreen) {
     // Calculate grid columns based on screen size
     int crossAxisCount;
     double childAspectRatio;
     double spacing;
-    
+
     if (isSmallScreen) {
       crossAxisCount = 2;
       childAspectRatio = 0.75;
@@ -1074,7 +1032,7 @@ decoration: const BoxDecoration(
             ),
           ),
           SizedBox(height: isSmallScreen ? 16 : 20),
-          
+
           // Responsive grid with proper overflow handling
           LayoutBuilder(
             builder: (context, constraints) {
@@ -1090,7 +1048,8 @@ decoration: const BoxDecoration(
                 itemCount: widget.recommendedProducts.length,
                 itemBuilder: (context, index) {
                   final product = widget.recommendedProducts[index];
-                  return _buildResponsiveProductCard(context, product, isSmallScreen);
+                  return _buildResponsiveProductCard(
+                      context, product, isSmallScreen);
                 },
               );
             },
@@ -1100,7 +1059,8 @@ decoration: const BoxDecoration(
     );
   }
 
-  Widget _buildResponsiveProductCard(BuildContext context, Product product, bool isSmallScreen) {
+  Widget _buildResponsiveProductCard(
+      BuildContext context, Product product, bool isSmallScreen) {
     return GestureDetector(
       onTap: () => _navigateToProduct(context, product),
       child: Container(
@@ -1160,9 +1120,11 @@ decoration: const BoxDecoration(
                               color: AppConstants.backgroundColor,
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
+                                  value: loadingProgress.expectedTotalBytes !=
+                                          null
                                       ? loadingProgress.cumulativeBytesLoaded /
-                                          (loadingProgress.expectedTotalBytes ?? 1)
+                                          (loadingProgress.expectedTotalBytes ??
+                                              1)
                                       : null,
                                   color: AppConstants.accentColor,
                                   strokeWidth: 2,
@@ -1184,7 +1146,7 @@ decoration: const BoxDecoration(
                 ),
               ),
             ),
-            
+
             // Product details with proper overflow handling
             Expanded(
               flex: 2,
@@ -1226,14 +1188,15 @@ decoration: const BoxDecoration(
                     // Celebrity Pick badge
                     Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: isSmallScreen ? 4 : 6, 
-                        vertical: isSmallScreen ? 2 : 3
-                      ),
+                          horizontal: isSmallScreen ? 4 : 6,
+                          vertical: isSmallScreen ? 2 : 3),
                       decoration: BoxDecoration(
-                        color: AppConstants.favoriteColor.withValues(alpha: 0.1),
+                        color:
+                            AppConstants.favoriteColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: AppConstants.favoriteColor.withValues(alpha: 0.3),
+                          color:
+                              AppConstants.favoriteColor.withValues(alpha: 0.3),
                           width: 0.5,
                         ),
                       ),
@@ -1324,7 +1287,7 @@ decoration: const BoxDecoration(
 
   Widget _buildResponsiveSocialMedia(bool isSmallScreen) {
     final availableLinks = <String, Map<String, dynamic>>{};
-    
+
     // Check which social media platforms are available
     if (widget.socialMediaLinks.containsKey('facebook')) {
       availableLinks['facebook'] = {
@@ -1335,7 +1298,7 @@ decoration: const BoxDecoration(
         'url': widget.socialMediaLinks['facebook']!,
       };
     }
-    
+
     if (widget.socialMediaLinks.containsKey('instagram')) {
       availableLinks['instagram'] = {
         'icon': FontAwesomeIcons.instagram,
@@ -1345,7 +1308,7 @@ decoration: const BoxDecoration(
         'url': widget.socialMediaLinks['instagram']!,
       };
     }
-    
+
     if (widget.socialMediaLinks.containsKey('snapchat')) {
       availableLinks['snapchat'] = {
         'icon': FontAwesomeIcons.snapchat,
@@ -1363,22 +1326,22 @@ decoration: const BoxDecoration(
       child: Column(
         children: [
           // Simple header section
-                Text(
+          Text(
             'Follow on Social Media',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 18 : 20,
+            style: TextStyle(
+              fontSize: isSmallScreen ? 18 : 20,
               fontWeight: FontWeight.w600,
-                    color: AppConstants.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-          
+              color: AppConstants.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+
           const SizedBox(height: 20),
-          
+
           // Clean social media icons row
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-              children: availableLinks.entries.map((entry) {
+            children: availableLinks.entries.map((entry) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _buildCleanSocialButton(
@@ -1389,8 +1352,8 @@ decoration: const BoxDecoration(
                   entry.value['url'],
                   isSmallScreen,
                 ),
-                );
-              }).toList(),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -1398,10 +1361,10 @@ decoration: const BoxDecoration(
   }
 
   Widget _buildCleanSocialButton(
-    String platform, 
-    IconData icon, 
-    Color iconColor, 
-    Color bgColor, 
+    String platform,
+    IconData icon,
+    Color iconColor,
+    Color bgColor,
     String url,
     bool isSmallScreen,
   ) {
@@ -1410,23 +1373,23 @@ decoration: const BoxDecoration(
       child: Container(
         width: isSmallScreen ? 48 : 56,
         height: isSmallScreen ? 48 : 56,
-              decoration: BoxDecoration(
-                color: bgColor,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
+        decoration: BoxDecoration(
+          color: bgColor,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
               color: bgColor.withValues(alpha: 0.3),
               blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(
-                icon,
-                color: platform == 'snapchat' ? Colors.black : Colors.white,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          color: platform == 'snapchat' ? Colors.black : Colors.white,
           size: isSmallScreen ? 24 : 28,
         ),
       ),
     );
   }
-} 
+}

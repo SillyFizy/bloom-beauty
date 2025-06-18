@@ -89,7 +89,8 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'name', 'price', 'sale_price', 'category_name', 
                   'brand_name', 'featured_image', 'stock', 'slug', 
-                  'is_active', 'is_featured', 'is_on_sale', 'discount_percentage']
+                  'is_active', 'is_featured', 'is_on_sale', 'discount_percentage',
+                  'beauty_points']
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -124,7 +125,8 @@ class ProductSerializer(serializers.ModelSerializer):
                   'stock', 'sku', 'slug', 'is_active', 'is_featured',
                   'weight', 'dimensions', 'meta_keywords', 'meta_description',
                   'low_stock_threshold', 'is_on_sale', 'discount_percentage',
-                  'is_low_stock', 'images', 'variants', 'created_at', 'updated_at']
+                  'is_low_stock', 'images', 'variants', 'beauty_points', 
+                  'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
     
     def to_representation(self, instance):

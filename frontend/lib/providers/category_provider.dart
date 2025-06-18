@@ -32,13 +32,13 @@ class CategoryProvider with ChangeNotifier {
   List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
   List<category_model.Category> _categories = [];
-  
+
   bool _isLoading = false;
   final bool _isLoadingProducts = false;
   String? _error;
-  
+
   // Filter and sort state
-  String? _selectedCategoryId;
+  int? _selectedCategoryId;
   SortOption _selectedSortOption = SortOption.newest;
   Set<FilterOption> _selectedFilters = {FilterOption.all};
   double _minPrice = 0;
@@ -49,13 +49,14 @@ class CategoryProvider with ChangeNotifier {
   // Getters
   List<Product> get allProducts => List.unmodifiable(_allProducts);
   List<Product> get filteredProducts => List.unmodifiable(_filteredProducts);
-  List<category_model.Category> get categories => List.unmodifiable(_categories);
+  List<category_model.Category> get categories =>
+      List.unmodifiable(_categories);
   bool get isLoading => _isLoading;
   bool get isLoadingProducts => _isLoadingProducts;
   String? get error => _error;
   bool get hasError => _error != null;
-  
-  String? get selectedCategoryId => _selectedCategoryId;
+
+  int? get selectedCategoryId => _selectedCategoryId;
   SortOption get selectedSortOption => _selectedSortOption;
   Set<FilterOption> get selectedFilters => Set.unmodifiable(_selectedFilters);
   double get minPrice => _minPrice;
@@ -78,19 +79,19 @@ class CategoryProvider with ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
-      
+
       // Load categories and products concurrently
       await Future.wait([
         _loadCategories(),
         _loadAllProducts(),
       ]);
-      
+
       // Reset filters to ensure all products show initially
       _resetFiltersToDefault();
-      
+
       // Apply initial filtering
       _applyFiltersAndSort();
-      
+
       _setLoading(false);
     } catch (e) {
       _setError('Failed to initialize categories: $e');
@@ -105,7 +106,7 @@ class CategoryProvider with ChangeNotifier {
     _selectedFilters = {FilterOption.all};
     _minRating = 0;
     _searchQuery = '';
-    
+
     // Set price range based on actual product prices if products are loaded
     if (_allProducts.isNotEmpty) {
       final priceRange = availablePriceRange;
@@ -125,15 +126,15 @@ class CategoryProvider with ChangeNotifier {
   /// Load all products
   Future<void> _loadAllProducts() async {
     _allProducts = await _productService.getAllProducts();
-    
+
     // Initialize filtered products to show all products initially
     _filteredProducts = List.from(_allProducts);
   }
 
   /// Select category filter
-  void selectCategory(String? categoryId) {
+  void selectCategory(int? categoryId) {
     if (_selectedCategoryId == categoryId) return;
-    
+
     _selectedCategoryId = categoryId;
     _applyFiltersAndSort();
     notifyListeners();
@@ -142,7 +143,7 @@ class CategoryProvider with ChangeNotifier {
   /// Update sort option
   void updateSortOption(SortOption sortOption) {
     if (_selectedSortOption == sortOption) return;
-    
+
     _selectedSortOption = sortOption;
     _applyFiltersAndSort();
     notifyListeners();
@@ -160,12 +161,12 @@ class CategoryProvider with ChangeNotifier {
       } else {
         _selectedFilters.add(filter);
       }
-      
+
       if (_selectedFilters.isEmpty) {
         _selectedFilters.add(FilterOption.all);
       }
     }
-    
+
     _applyFiltersAndSort();
     notifyListeners();
   }
@@ -206,15 +207,31 @@ class CategoryProvider with ChangeNotifier {
     // Apply search filter
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((product) {
-        return product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               product.brand.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               product.description.toLowerCase().contains(_searchQuery.toLowerCase());
+        return product.name
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()) ||
+            product.brand.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            product.description
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase());
       }).toList();
     }
 
     // Apply category filter
     if (_selectedCategoryId != null) {
-      filtered = filtered.where((product) => product.categoryId == _selectedCategoryId).toList();
+      // Find the selected category name to match with product.categoryId
+      try {
+        final selectedCategory = _categories.firstWhere(
+          (category) => category.id == _selectedCategoryId,
+        );
+
+        filtered = filtered
+            .where((product) => product.categoryId == selectedCategory.name)
+            .toList();
+      } catch (e) {
+        // Category not found, don't filter (show all products)
+        debugPrint('Category with ID $_selectedCategoryId not found: $e');
+      }
     }
 
     // Apply price range filter
@@ -225,7 +242,8 @@ class CategoryProvider with ChangeNotifier {
 
     // Apply rating filter
     if (_minRating > 0) {
-      filtered = filtered.where((product) => product.rating >= _minRating).toList();
+      filtered =
+          filtered.where((product) => product.rating >= _minRating).toList();
     }
 
     // Apply additional filters
@@ -236,12 +254,16 @@ class CategoryProvider with ChangeNotifier {
             filtered = filtered.where((product) => product.isInStock).toList();
             break;
           case FilterOption.discounted:
-            filtered = filtered.where((product) => 
-              product.discountPrice != null && product.discountPrice! < product.price
-            ).toList();
+            filtered = filtered
+                .where((product) =>
+                    product.discountPrice != null &&
+                    product.discountPrice! < product.price)
+                .toList();
             break;
           case FilterOption.celebrityPicks:
-            filtered = filtered.where((product) => product.celebrityEndorsement != null).toList();
+            filtered = filtered
+                .where((product) => product.celebrityEndorsement != null)
+                .toList();
             break;
           case FilterOption.featured:
             // This would require additional logic based on your featured products logic
@@ -267,10 +289,12 @@ class CategoryProvider with ChangeNotifier {
         // Assuming products are already sorted by newest
         break;
       case SortOption.priceAscending:
-        filtered.sort((a, b) => a.getCurrentPrice().compareTo(b.getCurrentPrice()));
+        filtered
+            .sort((a, b) => a.getCurrentPrice().compareTo(b.getCurrentPrice()));
         break;
       case SortOption.priceDescending:
-        filtered.sort((a, b) => b.getCurrentPrice().compareTo(a.getCurrentPrice()));
+        filtered
+            .sort((a, b) => b.getCurrentPrice().compareTo(a.getCurrentPrice()));
         break;
       case SortOption.rating:
         filtered.sort((a, b) => b.rating.compareTo(a.rating));
@@ -289,8 +313,9 @@ class CategoryProvider with ChangeNotifier {
   /// Get available price range from all products
   Map<String, double> get availablePriceRange {
     if (_allProducts.isEmpty) return {'min': 0.0, 'max': 0.0};
-    
-    final prices = _allProducts.map((product) => product.getCurrentPrice()).toList();
+
+    final prices =
+        _allProducts.map((product) => product.getCurrentPrice()).toList();
     return {
       'min': prices.reduce((a, b) => a < b ? a : b),
       'max': prices.reduce((a, b) => a > b ? a : b),
@@ -303,10 +328,11 @@ class CategoryProvider with ChangeNotifier {
       'total': _allProducts.length,
       'filtered': _filteredProducts.length,
       'inStock': _allProducts.where((p) => p.isInStock).length,
-      'discounted': _allProducts.where((p) => 
-        p.discountPrice != null && p.discountPrice! < p.price
-      ).length,
-      'celebrityPicks': _allProducts.where((p) => p.celebrityEndorsement != null).length,
+      'discounted': _allProducts
+          .where((p) => p.discountPrice != null && p.discountPrice! < p.price)
+          .length,
+      'celebrityPicks':
+          _allProducts.where((p) => p.celebrityEndorsement != null).length,
     };
   }
 
@@ -329,4 +355,4 @@ class CategoryProvider with ChangeNotifier {
     _error = error;
     debugPrint('CategoryProvider Error: $error');
   }
-} 
+}

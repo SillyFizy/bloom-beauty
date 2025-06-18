@@ -1,49 +1,99 @@
 import '../models/category_model.dart';
+import 'api_service.dart';
 
 class CategoryService {
   static final CategoryService _instance = CategoryService._internal();
   factory CategoryService() => _instance;
   CategoryService._internal();
 
-  /// Get all available categories
+  /// Get all available categories from backend
   Future<List<Category>> getAllCategories() async {
-    // Simulating async operation
-    await Future.delayed(const Duration(milliseconds: 100));
-    
-    return [
-      Category(
-        id: '1',
-        name: 'Skincare',
-        description: 'Premium skincare products for healthy, glowing skin',
-        imageUrl: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&h=400&fit=crop',
-      ),
-      Category(
-        id: '2',
-        name: 'Makeup',
-        description: 'Professional makeup products for all occasions',
-        imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop',
-      ),
-      Category(
-        id: '3',
-        name: 'Lipstick',
-        description: 'Luxurious lipsticks in various shades and finishes',
-        imageUrl: 'https://images.unsplash.com/photo-1586297135537-94bc9ba060aa?w=400&h=400&fit=crop',
-      ),
-    ];
+    try {
+      final response = await ApiService.get('/v1/products/categories/');
+
+      // Handle different response formats
+      List<dynamic> categoriesJson;
+      if (response['results'] != null) {
+        // Paginated response
+        categoriesJson = response['results'] as List<dynamic>;
+      } else if (response['data'] != null) {
+        // Data wrapped response
+        categoriesJson = response['data'] as List<dynamic>;
+      } else {
+        // Fallback - empty list
+        categoriesJson = [];
+      }
+
+      return categoriesJson
+          .map((json) => Category.fromJson(json as Map<String, dynamic>))
+          .where(
+              (category) => category.isActive) // Only return active categories
+          .toList();
+    } catch (e) {
+      // Log error for debugging
+      print('Error fetching categories: $e');
+
+      // Return empty list on error to prevent app crashes
+      // In production, you might want to show an error state
+      return [];
+    }
   }
 
-  /// Get category by ID
-  Future<Category?> getCategoryById(String categoryId) async {
-    final categories = await getAllCategories();
+  /// Get category by ID from backend
+  Future<Category?> getCategoryById(int categoryId) async {
     try {
-      return categories.firstWhere((category) => category.id == categoryId);
+      final response =
+          await ApiService.get('/v1/products/categories/$categoryId/');
+      return Category.fromJson(response);
     } catch (e) {
+      print('Error fetching category by ID: $e');
       return null;
     }
   }
 
-  /// Get popular categories (for display purposes)
+  /// Get popular categories (same as all categories for now)
   Future<List<Category>> getPopularCategories() async {
     return await getAllCategories();
+  }
+
+  /// Get categories with parent-child relationships
+  Future<List<Category>> getCategoriesWithHierarchy() async {
+    try {
+      final allCategories = await getAllCategories();
+
+      // Filter to get only parent categories (no parent_id)
+      final parentCategories =
+          allCategories.where((category) => category.parentId == null).toList();
+
+      // For each parent category, find its subcategories
+      for (final parent in parentCategories) {
+        final subcategories = allCategories
+            .where((category) => category.parentId == parent.id)
+            .toList();
+
+        if (subcategories.isNotEmpty) {
+          // Create a new Category instance with subcategories
+          final index = parentCategories.indexOf(parent);
+          parentCategories[index] = Category(
+            id: parent.id,
+            name: parent.name,
+            description: parent.description,
+            imageUrl: parent.imageUrl,
+            parentId: parent.parentId,
+            parentName: parent.parentName,
+            slug: parent.slug,
+            isActive: parent.isActive,
+            createdAt: parent.createdAt,
+            updatedAt: parent.updatedAt,
+            subcategories: subcategories,
+          );
+        }
+      }
+
+      return parentCategories;
+    } catch (e) {
+      print('Error fetching categories with hierarchy: $e');
+      return [];
+    }
   }
 } 

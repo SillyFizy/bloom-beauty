@@ -40,6 +40,14 @@ class ProductService {
         .toList();
   }
 
+  /// Get products by category name (for backend integration)
+  Future<List<Product>> getProductsByCategoryName(String categoryName) async {
+    final products = await getAllProducts();
+    return products
+        .where((product) => product.categoryId == categoryName)
+        .toList();
+  }
+
   /// Get bestselling products - using real API
   Future<List<Product>> getBestsellingProducts({int limit = 10}) async {
     try {
@@ -116,20 +124,29 @@ class ProductService {
     }
   }
 
-  /// Search products by name or description
+  /// Search products using backend search API
   Future<List<Product>> searchProducts(String query) async {
     if (query.isEmpty) return [];
 
-    final products = await getAllProducts();
-    final lowercaseQuery = query.toLowerCase();
+    try {
+      // Use backend search API for better performance and accuracy
+      final searchResult = await ApiService.searchProducts(query);
+      return searchResult['results'] as List<Product>;
+    } catch (e) {
+      debugPrint('Backend search failed, falling back to local search: $e');
 
-    return products.where((product) {
-      return product.name.toLowerCase().contains(lowercaseQuery) ||
-          product.description.toLowerCase().contains(lowercaseQuery) ||
-          product.brand.toLowerCase().contains(lowercaseQuery) ||
-          product.ingredients.any((ingredient) =>
-              ingredient.toLowerCase().contains(lowercaseQuery));
-    }).toList();
+      // Fallback to local search if backend fails
+      final products = await getAllProducts();
+      final lowercaseQuery = query.toLowerCase();
+
+      return products.where((product) {
+        return product.name.toLowerCase().contains(lowercaseQuery) ||
+            product.description.toLowerCase().contains(lowercaseQuery) ||
+            product.brand.toLowerCase().contains(lowercaseQuery) ||
+            product.ingredients.any((ingredient) =>
+                ingredient.toLowerCase().contains(lowercaseQuery));
+      }).toList();
+    }
   }
 
   /// Get products by brand
@@ -387,11 +404,21 @@ class ProductService {
   /// Refresh product cache
   Future<void> _refreshProductCache() async {
     try {
-      _cachedProducts = _dataService.getAllProducts();
+      // Use backend API instead of mock data
+      _cachedProducts = await ApiService.getAllProductsFromBackend();
       _lastCacheUpdate = DateTime.now();
+      debugPrint(
+          'Successfully loaded ${_cachedProducts?.length ?? 0} products from backend');
     } catch (e) {
-      debugPrint('Error refreshing product cache: $e');
-      _cachedProducts ??= []; // Fallback to empty list if cache fails
+      debugPrint('Error refreshing product cache from backend: $e');
+      // Fallback to mock data if backend fails
+      try {
+        _cachedProducts = _dataService.getAllProducts();
+        debugPrint('Fallback to mock data successful');
+      } catch (fallbackError) {
+        debugPrint('Fallback to mock data also failed: $fallbackError');
+        _cachedProducts ??= []; // Fallback to empty list if both fail
+      }
     }
   }
 

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/product_model.dart';
 import '../../providers/category_provider.dart';
+import '../../providers/product_provider.dart';
 import '../../constants/app_constants.dart';
 import '../../widgets/category/category_selector.dart';
 import '../../widgets/product/enhanced_product_card.dart';
-import 'product_detail_screen.dart';
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -21,33 +22,44 @@ class _ProductListScreenState extends State<ProductListScreen> {
     // Initialize category provider when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final categoryProvider = context.read<CategoryProvider>();
-      
+
       // Check if already initialized, if not initialize
-      if (!categoryProvider.isLoading && 
-          categoryProvider.allProducts.isEmpty && 
+      if (!categoryProvider.isLoading &&
+          categoryProvider.allProducts.isEmpty &&
           !categoryProvider.hasError) {
         await categoryProvider.initialize();
       }
     });
   }
 
-  // Helper function to navigate to product detail
-  Future<void> _navigateToProductDetail(BuildContext context, Product product) async {
+  // Helper function to navigate to product detail using same approach as home screen
+  Future<void> _navigateToProductDetail(
+      BuildContext context, Product product) async {
     try {
+      final productProvider = context.read<ProductProvider>();
+
+      // Add to recently viewed (same as home screen)
+      await productProvider.addToRecentlyViewed(product);
+
+      // Navigate using GoRouter with slug parameter (same as home screen)
       if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(product: product),
-          ),
-        );
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
       }
     } catch (e) {
       debugPrint('Error navigating to product detail: $e');
+      // Fallback navigation using slug
+      if (context.mounted) {
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
+      }
     }
   }
 
-  void _showSortOptions(BuildContext context, CategoryProvider provider, bool isSmallScreen) {
+  void _showSortOptions(
+      BuildContext context, CategoryProvider provider, bool isSmallScreen) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppConstants.surfaceColor,
@@ -69,24 +81,26 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Make the sort options scrollable to prevent overflow
             Flexible(
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: SortOption.values.map((option) => _buildSortOption(
-                    context,
-                    provider,
-                    option,
-                    _getSortOptionLabel(option),
-                    _getSortOptionIcon(option),
-                    isSmallScreen,
-                  )).toList(),
+                  children: SortOption.values
+                      .map((option) => _buildSortOption(
+                            context,
+                            provider,
+                            option,
+                            _getSortOptionLabel(option),
+                            _getSortOptionIcon(option),
+                            isSmallScreen,
+                          ))
+                      .toList(),
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 8),
           ],
         ),
@@ -95,7 +109,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   /// Show filter options
-  void _showFilterOptions(BuildContext context, CategoryProvider provider, bool isSmallScreen) {
+  void _showFilterOptions(
+      BuildContext context, CategoryProvider provider, bool isSmallScreen) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -103,8 +118,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
       barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (context) => Consumer<CategoryProvider>(
         builder: (context, categoryProvider, child) => Container(
-          width: MediaQuery.of(context).size.width, // Full width from beginning of screen
-          height: MediaQuery.of(context).size.height * 0.7, // Increased height for better space
+          width: MediaQuery.of(context)
+              .size
+              .width, // Full width from beginning of screen
+          height: MediaQuery.of(context).size.height *
+              0.7, // Increased height for better space
           decoration: const BoxDecoration(
             color: AppConstants.surfaceColor,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -123,10 +141,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   ),
                 ),
               ),
-              
+
               // Title and Clear All
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -143,8 +162,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         categoryProvider.clearFilters();
                       },
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        backgroundColor: AppConstants.accentColor.withValues(alpha: 0.1),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        backgroundColor:
+                            AppConstants.accentColor.withValues(alpha: 0.1),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -161,9 +182,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   ],
                 ),
               ),
-              
+
               const Divider(height: 1),
-              
+
               // Scrollable Filter Content
               Expanded(
                 child: SingleChildScrollView(
@@ -172,26 +193,29 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Price Range Filter
-                      _buildResponsivePriceFilter(categoryProvider, isSmallScreen),
-                      
+                      _buildResponsivePriceFilter(
+                          categoryProvider, isSmallScreen),
+
                       SizedBox(height: isSmallScreen ? 20 : 24),
-                      
+
                       // Rating Filter
-                      _buildResponsiveRatingFilter(categoryProvider, isSmallScreen),
-                      
+                      _buildResponsiveRatingFilter(
+                          categoryProvider, isSmallScreen),
+
                       SizedBox(height: isSmallScreen ? 16 : 20),
                     ],
                   ),
                 ),
               ),
-              
+
               // Fixed Apply Button at Bottom
               Container(
                 padding: EdgeInsets.fromLTRB(
                   isSmallScreen ? 16 : 20,
                   isSmallScreen ? 12 : 16,
                   isSmallScreen ? 16 : 20,
-                  MediaQuery.of(context).padding.bottom + (isSmallScreen ? 12 : 16),
+                  MediaQuery.of(context).padding.bottom +
+                      (isSmallScreen ? 12 : 16),
                 ),
                 decoration: BoxDecoration(
                   color: AppConstants.surfaceColor,
@@ -238,11 +262,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   /// Responsive Price Range Filter
-  Widget _buildResponsivePriceFilter(CategoryProvider provider, bool isSmallScreen) {
+  Widget _buildResponsivePriceFilter(
+      CategoryProvider provider, bool isSmallScreen) {
     final priceRange = provider.availablePriceRange;
     final minPrice = priceRange['min'] ?? 0;
     final maxPrice = priceRange['max'] ?? 1000000;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -268,12 +293,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ],
         ),
         SizedBox(height: isSmallScreen ? 12 : 16),
-        
+
         // Current selection display
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(
-            horizontal: isSmallScreen ? 12 : 16, 
+            horizontal: isSmallScreen ? 12 : 16,
             vertical: isSmallScreen ? 10 : 12,
           ),
           decoration: BoxDecoration(
@@ -299,7 +324,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ),
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 8 : 12, 
+                  horizontal: isSmallScreen ? 8 : 12,
                   vertical: isSmallScreen ? 2 : 4,
                 ),
                 decoration: BoxDecoration(
@@ -330,14 +355,17 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ),
         ),
         SizedBox(height: isSmallScreen ? 12 : 16),
-        
+
         // Range Slider
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: isSmallScreen ? 4 : 6,
-            thumbShape: RoundSliderThumbShape(enabledThumbRadius: isSmallScreen ? 10 : 12),
-            overlayShape: RoundSliderOverlayShape(overlayRadius: isSmallScreen ? 16 : 20),
-            rangeThumbShape: RoundRangeSliderThumbShape(enabledThumbRadius: isSmallScreen ? 10 : 12),
+            thumbShape: RoundSliderThumbShape(
+                enabledThumbRadius: isSmallScreen ? 10 : 12),
+            overlayShape:
+                RoundSliderOverlayShape(overlayRadius: isSmallScreen ? 16 : 20),
+            rangeThumbShape: RoundRangeSliderThumbShape(
+                enabledThumbRadius: isSmallScreen ? 10 : 12),
           ),
           child: RangeSlider(
             values: RangeValues(
@@ -354,7 +382,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             },
           ),
         ),
-        
+
         // Min/Max labels
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -383,7 +411,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   /// Responsive Rating Filter (matching celebrity picks design)
-  Widget _buildResponsiveRatingFilter(CategoryProvider provider, bool isSmallScreen) {
+  Widget _buildResponsiveRatingFilter(
+      CategoryProvider provider, bool isSmallScreen) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -409,7 +438,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ],
         ),
         SizedBox(height: isSmallScreen ? 12 : 16),
-        
+
         // Rating Buttons (exactly like celebrity picks screen)
         Wrap(
           spacing: isSmallScreen ? 8 : 12,
@@ -427,9 +456,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
-  Widget _buildCategoryRatingButton(CategoryProvider provider, double rating, String label, bool isSmallScreen) {
+  Widget _buildCategoryRatingButton(CategoryProvider provider, double rating,
+      String label, bool isSmallScreen) {
     final isSelected = provider.minRating == rating;
-    
+
     return GestureDetector(
       onTap: () => provider.updateRatingFilter(rating),
       child: Container(
@@ -438,23 +468,17 @@ class _ProductListScreenState extends State<ProductListScreen> {
           vertical: isSmallScreen ? 8 : 10,
         ),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? AppConstants.accentColor 
+          color: isSelected
+              ? AppConstants.accentColor
               : AppConstants.accentColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 24),
-          border: Border.all(
-            color: AppConstants.accentColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: isSmallScreen ? 13 : 15,
             fontWeight: FontWeight.w600,
-            color: isSelected 
-                ? Colors.white 
-                : AppConstants.accentColor,
+            color: isSelected ? Colors.white : AppConstants.accentColor,
           ),
         ),
       ),
@@ -470,11 +494,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
     bool isSmallScreen,
   ) {
     final isSelected = provider.selectedSortOption == option;
-    
+
     return ListTile(
       leading: Icon(
         icon,
-        color: isSelected ? AppConstants.accentColor : AppConstants.textSecondary,
+        color:
+            isSelected ? AppConstants.accentColor : AppConstants.textSecondary,
         size: isSmallScreen ? 20 : 22,
       ),
       title: Text(
@@ -482,7 +507,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
         style: TextStyle(
           fontSize: isSmallScreen ? 14 : 16,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          color: isSelected ? AppConstants.accentColor : AppConstants.textPrimary,
+          color:
+              isSelected ? AppConstants.accentColor : AppConstants.textPrimary,
         ),
       ),
       trailing: isSelected
@@ -541,11 +567,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
         final screenWidth = constraints.maxWidth;
         final isSmallScreen = screenWidth < 600;
         final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
-        
+
         // Grid configuration based on screen size
         final crossAxisCount = isSmallScreen ? 2 : (isMediumScreen ? 3 : 4);
-        final childAspectRatio = isSmallScreen ? 0.68 : (isMediumScreen ? 0.70 : 0.72);
-        
+        final childAspectRatio =
+            isSmallScreen ? 0.68 : (isMediumScreen ? 0.70 : 0.72);
+
         return Scaffold(
           appBar: AppBar(
             title: Text(
@@ -562,14 +589,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
               Consumer<CategoryProvider>(
                 builder: (context, categoryProvider, child) {
                   final hasActiveFilters = categoryProvider.minPrice > 0 ||
-                                          categoryProvider.maxPrice < categoryProvider.availablePriceRange['max']! ||
-                                          categoryProvider.minRating > 0;
+                      categoryProvider.maxPrice <
+                          categoryProvider.availablePriceRange['max']! ||
+                      categoryProvider.minRating > 0;
 
                   return Row(
                     children: [
                       // Sort button
                       IconButton(
-                        onPressed: () => _showSortOptions(context, categoryProvider, isSmallScreen),
+                        onPressed: () => _showSortOptions(
+                            context, categoryProvider, isSmallScreen),
                         icon: Icon(
                           Icons.sort_rounded,
                           color: AppConstants.textPrimary,
@@ -577,15 +606,20 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         ),
                         tooltip: 'Sort',
                       ),
-                      
+
                       // Filter button with indicator
                       Stack(
                         children: [
                           IconButton(
-                            onPressed: () => _showFilterOptions(context, categoryProvider, isSmallScreen),
+                            onPressed: () => _showFilterOptions(
+                                context, categoryProvider, isSmallScreen),
                             icon: Icon(
-                              hasActiveFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
-                              color: hasActiveFilters ? AppConstants.accentColor : AppConstants.textPrimary,
+                              hasActiveFilters
+                                  ? Icons.filter_alt
+                                  : Icons.filter_alt_outlined,
+                              color: hasActiveFilters
+                                  ? AppConstants.accentColor
+                                  : AppConstants.textPrimary,
                               size: isSmallScreen ? 22 : 24,
                             ),
                             tooltip: 'Filter',
@@ -597,8 +631,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               child: Container(
                                 width: 8,
                                 height: 8,
-decoration: const BoxDecoration(
-
+                                decoration: const BoxDecoration(
                                   color: AppConstants.accentColor,
                                   shape: BoxShape.circle,
                                 ),
@@ -631,7 +664,7 @@ decoration: const BoxDecoration(
                   SliverToBoxAdapter(
                     child: CategorySelector(isSmallScreen: isSmallScreen),
                   ),
-                  
+
                   // Products Grid
                   _buildProductsGrid(
                     categoryProvider,
@@ -653,8 +686,7 @@ decoration: const BoxDecoration(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-const CircularProgressIndicator(
-
+          const CircularProgressIndicator(
             color: AppConstants.accentColor,
           ),
           SizedBox(height: isSmallScreen ? 12 : 16),

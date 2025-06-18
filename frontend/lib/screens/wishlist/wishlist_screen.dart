@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/wishlist_provider.dart';
+import '../../providers/product_provider.dart';
 import '../../models/product_model.dart';
 import '../../widgets/common/wishlist_button.dart';
-import '../products/product_detail_screen.dart';
+import '../../widgets/common/optimized_image.dart';
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({super.key});
@@ -18,18 +20,45 @@ class _WishlistScreenState extends State<WishlistScreen> {
   String _searchQuery = '';
   WishlistSortOption _sortOption = WishlistSortOption.newest;
 
+  @override
+  void initState() {
+    super.initState();
+    // Initialize wishlist data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final wishlistProvider = context.read<WishlistProvider>();
+      if (!wishlistProvider.isInitialized) {
+        wishlistProvider.loadWishlistFromStorage();
+      }
+    });
+  }
+
   String _formatPrice(double price) {
     final formatter = NumberFormat('#,###');
     return '${formatter.format(price)} IQD';
   }
 
   Future<void> _navigateToProduct(Product product) async {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProductDetailScreen(product: product),
-      ),
-    );
+    try {
+      final productProvider = context.read<ProductProvider>();
+
+      // Add to recently viewed
+      await productProvider.addToRecentlyViewed(product);
+
+      // Navigate with only ID - product detail will fetch fresh data
+      if (mounted) {
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
+      }
+    } catch (e) {
+      debugPrint('Error navigating to product: $e');
+      // Even if adding to recently viewed fails, still navigate
+      if (mounted) {
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
+      }
+    }
   }
 
   void _showSortOptions() {
@@ -141,6 +170,17 @@ class _WishlistScreenState extends State<WishlistScreen> {
                         ),
                         itemBuilder: (context) => [
                           const PopupMenuItem(
+                            value: 'sync',
+                            child: Row(
+                              children: [
+                                Icon(Icons.sync,
+                                    color: AppConstants.accentColor),
+                                SizedBox(width: 8),
+                                Text('Sync with Backend'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
                             value: 'clear',
                             child: Row(
                               children: [
@@ -165,6 +205,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
                         ],
                         onSelected: (value) async {
                           switch (value) {
+                            case 'sync':
+                              await wishlistProvider.syncWithBackend();
+                              break;
                             case 'clear':
                               _showClearConfirmation(wishlistProvider);
                               break;
@@ -204,7 +247,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                   if (wishlistProvider.itemCount > 3)
                     _buildSearchBar(isSmallScreen),
 
-                  // Wishlist count
+                  // Wishlist count with sync status
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.symmetric(
@@ -212,13 +255,24 @@ class _WishlistScreenState extends State<WishlistScreen> {
                       vertical: isSmallScreen ? 8 : 12,
                     ),
                     color: AppConstants.surfaceColor,
-                    child: Text(
-                      '${filteredProducts.length} item${filteredProducts.length == 1 ? '' : 's'} in wishlist',
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 14 : 16,
-                        color: AppConstants.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${filteredProducts.length} item${filteredProducts.length == 1 ? '' : 's'} in wishlist',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 14 : 16,
+                            color: AppConstants.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (wishlistProvider.isInitialized)
+                          Icon(
+                            Icons.cloud_done_outlined,
+                            size: 16,
+                            color: AppConstants.accentColor,
+                          ),
+                      ],
                     ),
                   ),
 
@@ -278,6 +332,64 @@ class _WishlistScreenState extends State<WishlistScreen> {
     );
   }
 
+  Widget _buildProductImage(Product product, bool isSmallScreen) {
+    final imageUrl = product.images.isNotEmpty ? product.images.first : '';
+
+    // If product has images from database, use them
+    if (imageUrl.isNotEmpty && imageUrl != 'null') {
+      return OptimizedImage(
+        imageUrl: imageUrl,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        memCacheWidth: isSmallScreen ? 120 : 150,
+        memCacheHeight: isSmallScreen ? 120 : 150,
+        borderRadius: BorderRadius.circular(12),
+        errorWidget: _buildFallbackImage(product, isSmallScreen),
+      );
+    }
+
+    // Fallback to media/products images if no DB images
+    return _buildFallbackImage(product, isSmallScreen);
+  }
+
+  Widget _buildFallbackImage(Product product, bool isSmallScreen) {
+    // List of verified fallback images from backend/media/products
+    final List<String> fallbackImages = [
+      'tiana-eyeshadow-palette_1_product_33_20250507_195811.jpg',
+      'riding-solo-single-shadow_1_product_312_20250508_214207.jpg',
+      'flawless-stay-liquid-foundation_6_product_167_20250508_161948.jpg',
+      'lesdomakeup-mi-vida-lip-trio_1_product_239_20250508_204511.jpg',
+      'yerimua-bad-lip-duo_1_product_350_20250508_220246.jpg',
+      'volumizing-mascara_1_product_456_20250509_205844.jpg',
+    ];
+
+    // Try fallback images based on product ID hash
+    final productHashIndex = product.id.hashCode.abs() % fallbackImages.length;
+    final fallbackImageUrl =
+        '${AppConstants.baseUrl}/media/products/${fallbackImages[productHashIndex]}';
+
+    return OptimizedImage(
+      imageUrl: fallbackImageUrl,
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.cover,
+      memCacheWidth: isSmallScreen ? 120 : 150,
+      memCacheHeight: isSmallScreen ? 120 : 150,
+      borderRadius: BorderRadius.circular(12),
+      errorWidget: Container(
+        color: AppConstants.backgroundColor,
+        child: Center(
+          child: Icon(
+            Icons.spa_outlined,
+            size: isSmallScreen ? 32 : 40,
+            color: AppConstants.accentColor.withValues(alpha: 0.5),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildWishlistItem(
       Product product, WishlistProvider wishlistProvider, bool isSmallScreen) {
     return Container(
@@ -301,23 +413,19 @@ class _WishlistScreenState extends State<WishlistScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product image
+              // Product image with fallback support
               Container(
                 width: isSmallScreen ? 80 : 100,
                 height: isSmallScreen ? 80 : 100,
                 decoration: BoxDecoration(
-                  color: AppConstants.backgroundColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: AppConstants.borderColor.withValues(alpha: 0.3),
                   ),
                 ),
-                child: Center(
-                  child: Icon(
-                    Icons.spa_outlined,
-                    size: isSmallScreen ? 32 : 40,
-                    color: AppConstants.accentColor.withValues(alpha: 0.5),
-                  ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: _buildProductImage(product, isSmallScreen),
                 ),
               ),
 
@@ -379,28 +487,27 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
                     SizedBox(height: isSmallScreen ? 8 : 12),
 
-                    // Beauty Points section
-                    if (product.beautyPoints > 0) ...[
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.stars_rounded,
+                    // Beauty Points section (always show, even if 0)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.stars_rounded,
+                          color: AppConstants.favoriteColor,
+                          size: isSmallScreen ? 14 : 16,
+                        ),
+                        SizedBox(width: isSmallScreen ? 4 : 6),
+                        Text(
+                          '+${product.beautyPoints} Beauty Points',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 12 : 14,
                             color: AppConstants.favoriteColor,
-                            size: isSmallScreen ? 14 : 16,
+                            fontWeight: FontWeight.w600,
                           ),
-                          SizedBox(width: isSmallScreen ? 4 : 6),
-                          Text(
-                            '+${product.beautyPoints} Beauty Points',
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 12 : 14,
-                              color: AppConstants.favoriteColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: isSmallScreen ? 8 : 12),
-                    ],
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: isSmallScreen ? 8 : 12),
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

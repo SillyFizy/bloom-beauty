@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:flutter/foundation.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/category_provider.dart';
 
@@ -18,7 +19,7 @@ class CategorySelector extends StatelessWidget {
     return Consumer<CategoryProvider>(
       builder: (context, provider, child) {
         final categories = provider.categories;
-        
+
         if (categories.isEmpty && !provider.isLoading) {
           return const SizedBox.shrink();
         }
@@ -37,7 +38,6 @@ class CategorySelector extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              
               if (provider.isLoading)
                 _buildLoadingSkeleton()
               else
@@ -58,7 +58,7 @@ class CategorySelector extends StatelessWidget {
                           isSmallScreen,
                         );
                       }
-                      
+
                       final category = categories[index - 1];
                       return _buildCategoryItem(
                         context,
@@ -126,14 +126,14 @@ class CategorySelector extends StatelessWidget {
   Widget _buildCategoryItem(
     BuildContext context,
     CategoryProvider provider,
-    String? categoryId,
+    int? categoryId,
     String displayName,
     String imageUrl,
     bool isSmallScreen,
   ) {
     final isSelected = provider.selectedCategoryId == categoryId;
     final size = isSmallScreen ? 65.0 : 75.0;
-    
+
     return GestureDetector(
       onTap: () => provider.selectCategory(categoryId),
       child: Container(
@@ -148,19 +148,20 @@ class CategorySelector extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected 
-                      ? AppConstants.accentColor 
+                  color: isSelected
+                      ? AppConstants.accentColor
                       : AppConstants.borderColor.withValues(alpha: 0.3),
                   width: isSelected ? 3 : 2,
                 ),
-                boxShadow: isSelected 
+                boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: AppConstants.accentColor.withValues(alpha: 0.3),
+                          color:
+                              AppConstants.accentColor.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
-                      ] 
+                      ]
                     : [],
               ),
               child: ClipOval(
@@ -175,8 +176,8 @@ class CategorySelector extends StatelessWidget {
               style: TextStyle(
                 fontSize: isSmallScreen ? 11 : 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected 
-                    ? AppConstants.accentColor 
+                color: isSelected
+                    ? AppConstants.accentColor
                     : AppConstants.textSecondary,
               ),
               textAlign: TextAlign.center,
@@ -211,9 +212,28 @@ class CategorySelector extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryImage(String imageUrl, String displayName, bool isSmallScreen) {
+  String _getBackendBaseUrl() {
+    // Use same logic as ApiService for consistency
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000';
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000';
+    } else {
+      return 'http://127.0.0.1:8000';
+    }
+  }
+
+  Widget _buildCategoryImage(
+      String imageUrl, String displayName, bool isSmallScreen) {
+    // Construct full URL for backend media
+    final fullImageUrl = imageUrl.startsWith('http')
+        ? imageUrl
+        : '${_getBackendBaseUrl()}$imageUrl';
+
     return CachedNetworkImage(
-      imageUrl: imageUrl,
+      imageUrl: fullImageUrl,
       fit: BoxFit.cover,
       memCacheWidth: isSmallScreen ? 130 : 150,
       memCacheHeight: isSmallScreen ? 130 : 150,
@@ -250,4 +270,4 @@ class CategorySelector extends StatelessWidget {
       ),
     );
   }
-} 
+}

@@ -73,25 +73,19 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
   Future<void> _navigateToProduct(Product product) async {
     try {
       final productProvider = context.read<ProductProvider>();
-      final freshProduct = await productProvider.getProductById(product.id);
 
-      if (freshProduct != null) {
-        await productProvider.addToRecentlyViewed(freshProduct);
+      // Add to recently viewed using current product data
+      await productProvider.addToRecentlyViewed(product);
 
-        if (mounted) {
-          context.pushNamed('product-detail', pathParameters: {
-            'slug': freshProduct.id,
-          });
-        }
-      } else {
-        if (mounted) {
-          context.pushNamed('product-detail', pathParameters: {
-            'slug': product.id,
-          });
-        }
+      // Navigate with only ID - product detail will fetch fresh data
+      if (mounted) {
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
       }
     } catch (e) {
       debugPrint('Error navigating to product: $e');
+      // Even if adding to recently viewed fails, still navigate
       if (mounted) {
         context.pushNamed('product-detail', pathParameters: {
           'slug': product.id,
@@ -1067,10 +1061,6 @@ class _CelebrityPicksScreenState extends State<CelebrityPicksScreen> {
               ? AppConstants.accentColor
               : AppConstants.accentColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 24),
-          border: Border.all(
-            color: AppConstants.accentColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
         ),
         child: Text(
           label,

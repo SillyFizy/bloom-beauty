@@ -134,29 +134,27 @@ class CartItemWidget extends StatelessWidget {
                         ),
                       ],
 
-                      // Beauty Points (if exists)
-                      if (beautyPoints > 0) ...[
-                        SizedBox(height: isSmallScreen ? 2 : 4),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.stars_rounded,
+                      // Beauty Points (always show, even if 0)
+                      SizedBox(height: isSmallScreen ? 2 : 4),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.stars_rounded,
+                            color: AppConstants.favoriteColor,
+                            size: isSmallScreen ? 12 : 14,
+                          ),
+                          SizedBox(width: isSmallScreen ? 3 : 4),
+                          Text(
+                            '+${beautyPoints * quantity} points',
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 9 : 11,
                               color: AppConstants.favoriteColor,
-                              size: isSmallScreen ? 12 : 14,
+                              fontWeight: FontWeight.w600,
                             ),
-                            SizedBox(width: isSmallScreen ? 3 : 4),
-                            Text(
-                              '+${beautyPoints * quantity} points',
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 9 : 11,
-                                color: AppConstants.favoriteColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
 
                       SizedBox(height: isSmallScreen ? 4 : 8),
 

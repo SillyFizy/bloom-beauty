@@ -76,6 +76,7 @@ class Product(models.Model):
     meta_keywords = models.CharField(max_length=255, null=True, blank=True, help_text="Comma separated keywords for SEO")
     meta_description = models.TextField(null=True, blank=True, help_text="Meta description for SEO")
     low_stock_threshold = models.PositiveIntegerField(default=10)
+    beauty_points = models.PositiveIntegerField(default=0, help_text="Beauty points earned when purchasing this product")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

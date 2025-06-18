@@ -31,25 +31,25 @@ class CelebrityPicksProvider with ChangeNotifier {
   List<Celebrity> _celebrities = [];
   List<category_model.Category> _categories = [];
   List<Product> _displayProducts = [];
-  
+
   bool _isLoading = false;
   bool _isLoadingMore = false;
   final bool _isSearching = false;
   bool _hasMoreProducts = true;
   String? _error;
-  
+
   // Browse mode state
   BrowseMode _browseMode = BrowseMode.celebrity;
-  
+
   // Filter state
   String _searchQuery = '';
   String? _selectedCelebrityId;
-  String? _selectedCategoryId;
+  int? _selectedCategoryId;
   CelebrityPicksSortOption _sortOption = CelebrityPicksSortOption.newest;
   double _minPriceFilter = 0;
   double _maxPriceFilter = 500000; // Default max price
   double _minRatingFilter = 0;
-  
+
   // Pagination
   int _currentPage = 0;
   final int _itemsPerPage = 20;
@@ -58,23 +58,24 @@ class CelebrityPicksProvider with ChangeNotifier {
   List<Product> get displayProducts => List.unmodifiable(_displayProducts);
   List<Product> get filteredProducts => List.unmodifiable(_filteredProducts);
   List<Celebrity> get celebrities => List.unmodifiable(_celebrities);
-  List<category_model.Category> get categories => List.unmodifiable(_categories);
+  List<category_model.Category> get categories =>
+      List.unmodifiable(_categories);
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
   bool get isSearching => _isSearching;
   bool get hasMoreProducts => _hasMoreProducts;
   String? get error => _error;
   bool get hasError => _error != null;
-  
+
   String get searchQuery => _searchQuery;
   String? get selectedCelebrityId => _selectedCelebrityId;
-  String? get selectedCategoryId => _selectedCategoryId;
+  int? get selectedCategoryId => _selectedCategoryId;
   BrowseMode get browseMode => _browseMode;
   CelebrityPicksSortOption get sortOption => _sortOption;
   double get minPriceFilter => _minPriceFilter;
   double get maxPriceFilter => _maxPriceFilter;
   double get minRatingFilter => _minRatingFilter;
-  
+
   // Get selected celebrity
   Celebrity? get selectedCelebrity {
     if (_selectedCelebrityId == null) return null;
@@ -100,18 +101,18 @@ class CelebrityPicksProvider with ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
-      
+
       // Load celebrities, categories, and products concurrently
       await Future.wait([
         _loadCelebrities(),
         _loadCategories(),
         _loadAllCelebrityProducts(),
       ]);
-      
+
       // Apply initial filtering and load first page
       await _applyFiltersAndSort();
       _loadDisplayProducts();
-      
+
       _setLoading(false);
     } catch (e) {
       _setError('Failed to initialize celebrity picks: $e');
@@ -143,7 +144,7 @@ class CelebrityPicksProvider with ChangeNotifier {
     _currentPage = 0;
     _hasMoreProducts = true;
     _displayProducts.clear();
-    
+
     await _applyFiltersAndSort();
     _loadDisplayProducts();
     notifyListeners();
@@ -208,7 +209,7 @@ class CelebrityPicksProvider with ChangeNotifier {
   /// Switch browse mode between celebrity and category
   void switchBrowseMode(BrowseMode mode) {
     if (_browseMode == mode) return;
-    
+
     _browseMode = mode;
     // Clear current selections when switching modes
     _selectedCelebrityId = null;
@@ -222,7 +223,7 @@ class CelebrityPicksProvider with ChangeNotifier {
   }
 
   /// Select category filter
-  void selectCategory(String? categoryId) {
+  void selectCategory(int? categoryId) {
     _selectedCategoryId = categoryId;
     _currentPage = 0;
     _hasMoreProducts = true;
@@ -235,7 +236,7 @@ class CelebrityPicksProvider with ChangeNotifier {
   /// Load more products (infinite scroll)
   Future<void> loadMoreProducts() async {
     if (_isLoadingMore || !_hasMoreProducts) return;
-    
+
     _setLoadingMore(true);
     _currentPage++;
     _loadDisplayProducts();
@@ -245,46 +246,62 @@ class CelebrityPicksProvider with ChangeNotifier {
   /// Apply all filters and sorting
   Future<void> _applyFiltersAndSort() async {
     List<Product> filtered = List.from(_allCelebrityProducts);
-    
+
     // Apply search filter
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((product) => 
-        product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        product.brand.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().contains(_searchQuery.toLowerCase())
-      ).toList();
+      filtered = filtered
+          .where((product) =>
+              product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              product.brand
+                  .toLowerCase()
+                  .contains(_searchQuery.toLowerCase()) ||
+              product.description
+                  .toLowerCase()
+                  .contains(_searchQuery.toLowerCase()))
+          .toList();
     }
-    
+
     // Apply celebrity filter (only when in celebrity browse mode)
     if (_browseMode == BrowseMode.celebrity && _selectedCelebrityId != null) {
-      filtered = filtered.where((product) => 
-        product.celebrityEndorsement?.celebrityName == _selectedCelebrityId
-      ).toList();
+      filtered = filtered
+          .where((product) =>
+              product.celebrityEndorsement?.celebrityName ==
+              _selectedCelebrityId)
+          .toList();
     }
-    
+
     // Apply category filter (only when in category browse mode)
     if (_browseMode == BrowseMode.category && _selectedCategoryId != null) {
-      filtered = filtered.where((product) => 
-        product.categoryId == _selectedCategoryId
-      ).toList();
+      try {
+        final selectedCategory = _categories.firstWhere(
+          (category) => category.id == _selectedCategoryId,
+        );
+
+        filtered = filtered
+            .where((product) => product.categoryId == selectedCategory.name)
+            .toList();
+      } catch (e) {
+        // Category not found, don't filter (show all products)
+        debugPrint('Category with ID $_selectedCategoryId not found: $e');
+      }
     }
-    
+
     // Apply price filter
     filtered = filtered.where((product) {
       final price = product.discountPrice ?? product.price;
       return price >= _minPriceFilter && price <= _maxPriceFilter;
     }).toList();
-    
+
     // Apply rating filter
     if (_minRatingFilter > 0) {
-      filtered = filtered.where((product) => 
-        product.rating >= _minRatingFilter
-      ).toList();
+      filtered = filtered
+          .where((product) => product.rating >= _minRatingFilter)
+          .toList();
     }
-    
+
     // Apply sorting
     _applySorting(filtered);
-    
+
     _filteredProducts = filtered;
   }
 
@@ -322,20 +339,21 @@ class CelebrityPicksProvider with ChangeNotifier {
   void _loadDisplayProducts() {
     final startIndex = _currentPage * _itemsPerPage;
     final endIndex = startIndex + _itemsPerPage;
-    
+
     if (startIndex >= _filteredProducts.length) {
       _hasMoreProducts = false;
       return;
     }
-    
-    final newProducts = _filteredProducts.skip(startIndex).take(_itemsPerPage).toList();
-    
+
+    final newProducts =
+        _filteredProducts.skip(startIndex).take(_itemsPerPage).toList();
+
     if (_currentPage == 0) {
       _displayProducts = newProducts;
     } else {
       _displayProducts.addAll(newProducts);
     }
-    
+
     _hasMoreProducts = endIndex < _filteredProducts.length;
   }
 
@@ -343,12 +361,13 @@ class CelebrityPicksProvider with ChangeNotifier {
   Future<void> toggleWishlist(String productId) async {
     try {
       // Find the product in display products
-      final productIndex = _displayProducts.indexWhere((p) => p.id == productId);
+      final productIndex =
+          _displayProducts.indexWhere((p) => p.id == productId);
       if (productIndex != -1) {
         // Here you would typically call your wishlist service
         // For now, we'll just notify listeners for UI feedback
         notifyListeners();
-        
+
         // You can add actual wishlist logic here
         debugPrint('Toggled wishlist for product: $productId');
       }
@@ -417,6 +436,4 @@ class CelebrityPicksProvider with ChangeNotifier {
   void _clearError() {
     _error = null;
   }
-
-
-} 
+}

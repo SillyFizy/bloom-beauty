@@ -8,18 +8,16 @@ import '../../providers/cart_provider.dart';
 import '../../providers/celebrity_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../widgets/common/wishlist_button.dart';
+import '../../widgets/common/optimized_image.dart';
 import '../celebrity/celebrity_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  final Product? product; // Make nullable since we'll fetch from backend
-  final String? slug; // Add slug parameter for backend fetching
+  final String slug; // Always use slug to fetch from backend
 
   const ProductDetailScreen({
     super.key,
-    this.product,
-    this.slug,
-  }) : assert(product != null || slug != null,
-            'Either product or slug must be provided');
+    required this.slug,
+  });
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -45,8 +43,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   // Track quantities for each variant (starting from 0)
   final Map<String, int> _variantQuantities = {};
 
-  // Get the actual product to use (from prop or fetched)
-  Product? get currentProduct => _product ?? widget.product;
+  // Always use fetched product
+  Product? get currentProduct => _product;
 
   @override
   void initState() {
@@ -73,12 +71,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     // Add scroll listener for sticky header
     _scrollController.addListener(_onScroll);
 
-    // Fetch product from backend if slug is provided
-    if (widget.slug != null) {
-      _fetchProductDetail();
-    } else {
-      _initializeProduct();
-    }
+    // Always fetch product from backend using slug
+    _fetchProductDetail();
   }
 
   void _fetchProductDetail() async {
@@ -90,7 +84,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     try {
       final productProvider =
           Provider.of<ProductProvider>(context, listen: false);
-      final product = await productProvider.getProductDetail(widget.slug!);
+      final product = await productProvider.getProductDetail(widget.slug);
 
       if (mounted) {
         setState(() {
@@ -296,9 +290,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  if (widget.slug != null) {
-                    _fetchProductDetail();
-                  }
+                  _fetchProductDetail();
                 },
                 child: const Text('Retry'),
               ),
@@ -731,62 +723,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           child: AspectRatio(
                             aspectRatio: 1.0,
                             child: imageUrl.isNotEmpty
-                                ? Image.network(
-                                    imageUrl,
-                                    fit: BoxFit.cover,
-                                    loadingBuilder:
-                                        (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        color: AppConstants.surfaceColor,
-                                        child: Center(
-                                          child: CircularProgressIndicator(
-                                            color: AppConstants.accentColor,
-                                            value: loadingProgress
-                                                        .expectedTotalBytes !=
-                                                    null
-                                                ? loadingProgress
-                                                        .cumulativeBytesLoaded /
-                                                    loadingProgress
-                                                        .expectedTotalBytes!
-                                                : null,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: AppConstants.surfaceColor,
-                                        child: Center(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.broken_image_outlined,
-                                                size: isSmallScreen ? 60 : 80,
-                                                color:
-                                                    AppConstants.textSecondary,
-                                              ),
-                                              SizedBox(
-                                                  height:
-                                                      isSmallScreen ? 12 : 16),
-                                              Text(
-                                                'Image not available',
-                                                style: TextStyle(
-                                                  color: AppConstants
-                                                      .textSecondary,
-                                                  fontSize:
-                                                      isSmallScreen ? 12 : 14,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  )
+                                ? _buildRobustImage(imageUrl, isSmallScreen)
                                 : Container(
                                     color: AppConstants.surfaceColor,
                                     child: Center(
@@ -903,6 +840,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     );
   }
 
+  Widget _buildRobustImage(String imageUrl, bool isSmallScreen) {
+    // Use optimized ProductDetailImage for better mobile performance
+    return ProductDetailImage(
+      imageUrl: imageUrl,
+      isSmallScreen: isSmallScreen,
+      fallbackUrls: _getFallbackImageUrls(),
+    );
+  }
+
+  List<String> _getFallbackImageUrls() {
+    // Return full URLs for fallback images optimized for mobile
+    return [
+      '${AppConstants.baseUrl}/media/products/tiana-eyeshadow-palette_1_product_33_20250507_195811.jpg',
+      '${AppConstants.baseUrl}/media/products/riding-solo-single-shadow_1_product_312_20250508_214207.jpg',
+      '${AppConstants.baseUrl}/media/products/flawless-stay-liquid-foundation_6_product_167_20250508_161948.jpg',
+      '${AppConstants.baseUrl}/media/products/lesdomakeup-mi-vida-lip-trio_1_product_239_20250508_204511.jpg',
+      '${AppConstants.baseUrl}/media/products/yerimua-bad-lip-duo_1_product_350_20250508_220246.jpg',
+      '${AppConstants.baseUrl}/media/products/volumizing-mascara_1_product_456_20250509_205844.jpg',
+    ];
+  }
+
   Widget _buildProductInfo(bool isSmallScreen) {
     return Container(
       width: double.infinity,
@@ -962,43 +920,41 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ],
           ),
 
-          // Beauty Points section
-          if (currentProduct!.beautyPoints > 0) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: isSmallScreen ? 12 : 16,
-                vertical: isSmallScreen ? 8 : 10,
-              ),
-              decoration: BoxDecoration(
-                color: AppConstants.favoriteColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppConstants.favoriteColor.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.stars_rounded,
-                    color: AppConstants.favoriteColor,
-                    size: isSmallScreen ? 18 : 22,
-                  ),
-                  SizedBox(width: isSmallScreen ? 6 : 8),
-                  Text(
-                    'Earn ${currentProduct!.beautyPoints} Beauty Points',
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 12 : 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppConstants.favoriteColor,
-                    ),
-                  ),
-                ],
+          // Beauty Points section (always show, even if 0)
+          const SizedBox(height: 12),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 12 : 16,
+              vertical: isSmallScreen ? 8 : 10,
+            ),
+            decoration: BoxDecoration(
+              color: AppConstants.favoriteColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppConstants.favoriteColor.withValues(alpha: 0.3),
+                width: 1,
               ),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.stars_rounded,
+                  color: AppConstants.favoriteColor,
+                  size: isSmallScreen ? 18 : 22,
+                ),
+                SizedBox(width: isSmallScreen ? 6 : 8),
+                Text(
+                  'Earn ${currentProduct!.beautyPoints} Beauty Points',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 12 : 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppConstants.favoriteColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -2169,10 +2125,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     ),
                     child: Icon(
                       Icons.remove,
+                      color: AppConstants.surfaceColor,
                       size: isSmallScreen ? 16 : 18,
-                      color: currentQuantity > 0
-                          ? AppConstants.surfaceColor
-                          : AppConstants.surfaceColor.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -2213,10 +2167,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     ),
                     child: Icon(
                       Icons.add,
-                      size: isSmallScreen ? 16 : 18,
                       color: currentQuantity < 99
                           ? AppConstants.surfaceColor
                           : AppConstants.surfaceColor.withValues(alpha: 0.5),
+                      size: isSmallScreen ? 16 : 18,
                     ),
                   ),
                 ),

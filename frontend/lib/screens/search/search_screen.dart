@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:async';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/search_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../widgets/product/enhanced_product_card.dart';
-import '../products/product_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -28,7 +28,7 @@ class _SearchScreenState extends State<SearchScreen> {
     _searchController = TextEditingController();
     _scrollController = ScrollController();
     _searchFocusNode = FocusNode();
-    
+
     // Initialize search provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SearchProvider>().initialize();
@@ -36,7 +36,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     // Add scroll listener for infinite scroll
     _scrollController.addListener(_onScroll);
-    
+
     // Add focus listener for suggestions
     _searchFocusNode.addListener(_onFocusChange);
   }
@@ -51,7 +51,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= 
+    if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       context.read<SearchProvider>().loadMoreResults();
     }
@@ -59,7 +59,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _onFocusChange() {
     setState(() {
-      _showSuggestions = _searchFocusNode.hasFocus && _searchController.text.isNotEmpty;
+      _showSuggestions =
+          _searchFocusNode.hasFocus && _searchController.text.isNotEmpty;
     });
   }
 
@@ -99,18 +100,24 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _navigateToProduct(Product product) async {
     try {
       final productProvider = context.read<ProductProvider>();
+
+      // Add to recently viewed
       await productProvider.addToRecentlyViewed(product);
-      
+
+      // Navigate with only ID - product detail will fetch fresh data
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(product: product),
-          ),
-        );
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
       }
     } catch (e) {
       debugPrint('Error navigating to product: $e');
+      // Even if adding to recently viewed fails, still navigate
+      if (mounted) {
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
+      }
     }
   }
 
@@ -119,7 +126,8 @@ class _SearchScreenState extends State<SearchScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmallScreen = constraints.maxWidth < 600;
-        final crossAxisCount = isSmallScreen ? 2 : (constraints.maxWidth < 900 ? 3 : 4);
+        final crossAxisCount =
+            isSmallScreen ? 2 : (constraints.maxWidth < 900 ? 3 : 4);
         final childAspectRatio = isSmallScreen ? 0.68 : 0.70;
 
         return Scaffold(
@@ -131,17 +139,19 @@ class _SearchScreenState extends State<SearchScreen> {
                   children: [
                     // Search Header
                     _buildSearchHeader(isSmallScreen, searchProvider),
-                    
+
                     // Content Area
                     Expanded(
                       child: Stack(
                         children: [
                           // Main Content
-                          _buildMainContent(searchProvider, crossAxisCount, childAspectRatio, isSmallScreen),
-                          
+                          _buildMainContent(searchProvider, crossAxisCount,
+                              childAspectRatio, isSmallScreen),
+
                           // Search Suggestions Overlay
                           if (_showSuggestions)
-                            _buildSuggestionsOverlay(searchProvider, isSmallScreen),
+                            _buildSuggestionsOverlay(
+                                searchProvider, isSmallScreen),
                         ],
                       ),
                     ),
@@ -183,8 +193,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 color: AppConstants.backgroundColor,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: _searchFocusNode.hasFocus 
-                      ? AppConstants.accentColor 
+                  color: _searchFocusNode.hasFocus
+                      ? AppConstants.accentColor
                       : AppConstants.borderColor.withValues(alpha: 0.3),
                   width: _searchFocusNode.hasFocus ? 2 : 1,
                 ),
@@ -234,21 +244,21 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
           ),
-          
+
           SizedBox(width: isSmallScreen ? 12 : 16),
-          
+
           // Filter Button
           Container(
             height: isSmallScreen ? 44 : 48,
             width: isSmallScreen ? 44 : 48,
             decoration: BoxDecoration(
-              color: searchProvider.hasActiveFilters 
-                  ? AppConstants.accentColor 
+              color: searchProvider.hasActiveFilters
+                  ? AppConstants.accentColor
                   : AppConstants.backgroundColor,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: searchProvider.hasActiveFilters 
-                    ? AppConstants.accentColor 
+                color: searchProvider.hasActiveFilters
+                    ? AppConstants.accentColor
                     : AppConstants.borderColor.withValues(alpha: 0.3),
                 width: 1,
               ),
@@ -256,11 +266,11 @@ class _SearchScreenState extends State<SearchScreen> {
             child: IconButton(
               onPressed: () => _showFilterModal(searchProvider, isSmallScreen),
               icon: Icon(
-                searchProvider.hasActiveFilters 
-                    ? Icons.filter_alt 
+                searchProvider.hasActiveFilters
+                    ? Icons.filter_alt
                     : Icons.filter_alt_outlined,
-                color: searchProvider.hasActiveFilters 
-                    ? Colors.white 
+                color: searchProvider.hasActiveFilters
+                    ? Colors.white
                     : AppConstants.textSecondary,
                 size: isSmallScreen ? 20 : 24,
               ),
@@ -271,7 +281,8 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildMainContent(SearchProvider searchProvider, int crossAxisCount, double childAspectRatio, bool isSmallScreen) {
+  Widget _buildMainContent(SearchProvider searchProvider, int crossAxisCount,
+      double childAspectRatio, bool isSmallScreen) {
     if (searchProvider.isLoading) {
       return _buildLoadingState(isSmallScreen);
     }
@@ -288,10 +299,12 @@ class _SearchScreenState extends State<SearchScreen> {
       return _buildNoResultsState(isSmallScreen);
     }
 
-    return _buildSearchResults(searchProvider, crossAxisCount, childAspectRatio, isSmallScreen);
+    return _buildSearchResults(
+        searchProvider, crossAxisCount, childAspectRatio, isSmallScreen);
   }
 
-  Widget _buildEmptySearchState(SearchProvider searchProvider, bool isSmallScreen) {
+  Widget _buildEmptySearchState(
+      SearchProvider searchProvider, bool isSmallScreen) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
       child: Column(
@@ -299,12 +312,15 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           // Recent Searches
           if (searchProvider.hasSearchHistory) ...[
-            _buildSectionHeader('Recent Searches', isSmallScreen, 
+            _buildSectionHeader(
+              'Recent Searches',
+              isSmallScreen,
               actionText: 'Clear All',
               onActionTap: () => searchProvider.clearSearchHistory(),
             ),
             const SizedBox(height: 12),
-            _buildSearchChips(searchProvider.searchHistory, isSmallScreen, isHistory: true),
+            _buildSearchChips(searchProvider.searchHistory, isSmallScreen,
+                isHistory: true),
             SizedBox(height: isSmallScreen ? 24 : 32),
           ] else if (searchProvider.isLoading) ...[
             // Show loading for search history
@@ -313,7 +329,7 @@ class _SearchScreenState extends State<SearchScreen> {
             _buildLoadingChips(isSmallScreen),
             SizedBox(height: isSmallScreen ? 24 : 32),
           ],
-          
+
           // Popular Searches
           _buildSectionHeader('Popular Searches', isSmallScreen),
           const SizedBox(height: 12),
@@ -322,7 +338,7 @@ class _SearchScreenState extends State<SearchScreen> {
           else
             _buildSearchChips(searchProvider.popularSearches, isSmallScreen),
           SizedBox(height: isSmallScreen ? 24 : 32),
-          
+
           // Quick Categories
           _buildSectionHeader('Shop by Category', isSmallScreen),
           const SizedBox(height: 12),
@@ -335,7 +351,8 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, bool isSmallScreen, {String? actionText, VoidCallback? onActionTap}) {
+  Widget _buildSectionHeader(String title, bool isSmallScreen,
+      {String? actionText, VoidCallback? onActionTap}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -366,61 +383,69 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildSearchChips(List<String> items, bool isSmallScreen, {bool isHistory = false}) {
+  Widget _buildSearchChips(List<String> items, bool isSmallScreen,
+      {bool isHistory = false}) {
     return Wrap(
       spacing: isSmallScreen ? 8 : 12,
       runSpacing: isSmallScreen ? 8 : 12,
-      children: items.map((item) => GestureDetector(
-        onTap: () => _selectSuggestion(item),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isSmallScreen ? 12 : 16,
-            vertical: isSmallScreen ? 8 : 10,
-          ),
-          decoration: BoxDecoration(
-            color: AppConstants.surfaceColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppConstants.borderColor.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isHistory ? Icons.history_rounded : Icons.trending_up_rounded,
-                size: isSmallScreen ? 14 : 16,
-                color: AppConstants.textSecondary,
-              ),
-              SizedBox(width: isSmallScreen ? 6 : 8),
-              Text(
-                item,
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 13 : 15,
-                  color: AppConstants.textPrimary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (isHistory) ...[
-                SizedBox(width: isSmallScreen ? 6 : 8),
-                GestureDetector(
-                  onTap: () => context.read<SearchProvider>().removeFromSearchHistory(item),
-                  child: Icon(
-                    Icons.close_rounded,
-                    size: isSmallScreen ? 14 : 16,
-                    color: AppConstants.textSecondary,
+      children: items
+          .map((item) => GestureDetector(
+                onTap: () => _selectSuggestion(item),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 12 : 16,
+                    vertical: isSmallScreen ? 8 : 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppConstants.surfaceColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isHistory
+                            ? Icons.history_rounded
+                            : Icons.trending_up_rounded,
+                        size: isSmallScreen ? 14 : 16,
+                        color: AppConstants.textSecondary,
+                      ),
+                      SizedBox(width: isSmallScreen ? 6 : 8),
+                      Text(
+                        item,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 13 : 15,
+                          color: AppConstants.textPrimary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (isHistory) ...[
+                        SizedBox(width: isSmallScreen ? 6 : 8),
+                        GestureDetector(
+                          onTap: () => context
+                              .read<SearchProvider>()
+                              .removeFromSearchHistory(item),
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: isSmallScreen ? 14 : 16,
+                            color: AppConstants.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ],
-            ],
-          ),
-        ),
-      )).toList(),
+              ))
+          .toList(),
     );
   }
 
-  Widget _buildQuickCategories(SearchProvider searchProvider, bool isSmallScreen) {
+  Widget _buildQuickCategories(
+      SearchProvider searchProvider, bool isSmallScreen) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -472,7 +497,8 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildSuggestionsOverlay(SearchProvider searchProvider, bool isSmallScreen) {
+  Widget _buildSuggestionsOverlay(
+      SearchProvider searchProvider, bool isSmallScreen) {
     return Positioned(
       top: 0,
       left: 0,
@@ -511,7 +537,8 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildSearchResults(SearchProvider searchProvider, int crossAxisCount, double childAspectRatio, bool isSmallScreen) {
+  Widget _buildSearchResults(SearchProvider searchProvider, int crossAxisCount,
+      double childAspectRatio, bool isSmallScreen) {
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
@@ -533,7 +560,8 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () => _showSortModal(searchProvider, isSmallScreen),
+                  onPressed: () =>
+                      _showSortModal(searchProvider, isSmallScreen),
                   icon: Icon(
                     Icons.sort_rounded,
                     size: isSmallScreen ? 16 : 18,
@@ -552,7 +580,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
         ),
-        
+
         // Products Grid
         SliverPadding(
           padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 16 : 20),
@@ -576,21 +604,20 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
         ),
-        
+
         // Load More Indicator
         if (searchProvider.isLoadingMore)
           SliverToBoxAdapter(
             child: Container(
               padding: const EdgeInsets.all(16),
-child: const Center(
-
+              child: const Center(
                 child: CircularProgressIndicator(
                   color: AppConstants.accentColor,
                 ),
               ),
             ),
           ),
-        
+
         // Bottom padding
         const SliverToBoxAdapter(
           child: SizedBox(height: 20),
@@ -604,8 +631,7 @@ child: const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-const CircularProgressIndicator(
-
+          const CircularProgressIndicator(
             color: AppConstants.accentColor,
           ),
           SizedBox(height: isSmallScreen ? 16 : 20),
@@ -708,7 +734,8 @@ const CircularProgressIndicator(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
-                  onPressed: () => context.read<SearchProvider>().clearFilters(),
+                  onPressed: () =>
+                      context.read<SearchProvider>().clearFilters(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppConstants.accentColor,
                     foregroundColor: Colors.white,
@@ -729,8 +756,7 @@ const CircularProgressIndicator(
                     context.read<SearchProvider>().clearSearch();
                   },
                   style: OutlinedButton.styleFrom(
-side: const BorderSide(color: AppConstants.accentColor),
-
+                    side: const BorderSide(color: AppConstants.accentColor),
                     padding: EdgeInsets.symmetric(
                       horizontal: isSmallScreen ? 20 : 24,
                       vertical: isSmallScreen ? 10 : 12,
@@ -774,40 +800,38 @@ side: const BorderSide(color: AppConstants.accentColor),
               ),
             ),
             const SizedBox(height: 16),
-            
             ...SearchSortOption.values.map((option) => ListTile(
-              leading: Icon(
-                _getSortIcon(option),
-                color: searchProvider.sortOption == option 
-                    ? AppConstants.accentColor 
-                    : AppConstants.textSecondary,
-                size: isSmallScreen ? 20 : 22,
-              ),
-              title: Text(
-                _getSortLabel(option),
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 14 : 16,
-                  fontWeight: searchProvider.sortOption == option 
-                      ? FontWeight.w600 
-                      : FontWeight.w500,
-                  color: searchProvider.sortOption == option 
-                      ? AppConstants.accentColor 
-                      : AppConstants.textPrimary,
-                ),
-              ),
-              trailing: searchProvider.sortOption == option
-                  ? Icon(
-                      Icons.check_circle,
-                      color: AppConstants.accentColor,
-                      size: isSmallScreen ? 20 : 22,
-                    )
-                  : null,
-              onTap: () {
-                searchProvider.updateSortOption(option);
-                Navigator.pop(context);
-              },
-            )),
-            
+                  leading: Icon(
+                    _getSortIcon(option),
+                    color: searchProvider.sortOption == option
+                        ? AppConstants.accentColor
+                        : AppConstants.textSecondary,
+                    size: isSmallScreen ? 20 : 22,
+                  ),
+                  title: Text(
+                    _getSortLabel(option),
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 14 : 16,
+                      fontWeight: searchProvider.sortOption == option
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: searchProvider.sortOption == option
+                          ? AppConstants.accentColor
+                          : AppConstants.textPrimary,
+                    ),
+                  ),
+                  trailing: searchProvider.sortOption == option
+                      ? Icon(
+                          Icons.check_circle,
+                          color: AppConstants.accentColor,
+                          size: isSmallScreen ? 20 : 22,
+                        )
+                      : null,
+                  onTap: () {
+                    searchProvider.updateSortOption(option);
+                    Navigator.pop(context);
+                  },
+                )),
             const SizedBox(height: 8),
           ],
         ),
@@ -843,10 +867,11 @@ side: const BorderSide(color: AppConstants.accentColor),
                   ),
                 ),
               ),
-              
+
               // Title and Clear All
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -872,9 +897,9 @@ side: const BorderSide(color: AppConstants.accentColor),
                   ],
                 ),
               ),
-              
+
               const Divider(height: 1),
-              
+
               // Filter Content
               Expanded(
                 child: SingleChildScrollView(
@@ -885,25 +910,26 @@ side: const BorderSide(color: AppConstants.accentColor),
                       // Categories
                       _buildCategoryFilter(provider, isSmallScreen),
                       SizedBox(height: isSmallScreen ? 20 : 24),
-                      
+
                       // Price Range
                       _buildPriceFilter(provider, isSmallScreen),
                       SizedBox(height: isSmallScreen ? 20 : 24),
-                      
+
                       // Rating
                       _buildRatingFilter(provider, isSmallScreen),
                     ],
                   ),
                 ),
               ),
-              
+
               // Apply Button
               Container(
                 padding: EdgeInsets.fromLTRB(
                   isSmallScreen ? 16 : 20,
                   isSmallScreen ? 12 : 16,
                   isSmallScreen ? 16 : 20,
-                  MediaQuery.of(context).padding.bottom + (isSmallScreen ? 12 : 16),
+                  MediaQuery.of(context).padding.bottom +
+                      (isSmallScreen ? 12 : 16),
                 ),
                 decoration: BoxDecoration(
                   color: AppConstants.surfaceColor,
@@ -968,7 +994,6 @@ side: const BorderSide(color: AppConstants.accentColor),
           ],
         ),
         SizedBox(height: isSmallScreen ? 12 : 16),
-        
         Wrap(
           spacing: isSmallScreen ? 8 : 12,
           runSpacing: isSmallScreen ? 8 : 12,
@@ -1003,37 +1028,37 @@ side: const BorderSide(color: AppConstants.accentColor),
                 ),
               ),
             ),
-            
+
             // Individual categories
             ...provider.categories.map((category) => GestureDetector(
-              onTap: () => provider.applyCategoryFilter(category.id),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 12 : 16,
-                  vertical: isSmallScreen ? 8 : 10,
-                ),
-                decoration: BoxDecoration(
-                  color: provider.selectedCategoryId == category.id
-                      ? AppConstants.accentColor
-                      : AppConstants.accentColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppConstants.accentColor.withValues(alpha: 0.3),
-                    width: 1,
+                  onTap: () => provider.applyCategoryFilter(category.id),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallScreen ? 12 : 16,
+                      vertical: isSmallScreen ? 8 : 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: provider.selectedCategoryId == category.id
+                          ? AppConstants.accentColor
+                          : AppConstants.accentColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppConstants.accentColor.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      category.name,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 13 : 15,
+                        fontWeight: FontWeight.w600,
+                        color: provider.selectedCategoryId == category.id
+                            ? Colors.white
+                            : AppConstants.accentColor,
+                      ),
+                    ),
                   ),
-                ),
-                child: Text(
-                  category.name,
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 13 : 15,
-                    fontWeight: FontWeight.w600,
-                    color: provider.selectedCategoryId == category.id
-                        ? Colors.white
-                        : AppConstants.accentColor,
-                  ),
-                ),
-              ),
-            )),
+                )),
           ],
         ),
       ],
@@ -1043,7 +1068,7 @@ side: const BorderSide(color: AppConstants.accentColor),
   Widget _buildPriceFilter(SearchProvider provider, bool isSmallScreen) {
     final minPrice = provider.getMinPrice();
     final maxPrice = provider.getMaxPrice();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1066,7 +1091,7 @@ side: const BorderSide(color: AppConstants.accentColor),
           ],
         ),
         SizedBox(height: isSmallScreen ? 12 : 16),
-        
+
         // Current selection display
         Container(
           width: double.infinity,
@@ -1122,9 +1147,9 @@ side: const BorderSide(color: AppConstants.accentColor),
             ],
           ),
         ),
-        
+
         SizedBox(height: isSmallScreen ? 16 : 20),
-        
+
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: isSmallScreen ? 4 : 6,
@@ -1179,7 +1204,6 @@ side: const BorderSide(color: AppConstants.accentColor),
           ],
         ),
         SizedBox(height: isSmallScreen ? 12 : 16),
-        
         Wrap(
           spacing: isSmallScreen ? 8 : 12,
           runSpacing: isSmallScreen ? 8 : 12,
@@ -1196,9 +1220,10 @@ side: const BorderSide(color: AppConstants.accentColor),
     );
   }
 
-  Widget _buildRatingButton(SearchProvider provider, double rating, String label, bool isSmallScreen) {
+  Widget _buildRatingButton(SearchProvider provider, double rating,
+      String label, bool isSmallScreen) {
     final isSelected = provider.minRatingFilter == rating;
-    
+
     return GestureDetector(
       onTap: () => provider.applyRatingFilter(rating),
       child: Container(
@@ -1211,19 +1236,13 @@ side: const BorderSide(color: AppConstants.accentColor),
               ? AppConstants.accentColor
               : AppConstants.accentColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 24),
-          border: Border.all(
-            color: AppConstants.accentColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: isSmallScreen ? 13 : 15,
             fontWeight: FontWeight.w600,
-            color: isSelected
-                ? Colors.white
-                : AppConstants.accentColor,
+            color: isSelected ? Colors.white : AppConstants.accentColor,
           ),
         ),
       ),
@@ -1268,14 +1287,16 @@ side: const BorderSide(color: AppConstants.accentColor),
     return Wrap(
       spacing: isSmallScreen ? 8 : 12,
       runSpacing: isSmallScreen ? 8 : 12,
-      children: List.generate(6, (index) => Container(
-        width: 80 + (index * 20),
-        height: isSmallScreen ? 32 : 36,
-        decoration: BoxDecoration(
-          color: AppConstants.borderColor.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(20),
-        ),
-      )),
+      children: List.generate(
+          6,
+          (index) => Container(
+                width: 80 + (index * 20),
+                height: isSmallScreen ? 32 : 36,
+                decoration: BoxDecoration(
+                  color: AppConstants.borderColor.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              )),
     );
   }
 
@@ -1300,4 +1321,4 @@ side: const BorderSide(color: AppConstants.accentColor),
       },
     );
   }
-} 
+}

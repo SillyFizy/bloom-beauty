@@ -28,14 +28,14 @@ class EnhancedProductCard extends StatelessWidget {
 
   void _navigateToCelebrityProfile(BuildContext context) async {
     if (product.celebrityEndorsement == null || _isNavigating) return;
-    
+
     _isNavigating = true;
     try {
       // Get celebrity provider and data in a single operation
       final celebrityProvider = context.read<CelebrityProvider>();
-      final celebrityData = await celebrityProvider.getCelebrityDataForNavigation(
-        product.celebrityEndorsement!.celebrityName
-      );
+      final celebrityData =
+          await celebrityProvider.getCelebrityDataForNavigation(
+              product.celebrityEndorsement!.celebrityName);
 
       // Check context is still valid before navigation
       if (!context.mounted) return;
@@ -50,22 +50,23 @@ class EnhancedProductCard extends StatelessWidget {
             testimonial: product.celebrityEndorsement!.testimonial,
             recommendedProducts: celebrityData['recommendedProducts'] ?? [],
             socialMediaLinks: celebrityData['socialMediaLinks'] ?? {},
-            morningRoutineProducts: celebrityData['morningRoutineProducts'] ?? [],
-            eveningRoutineProducts: celebrityData['eveningRoutineProducts'] ?? [],
+            morningRoutineProducts:
+                celebrityData['morningRoutineProducts'] ?? [],
+            eveningRoutineProducts:
+                celebrityData['eveningRoutineProducts'] ?? [],
           ),
         ),
       );
     } catch (e) {
       debugPrint('Error navigating to celebrity profile: $e');
-      
+
       // Show error only if context is still valid
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-const SnackBar(
+          const SnackBar(
             content: Text('Failed to load celebrity profile'),
             backgroundColor: AppConstants.errorColor,
             duration: Duration(seconds: 2),
-
           ),
         );
       }
@@ -76,17 +77,17 @@ const SnackBar(
 
   @override
   Widget build(BuildContext context) {
-    final hasDiscount = product.discountPrice != null && 
-                       product.discountPrice! < product.price;
+    final hasDiscount =
+        product.discountPrice != null && product.discountPrice! < product.price;
     final currentPrice = product.getCurrentPrice();
-    
+
     return LayoutBuilder(
       builder: (context, constraints) {
         // Determine card dimensions based on available space
         final cardWidth = constraints.maxWidth;
         final isMobile = cardWidth < 200;
         final isTablet = cardWidth >= 200 && cardWidth < 300;
-        
+
         return GestureDetector(
           onTap: onTap,
           child: Container(
@@ -110,14 +111,18 @@ const SnackBar(
               children: [
                 // Product Image Section - Adjusted for bigger details
                 Expanded(
-                  flex: isMobile ? 6 : 5, // Reduced to give more space to details
-                  child: _buildImageSection(hasDiscount, isMobile, isTablet, context),
+                  flex:
+                      isMobile ? 6 : 5, // Reduced to give more space to details
+                  child: _buildImageSection(
+                      hasDiscount, isMobile, isTablet, context),
                 ),
-                
+
                 // Product Details Section - More space for bigger layout
                 Expanded(
-                  flex: isMobile ? 6 : 6, // Increased for bigger text and spacing
-                  child: _buildDetailsSection(currentPrice, hasDiscount, isMobile, isTablet, context),
+                  flex:
+                      isMobile ? 6 : 6, // Increased for bigger text and spacing
+                  child: _buildDetailsSection(
+                      currentPrice, hasDiscount, isMobile, isTablet, context),
                 ),
               ],
             ),
@@ -127,7 +132,8 @@ const SnackBar(
     );
   }
 
-  Widget _buildImageSection(bool hasDiscount, bool isMobile, bool isTablet, BuildContext context) {
+  Widget _buildImageSection(
+      bool hasDiscount, bool isMobile, bool isTablet, BuildContext context) {
     return Stack(
       children: [
         // Main image container
@@ -147,7 +153,9 @@ const SnackBar(
                 ? CachedNetworkImage(
                     imageUrl: product.images.first,
                     fit: BoxFit.cover,
-                    memCacheWidth: isMobile ? 400 : (isTablet ? 500 : 600), // Increased cache sizes
+                    memCacheWidth: isMobile
+                        ? 400
+                        : (isTablet ? 500 : 600), // Increased cache sizes
                     memCacheHeight: isMobile ? 400 : (isTablet ? 500 : 600),
                     placeholder: (context, url) => Shimmer.fromColors(
                       baseColor: Colors.grey[300]!,
@@ -156,24 +164,25 @@ const SnackBar(
                         color: Colors.white,
                       ),
                     ),
-                    errorWidget: (context, url, error) => _buildImagePlaceholder(isMobile),
+                    errorWidget: (context, url, error) =>
+                        _buildImagePlaceholder(isMobile),
                   )
                 : _buildImagePlaceholder(isMobile),
           ),
         ),
-        
+
         // Wishlist button
         Positioned(
           top: isMobile ? 6 : 8,
           left: isMobile ? 6 : 8,
           child: WishlistButton(
             product: product,
-                size: isMobile ? 16 : 18,
+            size: isMobile ? 16 : 18,
             onPressed: onFavorite,
             heroTag: 'enhanced_card_wishlist_${product.id}',
           ),
         ),
-        
+
         // Discount badge - Moved to top-right to avoid overlap with wishlist
         if (hasDiscount)
           Positioned(
@@ -206,51 +215,52 @@ const SnackBar(
               ),
             ),
           ),
-        
+
         // Beauty Points Badge - Moved to bottom-right corner of image
-        if (product.beautyPoints > 0)
-          Positioned(
-            bottom: isMobile ? 6 : 8,
-            right: isMobile ? 6 : 8,
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 6 : 8, // Increased padding
-                vertical: isMobile ? 3 : 4, // Increased padding
-              ),
-              decoration: BoxDecoration(
-                color: AppConstants.favoriteColor,
-                borderRadius: BorderRadius.circular(isMobile ? 10 : 12), // Increased border radius
-                boxShadow: [
-                  BoxShadow(
-                    color: AppConstants.favoriteColor.withValues(alpha: 0.3),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.stars_rounded,
-                    size: isMobile ? 12 : 14, // Increased icon size
+        // Always show beauty points, even if 0
+        Positioned(
+          bottom: isMobile ? 6 : 8,
+          right: isMobile ? 6 : 8,
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 6 : 8, // Increased padding
+              vertical: isMobile ? 3 : 4, // Increased padding
+            ),
+            decoration: BoxDecoration(
+              color: AppConstants.favoriteColor,
+              borderRadius: BorderRadius.circular(
+                  isMobile ? 10 : 12), // Increased border radius
+              boxShadow: [
+                BoxShadow(
+                  color: AppConstants.favoriteColor.withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.stars_rounded,
+                  size: isMobile ? 12 : 14, // Increased icon size
+                  color: Colors.white,
+                ),
+                SizedBox(width: isMobile ? 2 : 3),
+                Text(
+                  '+${product.beautyPoints}',
+                  style: TextStyle(
+                    fontSize: isMobile ? 10 : 12, // Increased font size
                     color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
                   ),
-                  SizedBox(width: isMobile ? 2 : 3),
-                  Text(
-                    '+${product.beautyPoints}',
-                    style: TextStyle(
-                      fontSize: isMobile ? 10 : 12, // Increased font size
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        
+        ),
+
         // Out of stock overlay
         if (!product.isInStock)
           Positioned.fill(
@@ -300,17 +310,20 @@ const SnackBar(
     );
   }
 
-  Widget _buildDetailsSection(double currentPrice, bool hasDiscount, bool isMobile, bool isTablet, BuildContext context) {
+  Widget _buildDetailsSection(double currentPrice, bool hasDiscount,
+      bool isMobile, bool isTablet, BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate if we need compact layout based on available height
         final isCompactLayout = constraints.maxHeight < 140;
-        
+
         return ClipRect(
           child: Padding(
-            padding: EdgeInsets.all(isMobile ? 6 : 8), // Reduced padding for more space
+            padding: EdgeInsets.all(
+                isMobile ? 6 : 8), // Reduced padding for more space
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribute space evenly
+              mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween, // Distribute space evenly
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Top section - Title and Brand grouped together
@@ -322,9 +335,11 @@ const SnackBar(
                     Text(
                       product.name,
                       style: TextStyle(
-                        fontSize: isCompactLayout 
-                            ? (isMobile ? 11 : 12) 
-                            : (isMobile ? 13 : 15), // Slightly increased font sizes
+                        fontSize: isCompactLayout
+                            ? (isMobile ? 11 : 12)
+                            : (isMobile
+                                ? 13
+                                : 15), // Slightly increased font sizes
                         fontWeight: FontWeight.w600,
                         color: AppConstants.textPrimary,
                         height: 1.1, // Tighter line height
@@ -332,16 +347,16 @@ const SnackBar(
                       maxLines: isCompactLayout ? 1 : 2, // Adaptive max lines
                       overflow: TextOverflow.ellipsis,
                     ),
-                    
+
                     // Small gap between title and brand
                     SizedBox(height: isCompactLayout ? 2 : 3),
-                    
+
                     // 2. Product Brand - Directly under title
                     Text(
                       product.brand,
                       style: TextStyle(
-                        fontSize: isCompactLayout 
-                            ? (isMobile ? 9 : 10) 
+                        fontSize: isCompactLayout
+                            ? (isMobile ? 9 : 10)
                             : (isMobile ? 10 : 11),
                         color: AppConstants.textSecondary,
                         fontWeight: FontWeight.w500,
@@ -352,7 +367,7 @@ const SnackBar(
                     ),
                   ],
                 ),
-                
+
                 // 3. Celebrity Badge Area - Fixed space when present
                 if (product.celebrityEndorsement != null)
                   GestureDetector(
@@ -360,8 +375,12 @@ const SnackBar(
                     child: Row(
                       children: [
                         Container(
-                          width: isCompactLayout ? 24 : (isMobile ? 28 : 32), // Increased avatar size
-                          height: isCompactLayout ? 24 : (isMobile ? 28 : 32), // Increased avatar size
+                          width: isCompactLayout
+                              ? 24
+                              : (isMobile ? 28 : 32), // Increased avatar size
+                          height: isCompactLayout
+                              ? 24
+                              : (isMobile ? 28 : 32), // Increased avatar size
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
@@ -370,7 +389,8 @@ const SnackBar(
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppConstants.accentColor.withValues(alpha: 0.2),
+                                color: AppConstants.accentColor
+                                    .withValues(alpha: 0.2),
                                 blurRadius: 3, // Increased shadow
                                 offset: const Offset(0, 1),
                               ),
@@ -378,16 +398,24 @@ const SnackBar(
                           ),
                           child: ClipOval(
                             child: CachedNetworkImage(
-                              imageUrl: product.celebrityEndorsement!.celebrityImage,
+                              imageUrl:
+                                  product.celebrityEndorsement!.celebrityImage,
                               fit: BoxFit.cover,
-                              memCacheWidth: isCompactLayout ? 48 : (isMobile ? 56 : 64), // Increased cache sizes
-                              memCacheHeight: isCompactLayout ? 48 : (isMobile ? 56 : 64),
+                              memCacheWidth: isCompactLayout
+                                  ? 48
+                                  : (isMobile
+                                      ? 56
+                                      : 64), // Increased cache sizes
+                              memCacheHeight:
+                                  isCompactLayout ? 48 : (isMobile ? 56 : 64),
                               placeholder: (context, url) => Shimmer.fromColors(
-                                baseColor: AppConstants.borderColor.withValues(alpha: 0.3),
+                                baseColor: AppConstants.borderColor
+                                    .withValues(alpha: 0.3),
                                 highlightColor: AppConstants.surfaceColor,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                    color: AppConstants.borderColor
+                                        .withValues(alpha: 0.3),
                                   ),
                                 ),
                               ),
@@ -396,18 +424,27 @@ const SnackBar(
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        AppConstants.accentColor.withValues(alpha: 0.6),
-                                        AppConstants.accentColor.withValues(alpha: 0.3),
+                                        AppConstants.accentColor
+                                            .withValues(alpha: 0.6),
+                                        AppConstants.accentColor
+                                            .withValues(alpha: 0.3),
                                       ],
                                     ),
                                   ),
                                   child: Center(
                                     child: Text(
-                                      product.celebrityEndorsement!.celebrityName.isNotEmpty 
-                                          ? product.celebrityEndorsement!.celebrityName[0].toUpperCase() 
+                                      product.celebrityEndorsement!
+                                              .celebrityName.isNotEmpty
+                                          ? product.celebrityEndorsement!
+                                              .celebrityName[0]
+                                              .toUpperCase()
                                           : 'C',
                                       style: TextStyle(
-                                        fontSize: isCompactLayout ? 10 : (isMobile ? 12 : 14), // Increased font size
+                                        fontSize: isCompactLayout
+                                            ? 10
+                                            : (isMobile
+                                                ? 12
+                                                : 14), // Increased font size
                                         fontWeight: FontWeight.bold,
                                         color: AppConstants.surfaceColor,
                                       ),
@@ -418,7 +455,9 @@ const SnackBar(
                             ),
                           ),
                         ),
-                        SizedBox(width: isCompactLayout ? 6 : 8), // Increased spacing
+                        SizedBox(
+                            width:
+                                isCompactLayout ? 6 : 8), // Increased spacing
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +466,11 @@ const SnackBar(
                               Text(
                                 'Picked by',
                                 style: TextStyle(
-                                  fontSize: isCompactLayout ? 8 : (isMobile ? 9 : 10), // Slightly increased text
+                                  fontSize: isCompactLayout
+                                      ? 8
+                                      : (isMobile
+                                          ? 9
+                                          : 10), // Slightly increased text
                                   color: AppConstants.textSecondary,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -435,7 +478,11 @@ const SnackBar(
                               Text(
                                 product.celebrityEndorsement!.celebrityName,
                                 style: TextStyle(
-                                  fontSize: isCompactLayout ? 10 : (isMobile ? 11 : 12), // Slightly increased text
+                                  fontSize: isCompactLayout
+                                      ? 10
+                                      : (isMobile
+                                          ? 11
+                                          : 12), // Slightly increased text
                                   color: AppConstants.accentColor,
                                   fontWeight: FontWeight.w600,
                                   height: 1.0,
@@ -449,7 +496,7 @@ const SnackBar(
                       ],
                     ),
                   ),
-                
+
                 // 4. Bottom Row - Price at far left and Rating/Count at far right
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -466,8 +513,8 @@ const SnackBar(
                           Text(
                             Formatters.formatPrice(currentPrice),
                             style: TextStyle(
-                              fontSize: isCompactLayout 
-                                  ? (isMobile ? 13 : 15) 
+                              fontSize: isCompactLayout
+                                  ? (isMobile ? 13 : 15)
                                   : (isMobile ? 15 : 17),
                               fontWeight: FontWeight.w700,
                               color: AppConstants.textPrimary,
@@ -477,16 +524,15 @@ const SnackBar(
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          
+
                           // Original price if discounted (below current price)
                           if (hasDiscount) ...[
-const SizedBox(height: 2),
-
+                            const SizedBox(height: 2),
                             Text(
                               Formatters.formatPrice(product.price),
                               style: TextStyle(
-                                fontSize: isCompactLayout 
-                                    ? (isMobile ? 10 : 11) 
+                                fontSize: isCompactLayout
+                                    ? (isMobile ? 10 : 11)
                                     : (isMobile ? 11 : 12),
                                 color: AppConstants.textSecondary,
                                 decoration: TextDecoration.lineThrough,
@@ -501,7 +547,7 @@ const SizedBox(height: 2),
                         ],
                       ),
                     ),
-                    
+
                     // Right side - Rating only (removed count)
                     Container(
                       padding: EdgeInsets.symmetric(
@@ -510,32 +556,29 @@ const SizedBox(height: 2),
                       ),
                       decoration: BoxDecoration(
                         color: AppConstants.accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(isCompactLayout ? 5 : (isMobile ? 6 : 8)),
-                        border: Border.all(
-                          color: AppConstants.accentColor.withValues(alpha: 0.2),
-                          width: 1,
-                        ),
+                        borderRadius: BorderRadius.circular(
+                            isCompactLayout ? 5 : (isMobile ? 6 : 8)),
                       ),
                       child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.star_rounded,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.star_rounded,
                             size: isCompactLayout ? 12 : (isMobile ? 14 : 16),
-                              color: AppConstants.accentColor,
-                            ),
-const SizedBox(width: 2),
-
-                            Text(
-                              product.rating.toStringAsFixed(1),
-                              style: TextStyle(
-                              fontSize: isCompactLayout ? 10 : (isMobile ? 11 : 13),
+                            color: AppConstants.accentColor,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            product.rating.toStringAsFixed(1),
+                            style: TextStyle(
+                              fontSize:
+                                  isCompactLayout ? 10 : (isMobile ? 11 : 13),
                               color: AppConstants.accentColor,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.1,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
                       ),
                     ),
                   ],
@@ -547,4 +590,4 @@ const SizedBox(width: 2),
       },
     );
   }
-} 
+}

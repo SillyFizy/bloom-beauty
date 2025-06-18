@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen>
     return '${formatter.format(price)} IQD';
   }
 
-  // Helper function to navigate to product with provider pattern
+  // Helper function to navigate to product with only ID - simplified approach
   Future<void> _navigateToProductWithProvider(
     BuildContext context,
     Product product, {
@@ -126,58 +126,20 @@ class _HomeScreenState extends State<HomeScreen>
   }) async {
     try {
       final productProvider = context.read<ProductProvider>();
-      final freshProduct = await productProvider.getProductById(product.id);
 
-      if (freshProduct != null) {
-        Product productToNavigate = freshProduct;
+      // Add to recently viewed using the current product data
+      await productProvider.addToRecentlyViewed(product);
 
-        // If we have celebrity information, ensure it's included in the product
-        if (celebrityName != null) {
-          productToNavigate = Product(
-            id: freshProduct.id,
-            name: freshProduct.name,
-            description: freshProduct.description,
-            price: freshProduct.price,
-            discountPrice: freshProduct.discountPrice,
-            images: freshProduct.images,
-            categoryId: freshProduct.categoryId,
-            brand: freshProduct.brand,
-            rating: freshProduct.rating,
-            reviewCount: freshProduct.reviewCount,
-            isInStock: freshProduct.isInStock,
-            ingredients: freshProduct.ingredients,
-            beautyPoints: freshProduct.beautyPoints,
-            variants: freshProduct.variants,
-            reviews: freshProduct.reviews,
-            celebrityEndorsement: CelebrityEndorsement(
-              celebrityName: celebrityName,
-              celebrityImage: celebrityImage ?? '',
-              testimonial: testimonial,
-            ),
-          );
-        }
-
-        // Add to recently viewed
-        await productProvider.addToRecentlyViewed(productToNavigate);
-
-        // Navigate to product detail using GoRouter
-        if (context.mounted) {
-          context.pushNamed('product-detail', pathParameters: {
-            'slug': productToNavigate.id,
-          });
-        }
-      } else {
-        // Fallback to using slug if service fails
-        debugPrint('Error fetching fresh product data');
-        if (context.mounted) {
-          context.pushNamed('product-detail', pathParameters: {
-            'slug': product.id,
-          });
-        }
+      // Navigate to product detail using GoRouter with only the ID
+      // Product detail screen will fetch fresh data from backend
+      if (context.mounted) {
+        context.pushNamed('product-detail', pathParameters: {
+          'slug': product.id,
+        });
       }
     } catch (e) {
-      // Error handling - use slug to fetch proper data
-      debugPrint('Error fetching fresh product data: $e');
+      debugPrint('Error navigating to product: $e');
+      // Even if adding to recently viewed fails, still navigate
       if (context.mounted) {
         context.pushNamed('product-detail', pathParameters: {
           'slug': product.id,
@@ -794,46 +756,45 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ),
                   // Beauty Points positioned at bottom-right of image
-                  if (product.beautyPoints > 0)
-                    Positioned(
-                      bottom: isSmallScreen ? 6 : 8,
-                      right: isSmallScreen ? 6 : 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color:
-                              AppConstants.favoriteColor.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.stars_rounded,
-                              size: isSmallScreen ? 12 : 14,
+                  Positioned(
+                    bottom: isSmallScreen ? 6 : 8,
+                    right: isSmallScreen ? 6 : 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color:
+                            AppConstants.favoriteColor.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.stars_rounded,
+                            size: isSmallScreen ? 12 : 14,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '+${product.beautyPoints}',
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 10 : 12,
                               color: Colors.white,
+                              fontWeight: FontWeight.w600,
                             ),
-                            const SizedBox(width: 2),
-                            Text(
-                              '+${product.beautyPoints}',
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 10 : 12,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
@@ -1188,46 +1149,45 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                       // Beauty Points positioned at bottom-right of image
-                      if (product.beautyPoints > 0)
-                        Positioned(
-                          bottom: isSmallScreen ? 6 : 8,
-                          right: isSmallScreen ? 6 : 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppConstants.favoriteColor
-                                  .withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.stars_rounded,
-                                  size: isSmallScreen ? 12 : 14,
+                      Positioned(
+                        bottom: isSmallScreen ? 6 : 8,
+                        right: isSmallScreen ? 6 : 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppConstants.favoriteColor
+                                .withValues(alpha: 0.9),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.stars_rounded,
+                                size: isSmallScreen ? 12 : 14,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                '+${product.beautyPoints}',
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 10 : 12,
                                   color: Colors.white,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  '+${product.beautyPoints}',
-                                  style: TextStyle(
-                                    fontSize: isSmallScreen ? 10 : 12,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
+                      ),
                     ],
                   ),
                 ),

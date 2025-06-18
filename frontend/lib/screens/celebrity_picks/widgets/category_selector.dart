@@ -18,7 +18,7 @@ class CategorySelector extends StatelessWidget {
     return Consumer<CelebrityPicksProvider>(
       builder: (context, provider, child) {
         final categories = provider.categories;
-        
+
         if (categories.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -65,12 +65,14 @@ class CategorySelector extends StatelessWidget {
                         ),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: AppConstants.accentColor.withValues(alpha: 0.2),
+                          color:
+                              AppConstants.accentColor.withValues(alpha: 0.2),
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppConstants.accentColor.withValues(alpha: 0.1),
+                            color:
+                                AppConstants.accentColor.withValues(alpha: 0.1),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -97,10 +99,12 @@ class CategorySelector extends StatelessWidget {
                       PopupMenuItem<BrowseMode>(
                         value: BrowseMode.celebrity,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 8),
                           decoration: BoxDecoration(
-                            color: provider.browseMode == BrowseMode.celebrity 
-                                ? AppConstants.accentColor.withValues(alpha: 0.1)
+                            color: provider.browseMode == BrowseMode.celebrity
+                                ? AppConstants.accentColor
+                                    .withValues(alpha: 0.1)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -108,9 +112,10 @@ class CategorySelector extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.star_rounded,
-                                color: provider.browseMode == BrowseMode.celebrity 
-                                    ? AppConstants.accentColor 
-                                    : AppConstants.textSecondary,
+                                color:
+                                    provider.browseMode == BrowseMode.celebrity
+                                        ? AppConstants.accentColor
+                                        : AppConstants.textSecondary,
                                 size: isSmallScreen ? 18 : 20,
                               ),
                               const SizedBox(width: 12),
@@ -118,11 +123,13 @@ class CategorySelector extends StatelessWidget {
                                 'Browse by Celebrity',
                                 style: TextStyle(
                                   fontSize: isSmallScreen ? 14 : 16,
-                                  fontWeight: provider.browseMode == BrowseMode.celebrity 
-                                      ? FontWeight.w600 
+                                  fontWeight: provider.browseMode ==
+                                          BrowseMode.celebrity
+                                      ? FontWeight.w600
                                       : FontWeight.w500,
-                                  color: provider.browseMode == BrowseMode.celebrity 
-                                      ? AppConstants.accentColor 
+                                  color: provider.browseMode ==
+                                          BrowseMode.celebrity
+                                      ? AppConstants.accentColor
                                       : AppConstants.textPrimary,
                                 ),
                               ),
@@ -133,10 +140,12 @@ class CategorySelector extends StatelessWidget {
                       PopupMenuItem<BrowseMode>(
                         value: BrowseMode.category,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 8),
                           decoration: BoxDecoration(
-                            color: provider.browseMode == BrowseMode.category 
-                                ? AppConstants.accentColor.withValues(alpha: 0.1)
+                            color: provider.browseMode == BrowseMode.category
+                                ? AppConstants.accentColor
+                                    .withValues(alpha: 0.1)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -144,9 +153,10 @@ class CategorySelector extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.category_rounded,
-                                color: provider.browseMode == BrowseMode.category 
-                                    ? AppConstants.accentColor 
-                                    : AppConstants.textSecondary,
+                                color:
+                                    provider.browseMode == BrowseMode.category
+                                        ? AppConstants.accentColor
+                                        : AppConstants.textSecondary,
                                 size: isSmallScreen ? 18 : 20,
                               ),
                               const SizedBox(width: 12),
@@ -154,12 +164,14 @@ class CategorySelector extends StatelessWidget {
                                 'Browse by Category',
                                 style: TextStyle(
                                   fontSize: isSmallScreen ? 14 : 16,
-                                  fontWeight: provider.browseMode == BrowseMode.category 
-                                      ? FontWeight.w600 
-                                      : FontWeight.w500,
-                                  color: provider.browseMode == BrowseMode.category 
-                                      ? AppConstants.accentColor 
-                                      : AppConstants.textPrimary,
+                                  fontWeight:
+                                      provider.browseMode == BrowseMode.category
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                  color:
+                                      provider.browseMode == BrowseMode.category
+                                          ? AppConstants.accentColor
+                                          : AppConstants.textPrimary,
                                 ),
                               ),
                             ],
@@ -188,7 +200,7 @@ class CategorySelector extends StatelessWidget {
                         isSmallScreen,
                       );
                     }
-                    
+
                     final category = categories[index - 1];
                     return _buildCategoryItem(
                       context,
@@ -211,14 +223,14 @@ class CategorySelector extends StatelessWidget {
   Widget _buildCategoryItem(
     BuildContext context,
     CelebrityPicksProvider provider,
-    String? categoryId,
+    int? categoryId,
     String displayName,
     String imageUrl,
     bool isSmallScreen,
   ) {
     final isSelected = provider.selectedCategoryId == categoryId;
     final size = isSmallScreen ? 65.0 : 75.0;
-    
+
     return GestureDetector(
       onTap: () => provider.selectCategory(categoryId),
       child: Container(
@@ -233,19 +245,20 @@ class CategorySelector extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected 
-                      ? AppConstants.accentColor 
+                  color: isSelected
+                      ? AppConstants.accentColor
                       : AppConstants.borderColor.withValues(alpha: 0.3),
                   width: isSelected ? 3 : 2,
                 ),
-                boxShadow: isSelected 
+                boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: AppConstants.accentColor.withValues(alpha: 0.3),
+                          color:
+                              AppConstants.accentColor.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
-                      ] 
+                      ]
                     : [],
               ),
               child: ClipOval(
@@ -260,8 +273,8 @@ class CategorySelector extends StatelessWidget {
               style: TextStyle(
                 fontSize: isSmallScreen ? 12 : 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected 
-                    ? AppConstants.accentColor 
+                color: isSelected
+                    ? AppConstants.accentColor
                     : AppConstants.textSecondary,
               ),
               textAlign: TextAlign.center,
@@ -335,4 +348,4 @@ class CategorySelector extends StatelessWidget {
       ),
     );
   }
-} 
+}

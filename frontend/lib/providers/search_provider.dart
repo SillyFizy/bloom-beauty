@@ -25,20 +25,20 @@ class SearchProvider with ChangeNotifier {
   List<String> _popularSearches = [];
   List<String> _searchSuggestions = [];
   List<category_model.Category> _categories = [];
-  
+
   bool _isLoading = false;
   bool _isSearching = false;
   bool _isLoadingMore = false;
   String? _error;
-  
+
   // Search state
   String _currentQuery = '';
-  String? _selectedCategoryId;
+  int? _selectedCategoryId;
   SearchSortOption _sortOption = SearchSortOption.relevance;
   double _minPriceFilter = 0;
   double _maxPriceFilter = 1000000;
   double _minRatingFilter = 0;
-  
+
   // Pagination
   int _currentPage = 0;
   final int _pageSize = 20;
@@ -49,25 +49,27 @@ class SearchProvider with ChangeNotifier {
   List<String> get searchHistory => List.unmodifiable(_searchHistory);
   List<String> get popularSearches => List.unmodifiable(_popularSearches);
   List<String> get searchSuggestions => List.unmodifiable(_searchSuggestions);
-  List<category_model.Category> get categories => List.unmodifiable(_categories);
-  
+  List<category_model.Category> get categories =>
+      List.unmodifiable(_categories);
+
   bool get isLoading => _isLoading;
   bool get isSearching => _isSearching;
   bool get isLoadingMore => _isLoadingMore;
   bool get hasError => _error != null;
   String? get error => _error;
-  
+
   String get currentQuery => _currentQuery;
-  String? get selectedCategoryId => _selectedCategoryId;
+  int? get selectedCategoryId => _selectedCategoryId;
   SearchSortOption get sortOption => _sortOption;
   double get minPriceFilter => _minPriceFilter;
   double get maxPriceFilter => _maxPriceFilter;
   double get minRatingFilter => _minRatingFilter;
   bool get hasMoreResults => _hasMoreResults;
-  bool get hasActiveFilters => _selectedCategoryId != null || 
-                               _minPriceFilter > getMinPrice() || 
-                               _maxPriceFilter < getMaxPrice() || 
-                               _minRatingFilter > 0;
+  bool get hasActiveFilters =>
+      _selectedCategoryId != null ||
+      _minPriceFilter > getMinPrice() ||
+      _maxPriceFilter < getMaxPrice() ||
+      _minRatingFilter > 0;
   bool get hasSearchHistory => _searchHistory.isNotEmpty;
   int get searchHistoryCount => _searchHistory.length;
 
@@ -113,16 +115,17 @@ class SearchProvider with ChangeNotifier {
   /// Load search history from storage
   Future<void> _loadSearchHistory() async {
     try {
-      final history = await StorageService.getStringList('search_history') ?? [];
+      final history =
+          await StorageService.getStringList('search_history') ?? [];
       // Clean up any empty or duplicate entries and limit to 15 items
       final cleanedHistory = history
           .where((item) => item.trim().isNotEmpty)
           .toSet() // Remove duplicates
           .take(15)
           .toList();
-      
+
       _searchHistory = cleanedHistory;
-      
+
       // Save cleaned history back to storage if it was modified
       if (cleanedHistory.length != history.length) {
         await _saveSearchHistory();
@@ -142,25 +145,55 @@ class SearchProvider with ChangeNotifier {
     }
   }
 
-  /// Load popular searches
+  /// Load popular searches based on backend data
   Future<void> _loadPopularSearches() async {
     try {
-      // This would typically come from analytics/backend
+      // Generate popular searches from actual backend categories and brands
+      final popularSet = <String>{};
+
+      // Add real category names from backend
+      for (final category in _categories) {
+        if (category.name.isNotEmpty) {
+          popularSet.add(category.name.toLowerCase());
+        }
+      }
+
+      // Add top brands from backend products
+      final brandCounts = <String, int>{};
+      for (final product in _allProducts) {
+        if (product.brand.isNotEmpty) {
+          final brand = product.brand.toLowerCase();
+          brandCounts[brand] = (brandCounts[brand] ?? 0) + 1;
+        }
+      }
+
+      // Add top 5 brands by product count
+      final topBrands = brandCounts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      for (int i = 0; i < 5 && i < topBrands.length; i++) {
+        popularSet.add(topBrands[i].key);
+      }
+
+      // Add some common beauty terms as fallback
+      popularSet.addAll([
+        'lipstick',
+        'foundation',
+        'mascara',
+        'eyeshadow',
+        'blush',
+      ]);
+
+      _popularSearches = popularSet.take(10).toList();
+    } catch (e) {
+      debugPrint('Error loading popular searches: $e');
+      // Fallback to basic terms if backend data fails
       _popularSearches = [
         'lipstick',
         'foundation',
         'mascara',
         'eyeshadow',
         'blush',
-        'concealer',
-        'primer',
-        'bronzer',
-        'highlighter',
-        'lip gloss',
       ];
-    } catch (e) {
-      debugPrint('Error loading popular searches: $e');
-      _popularSearches = [];
     }
   }
 
@@ -183,7 +216,7 @@ class SearchProvider with ChangeNotifier {
 
     try {
       final results = await _performSearch();
-      
+
       if (isNewSearch) {
         _searchResults = results;
       } else {
@@ -221,22 +254,49 @@ class SearchProvider with ChangeNotifier {
 
   /// Perform the actual search with filters and sorting
   Future<List<Product>> _performSearch() async {
-    List<Product> filtered = List.from(_allProducts);
+    List<Product> filtered;
 
-    // Apply search query filter
+    // Use backend search if we have a query, otherwise use all products
     if (_currentQuery.isNotEmpty) {
-      final queryLower = _currentQuery.toLowerCase();
-      filtered = filtered.where((product) {
-        return product.name.toLowerCase().contains(queryLower) ||
-               product.brand.toLowerCase().contains(queryLower) ||
-               product.description.toLowerCase().contains(queryLower) ||
-               (product.celebrityEndorsement?.celebrityName.toLowerCase().contains(queryLower) ?? false);
-      }).toList();
+      try {
+        // Use backend search for better performance and accuracy
+        filtered = await _productService.searchProducts(_currentQuery);
+
+        // Note: Backend search already handles filtering out of stock products
+        // and basic text search, so we only need to apply additional frontend filters
+      } catch (e) {
+        debugPrint('Search failed, falling back to local products: $e');
+        // Fallback to local filtering if search fails
+        filtered = List.from(_allProducts);
+        final queryLower = _currentQuery.toLowerCase();
+        filtered = filtered.where((product) {
+          return product.name.toLowerCase().contains(queryLower) ||
+              product.brand.toLowerCase().contains(queryLower) ||
+              product.description.toLowerCase().contains(queryLower) ||
+              (product.celebrityEndorsement?.celebrityName
+                      .toLowerCase()
+                      .contains(queryLower) ??
+                  false);
+        }).toList();
+      }
+    } else {
+      filtered = List.from(_allProducts);
     }
 
     // Apply category filter
     if (_selectedCategoryId != null) {
-      filtered = filtered.where((product) => product.categoryId == _selectedCategoryId).toList();
+      try {
+        final selectedCategory = _categories.firstWhere(
+          (category) => category.id == _selectedCategoryId,
+        );
+
+        filtered = filtered
+            .where((product) => product.categoryId == selectedCategory.name)
+            .toList();
+      } catch (e) {
+        // Category not found, don't filter (show all products)
+        debugPrint('Category with ID $_selectedCategoryId not found: $e');
+      }
     }
 
     // Apply price filter
@@ -247,7 +307,9 @@ class SearchProvider with ChangeNotifier {
 
     // Apply rating filter
     if (_minRatingFilter > 0) {
-      filtered = filtered.where((product) => product.rating >= _minRatingFilter).toList();
+      filtered = filtered
+          .where((product) => product.rating >= _minRatingFilter)
+          .toList();
     }
 
     // Apply sorting
@@ -256,8 +318,8 @@ class SearchProvider with ChangeNotifier {
     // Apply pagination
     final startIndex = _currentPage * _pageSize;
     final endIndex = (startIndex + _pageSize).clamp(0, filtered.length);
-    
-    return startIndex < filtered.length 
+
+    return startIndex < filtered.length
         ? filtered.sublist(startIndex, endIndex)
         : [];
   }
@@ -272,10 +334,12 @@ class SearchProvider with ChangeNotifier {
         // Assuming products are already sorted by newest
         break;
       case SearchSortOption.priceLowToHigh:
-        products.sort((a, b) => (a.discountPrice ?? a.price).compareTo(b.discountPrice ?? b.price));
+        products.sort((a, b) =>
+            (a.discountPrice ?? a.price).compareTo(b.discountPrice ?? b.price));
         break;
       case SearchSortOption.priceHighToLow:
-        products.sort((a, b) => (b.discountPrice ?? b.price).compareTo(a.discountPrice ?? a.price));
+        products.sort((a, b) =>
+            (b.discountPrice ?? b.price).compareTo(a.discountPrice ?? a.price));
         break;
       case SearchSortOption.highestRated:
         products.sort((a, b) => b.rating.compareTo(a.rating));
@@ -343,7 +407,7 @@ class SearchProvider with ChangeNotifier {
     _minPriceFilter = getMinPrice();
     _maxPriceFilter = getMaxPrice();
     _minRatingFilter = 0;
-    
+
     if (_currentQuery.isNotEmpty) {
       search(_currentQuery, isNewSearch: true);
     } else {
@@ -362,7 +426,7 @@ class SearchProvider with ChangeNotifier {
   }
 
   /// Apply category filter
-  void applyCategoryFilter(String? categoryId) {
+  void applyCategoryFilter(int? categoryId) {
     _selectedCategoryId = categoryId;
     if (_currentQuery.isNotEmpty) {
       search(_currentQuery, isNewSearch: true);
@@ -396,27 +460,27 @@ class SearchProvider with ChangeNotifier {
   Future<void> _addToSearchHistory(String query) async {
     try {
       final trimmedQuery = query.trim();
-      
+
       // Don't add empty queries or queries that are too short
       if (trimmedQuery.isEmpty || trimmedQuery.length < 2) {
         return;
       }
-      
+
       // Remove if already exists to avoid duplicates (case-insensitive)
-      _searchHistory.removeWhere((item) => 
-          item.toLowerCase() == trimmedQuery.toLowerCase());
-      
+      _searchHistory.removeWhere(
+          (item) => item.toLowerCase() == trimmedQuery.toLowerCase());
+
       // Add to beginning of the list
       _searchHistory.insert(0, trimmedQuery);
-      
+
       // Keep only last 15 searches
       if (_searchHistory.length > 15) {
         _searchHistory = _searchHistory.take(15).toList();
       }
-      
+
       // Save to storage
       await _saveSearchHistory();
-      
+
       // Notify listeners to update UI
       notifyListeners();
     } catch (e) {
@@ -472,10 +536,12 @@ class SearchProvider with ChangeNotifier {
     return {
       'totalSearches': _searchHistory.length,
       'uniqueSearches': _searchHistory.toSet().length,
-      'averageSearchLength': _searchHistory.isEmpty 
-          ? 0.0 
-          : _searchHistory.map((s) => s.length).reduce((a, b) => a + b) / _searchHistory.length,
-      'mostRecentSearch': _searchHistory.isNotEmpty ? _searchHistory.first : null,
+      'averageSearchLength': _searchHistory.isEmpty
+          ? 0.0
+          : _searchHistory.map((s) => s.length).reduce((a, b) => a + b) /
+              _searchHistory.length,
+      'mostRecentSearch':
+          _searchHistory.isNotEmpty ? _searchHistory.first : null,
       'oldestSearch': _searchHistory.isNotEmpty ? _searchHistory.last : null,
     };
   }
@@ -489,7 +555,7 @@ class SearchProvider with ChangeNotifier {
           .toSet()
           .take(15)
           .toList();
-      
+
       _searchHistory = cleanedHistory;
       await _saveSearchHistory();
       notifyListeners();
@@ -540,4 +606,4 @@ class SearchProvider with ChangeNotifier {
   void _clearError() {
     _error = null;
   }
-} 
+}
