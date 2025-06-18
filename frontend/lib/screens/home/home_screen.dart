@@ -134,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen>
       // Product detail screen will fetch fresh data from backend
       if (context.mounted) {
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       }
     } catch (e) {
@@ -142,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen>
       // Even if adding to recently viewed fails, still navigate
       if (context.mounted) {
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       }
     }

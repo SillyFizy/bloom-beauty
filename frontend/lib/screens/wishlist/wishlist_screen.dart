@@ -8,6 +8,7 @@ import '../../providers/product_provider.dart';
 import '../../models/product_model.dart';
 import '../../widgets/common/wishlist_button.dart';
 import '../../widgets/common/optimized_image.dart';
+import '../../utils/wishlist_utils.dart';
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({super.key});
@@ -16,21 +17,10 @@ class WishlistScreen extends StatefulWidget {
   State<WishlistScreen> createState() => _WishlistScreenState();
 }
 
-class _WishlistScreenState extends State<WishlistScreen> {
+class _WishlistScreenState extends State<WishlistScreen>
+    with WishlistScreenMixin {
   String _searchQuery = '';
   WishlistSortOption _sortOption = WishlistSortOption.newest;
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize wishlist data
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final wishlistProvider = context.read<WishlistProvider>();
-      if (!wishlistProvider.isInitialized) {
-        wishlistProvider.loadWishlistFromStorage();
-      }
-    });
-  }
 
   String _formatPrice(double price) {
     final formatter = NumberFormat('#,###');
@@ -47,7 +37,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
       // Navigate with only ID - product detail will fetch fresh data
       if (mounted) {
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       }
     } catch (e) {
@@ -55,7 +45,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
       // Even if adding to recently viewed fails, still navigate
       if (mounted) {
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       }
     }

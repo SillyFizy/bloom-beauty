@@ -109,18 +109,18 @@ class ProductService {
     }
   }
 
-  /// Get product detail from backend API using slug
-  Future<Product?> getProductDetail(String slug) async {
+  /// Get product detail from backend API using product ID
+  Future<Product?> getProductDetail(String productId) async {
     try {
-      debugPrint('Fetching product detail for slug: $slug');
-      return await ApiService.getProductDetail(slug);
+      debugPrint('Fetching product detail for ID: $productId');
+      return await ApiService.getProductDetail(productId);
     } catch (e) {
       debugPrint('Failed to load product detail from API: $e');
       debugPrint('API Error details: $e');
       // Do NOT fall back to cached data for product details as it has incorrect descriptions
       // The cached data uses product name as description, which is wrong
       throw Exception(
-          'Could not load product detail for slug: $slug. API Error: $e');
+          'Could not load product detail for ID: $productId. API Error: $e');
     }
   }
 

@@ -12,11 +12,11 @@ import '../../widgets/common/optimized_image.dart';
 import '../celebrity/celebrity_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  final String slug; // Always use slug to fetch from backend
+  final String productId; // Always use product ID to fetch from backend
 
   const ProductDetailScreen({
     super.key,
-    required this.slug,
+    required this.productId,
   });
 
   @override
@@ -84,7 +84,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     try {
       final productProvider =
           Provider.of<ProductProvider>(context, listen: false);
-      final product = await productProvider.getProductDetail(widget.slug);
+      final product = await productProvider.getProductDetail(widget.productId);
 
       if (mounted) {
         setState(() {
@@ -349,7 +349,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                             children: [
                               _buildTransparentActionButton(
                                 icon: Icons.arrow_back_ios,
-                                onPressed: () => context.goNamed('home'),
+                                onPressed: () => Navigator.pop(context),
                                 isSmallScreen: isSmallScreen,
                               ),
                               Row(
@@ -538,7 +538,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               children: [
                 _buildStickyActionButton(
                   icon: Icons.arrow_back_ios,
-                  onPressed: () => context.goNamed('home'),
+                  onPressed: () => Navigator.pop(context),
                   isSmallScreen: isSmallScreen,
                 ),
 

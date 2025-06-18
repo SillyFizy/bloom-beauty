@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../models/product_model.dart';
 import '../../utils/formatters.dart';
+import '../../utils/wishlist_utils.dart';
 import '../../screens/celebrity/celebrity_screen.dart';
 import '../../providers/celebrity_provider.dart';
 import '../common/wishlist_button.dart';

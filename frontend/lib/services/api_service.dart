@@ -264,11 +264,11 @@ class ApiService {
     }
   }
 
-  /// Get product detail by slug - includes images, variants, and full details
-  static Future<Product> getProductDetail(String slug) async {
+  /// Get product detail by ID - includes images, variants, and full details
+  static Future<Product> getProductDetail(String productId) async {
     try {
-      print('DEBUG: Fetching product detail for slug: $slug');
-      final response = await get('/v1/products/$slug/');
+      print('DEBUG: Fetching product detail for ID: $productId');
+      final response = await get('/v1/products/$productId/');
 
       // Convert backend data format to match frontend model expectations
       final productData = Map<String, dynamic>.from(response);
@@ -282,11 +282,11 @@ class ApiService {
       }
 
       // Add mock rating and review count (beauty points come from backend)
-      final productId = int.tryParse(productData['id'].toString()) ?? 0;
+      final productIdNum = int.tryParse(productData['id'].toString()) ?? 0;
       productData['rating'] =
-          4.5 + (productId % 10) / 10.0; // Mock rating 4.5-5.4
+          4.5 + (productIdNum % 10) / 10.0; // Mock rating 4.5-5.4
       productData['review_count'] =
-          50 + (productId % 200); // Mock review count 50-249
+          50 + (productIdNum % 200); // Mock review count 50-249
 
       // Safe price conversion - handle both string and number formats
       double price = 0.0;
@@ -359,7 +359,7 @@ class ApiService {
         ];
 
         // Use product ID to select a consistent random image
-        final imageIndex = productId % fallbackImages.length;
+        final imageIndex = productIdNum % fallbackImages.length;
         final fallbackImage = fallbackImages[imageIndex];
         final imageUrl = '$baseImageUrl/media/products/$fallbackImage';
         finalImages.add(imageUrl);
@@ -398,7 +398,7 @@ class ApiService {
         }
       }
 
-      // Set default values for missing fields
+      // Set default values for missing fields to match fromBackendApi format
       productData['is_in_stock'] = (productData['stock'] ?? 0) > 0;
       productData['ingredients'] = []; // Empty for now as per requirements
       productData['reviews'] = []; // Empty for now as per requirements
@@ -406,7 +406,59 @@ class ApiService {
       productData['brand'] = productData['brand_name'] ?? '';
       productData['discount_price'] = productData['sale_price'];
 
-      return Product.fromJson(productData);
+      // CRITICAL FIX: Use slug as ID for consistency with other screens
+      // All other screens (home, categories, search) use slug as product ID
+      // Product detail should also use slug for wishlist consistency
+      final productSlug = productData['slug'] ?? productData['id'].toString();
+
+      print('DEBUG: Product Detail API Response Analysis:');
+      print('  Numeric ID: ${productData['id']}');
+      print('  Slug: ${productData['slug']}');
+      print('  Using slug as ID: $productSlug');
+
+      // Format the data to match what fromBackendApi expects
+      final formattedData = {
+        'id': productSlug, // Use slug as ID for wishlist consistency
+        'slug': productSlug, // Ensure slug is preserved
+        'name': productData['name'],
+        'price': productData['price'],
+        'sale_price': productData['sale_price'],
+        'beauty_points': productData['beauty_points'],
+        'stock': productData['stock'],
+        'featured_image': productData['images']?.isNotEmpty == true
+            ? productData['images'][0]
+            : null,
+        'category_name': productData['category_id'],
+        'brand_name': productData['brand'],
+      };
+
+      print('DEBUG: Using fromBackendApi for consistency');
+      print('DEBUG: Formatted data ID (slug): ${formattedData['id']}');
+      print('DEBUG: Formatted data name: ${formattedData['name']}');
+      print('DEBUG: Product will use slug for wishlist operations');
+
+      // Use fromBackendApi for consistency with other screens
+      final product = Product.fromBackendApi(formattedData);
+
+      // Override with detailed data from product detail API
+      return Product(
+        id: product.id, // Keep consistent ID format
+        name: productData['name'] ?? product.name,
+        description: productData['description'] ?? product.description,
+        price: product.price,
+        discountPrice: product.discountPrice,
+        images: finalImages.isNotEmpty ? finalImages : product.images,
+        categoryId: product.categoryId,
+        brand: product.brand,
+        rating: product.rating,
+        reviewCount: product.reviewCount,
+        isInStock: product.isInStock,
+        ingredients: [], // Keep empty as per requirements
+        beautyPoints: product.beautyPoints,
+        variants: [], // Keep empty for now
+        reviews: [], // Keep empty for now
+        celebrityEndorsement: null,
+      );
     } catch (e) {
       throw ApiException('Failed to load product detail: $e');
     }

@@ -41,18 +41,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
       // Add to recently viewed (same as home screen)
       await productProvider.addToRecentlyViewed(product);
 
-      // Navigate using GoRouter with slug parameter (same as home screen)
+      // Navigate using GoRouter with product ID parameter (same as home screen)
       if (context.mounted) {
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       }
     } catch (e) {
       debugPrint('Error navigating to product detail: $e');
-      // Fallback navigation using slug
+      // Fallback navigation using product ID
       if (context.mounted) {
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       }
     }

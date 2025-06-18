@@ -553,14 +553,19 @@ class Product {
     } else {
       // RANDOM IMAGE FROM BACKEND/MEDIA when DB response is null
       final baseImageUrl = _getImageBaseUrl();
-      final randomImage = _getRandomBackendImage(productId);
+      // Use numeric productId for random image selection, not the slug
+      final numericProductId = (productId is int)
+          ? productId
+          : (int.tryParse(productId.toString()) ?? 0);
+      final randomImage = _getRandomBackendImage(numericProductId);
       final imageUrl = '${baseImageUrl}/media/products/$randomImage';
       images.add(imageUrl);
 
       // Debug logging
       if (kDebugMode) {
         debugPrint('Backend Products Debug - RANDOM IMAGE:');
-        debugPrint('  Product ID: ${json['id']}');
+        debugPrint('  Product Numeric ID: ${json['id']}');
+        debugPrint('  Product Slug: ${json['slug']}');
         debugPrint('  Product Name: ${json['name']}');
         debugPrint('  Featured Image: NULL -> Using Random');
         debugPrint('  Beauty Points (from backend): $beautyPoints');
@@ -572,9 +577,18 @@ class Product {
     }
 
     // Create Product with backend data + mockup rating/beauty points
+    // FIX: Use slug as ID for consistency across all screens (wishlist compatibility)
+    final productIdForWishlist = json['slug'] ?? json['id'].toString();
+
+    if (kDebugMode) {
+      debugPrint('🔧 fromBackendApi: Creating product with ID format:');
+      debugPrint('   Numeric ID from backend: ${json['id']}');
+      debugPrint('   Slug from backend: ${json['slug']}');
+      debugPrint('   Final Product ID (for wishlist): $productIdForWishlist');
+    }
+
     return Product(
-      id: json['slug'] ??
-          json['id'].toString(), // Use slug as ID for proper navigation
+      id: productIdForWishlist, // Use slug as ID for proper wishlist navigation consistency
       name: json['name'] ?? '',
       description: json['name'] ??
           '', // Using name as description since backend doesn't provide detailed description

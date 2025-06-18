@@ -24,7 +24,13 @@ class WishlistProvider extends ChangeNotifier {
 
   // Check if a product is in wishlist
   bool isInWishlist(String productId) {
-    return _items.any((item) => item.product.id == productId);
+    final isInList = _items.any((item) => item.product.id == productId);
+    // Only show debug for interesting cases (when checking specific items)
+    if (kDebugMode && productId.isNotEmpty) {
+      debugPrint(
+          '🔍 Checking wishlist for product ID: $productId -> ${isInList ? "✅ FOUND" : "❌ NOT FOUND"}');
+    }
+    return isInList;
   }
 
   // Get wishlist item by product ID
@@ -59,11 +65,16 @@ class WishlistProvider extends ChangeNotifier {
 
   // Initialize wishlist from storage and sync with backend
   Future<void> loadWishlistFromStorage() async {
-    if (_isInitialized) return;
+    if (_isInitialized) {
+      debugPrint('Wishlist already initialized, skipping...');
+      return;
+    }
 
     try {
       _setLoading(true);
       _clearError();
+
+      debugPrint('=== INITIALIZING WISHLIST ===');
 
       // Load from local storage first for immediate UI update
       final prefs = await SharedPreferences.getInstance();
@@ -74,16 +85,27 @@ class WishlistProvider extends ChangeNotifier {
         _items.clear();
         _items.addAll(
             wishlistList.map((item) => WishlistItem.fromJson(item)).toList());
-        debugPrint('Loaded ${_items.length} items from local storage');
+        debugPrint('✅ Loaded ${_items.length} items from local storage');
+
+        // Debug: Print all product IDs in wishlist
+        final productIds = _items.map((item) => item.product.id).toList();
+        debugPrint('📝 Wishlist product IDs: $productIds');
+
         notifyListeners(); // Update UI immediately with local data
+      } else {
+        debugPrint('📭 No wishlist data found in local storage');
       }
 
       // Then sync with backend for fresh data
       await _syncWithBackend();
       _isInitialized = true;
+
+      debugPrint(
+          '✅ Wishlist initialization complete. Total items: ${_items.length}');
+      debugPrint('=============================');
     } catch (e) {
       _setError('Error loading wishlist: $e');
-      debugPrint('Error loading wishlist: $e');
+      debugPrint('❌ Error loading wishlist: $e');
     } finally {
       _setLoading(false);
     }
@@ -150,8 +172,23 @@ class WishlistProvider extends ChangeNotifier {
     try {
       // Check if already in wishlist
       if (isInWishlist(product.id)) {
-        debugPrint('Product ${product.name} is already in wishlist');
+        debugPrint(
+            '🔄 Product ${product.name} (ID: ${product.id}) is already in wishlist');
         return false;
+      }
+
+      debugPrint('🔄 Adding product to wishlist:');
+      debugPrint('   📦 Name: ${product.name}');
+      debugPrint('   🆔 ID: ${product.id}');
+      debugPrint(
+          '   🔍 ID Analysis: ${product.id.contains('-') ? 'SLUG-BASED ID' : 'NUMERIC ID'}');
+      debugPrint('   🔍 ID Format: ${product.id.runtimeType}');
+      debugPrint('   🏷️ Brand: ${product.brand}');
+      debugPrint('   💰 Price: ${product.price}');
+      debugPrint('   🔗 Category ID: ${product.categoryId}');
+      debugPrint('   🖼️ Images: ${product.images.length} images');
+      if (product.images.isNotEmpty) {
+        debugPrint('   🖼️ First Image: ${product.images.first}');
       }
 
       // Optimistic update - add to local list first
@@ -162,22 +199,23 @@ class WishlistProvider extends ChangeNotifier {
       // Try to sync with backend
       try {
         await ApiService.addToWishlist(product.id);
-        debugPrint('Added ${product.name} to backend wishlist');
+        debugPrint('✅ Added ${product.name} to backend wishlist');
       } catch (e) {
-        debugPrint('Backend add failed (keeping local): $e');
+        debugPrint('⚠️ Backend add failed (keeping local): $e');
         // Keep the item locally even if backend fails
       }
 
       // Save to local storage
       await _saveWishlistToStorage();
 
-      debugPrint('Added ${product.name} to wishlist');
+      debugPrint('✅ Successfully added ${product.name} to wishlist');
+      debugPrint('📊 Total wishlist items: ${_items.length}');
       return true;
     } catch (e) {
       // Remove from local list if there was an error
       _items.removeWhere((item) => item.product.id == product.id);
       _setError('Error adding to wishlist: $e');
-      debugPrint('Error adding to wishlist: $e');
+      debugPrint('❌ Error adding to wishlist: $e');
       notifyListeners();
       return false;
     }
@@ -230,11 +268,32 @@ class WishlistProvider extends ChangeNotifier {
 
   // Toggle product in wishlist
   Future<bool> toggleWishlist(Product product) async {
+    debugPrint(
+        '🔄 Toggling wishlist for product: ${product.name} (ID: ${product.id})');
+
+    bool result;
     if (isInWishlist(product.id)) {
-      return await removeFromWishlist(product.id);
+      debugPrint('   ➡️ Product is in wishlist, removing...');
+      result = await removeFromWishlist(product.id);
+      debugPrint('   ✅ Remove result: $result');
     } else {
-      return await addToWishlist(product);
+      debugPrint('   ➡️ Product not in wishlist, adding...');
+      result = await addToWishlist(product);
+      debugPrint('   ✅ Add result: $result');
     }
+
+    // Force refresh all button states to ensure synchronization
+    if (result) {
+      debugPrint('🔄 Forcing complete app-wide wishlist synchronization...');
+      forceRefreshButtonStates();
+
+      // Additional delay to ensure all UI components catch the change
+      Future.delayed(const Duration(milliseconds: 200), () {
+        forceRefreshButtonStates();
+      });
+    }
+
+    return result;
   }
 
   // Clear entire wishlist with backend sync
@@ -315,6 +374,22 @@ class WishlistProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_wishlistStorageKey);
     notifyListeners();
+  }
+
+  // Force refresh all wishlist button states across the app
+  void forceRefreshButtonStates() {
+    debugPrint('🔄 Force refreshing all wishlist button states...');
+    debugPrint('   📊 Current wishlist items: ${_items.length}');
+    for (final item in _items) {
+      debugPrint('   📦 Item: ${item.product.name} (ID: ${item.product.id})');
+    }
+    // Notify all listeners to rebuild their UI with current state
+    notifyListeners();
+
+    // Small delay to ensure UI has time to process the change
+    Future.delayed(const Duration(milliseconds: 100), () {
+      notifyListeners();
+    });
   }
 
   // Debug method to log wishlist contents

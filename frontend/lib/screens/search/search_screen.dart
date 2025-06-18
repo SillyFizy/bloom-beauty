@@ -107,7 +107,7 @@ class _SearchScreenState extends State<SearchScreen> {
       // Navigate with only ID - product detail will fetch fresh data
       if (mounted) {
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       }
     } catch (e) {
@@ -115,7 +115,7 @@ class _SearchScreenState extends State<SearchScreen> {
       // Even if adding to recently viewed fails, still navigate
       if (mounted) {
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       }
     }

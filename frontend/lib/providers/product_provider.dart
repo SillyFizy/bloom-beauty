@@ -347,12 +347,12 @@ class ProductProvider with ChangeNotifier {
   }
 
   /// Get product detail from backend API
-  Future<Product?> getProductDetail(String slug) async {
+  Future<Product?> getProductDetail(String productId) async {
     try {
       _setLoading(true);
       _clearError();
 
-      final product = await _productService.getProductDetail(slug);
+      final product = await _productService.getProductDetail(productId);
 
       _setLoading(false);
       if (product != null) {

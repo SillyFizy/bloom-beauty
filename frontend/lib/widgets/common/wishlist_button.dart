@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../constants/app_constants.dart';
+import '../../utils/wishlist_utils.dart';
 
 class WishlistButton extends StatefulWidget {
   final Product product;
@@ -91,55 +92,17 @@ class _WishlistButtonState extends State<WishlistButton>
     await _animationController.reverse();
 
     try {
-      final wishlistProvider = context.read<WishlistProvider>();
+      // Use the centralized wishlist utility for consistent behavior
+      final success = await WishlistUtils.safeToggleWishlist(
+        context,
+        widget.product,
+        showSnackBar: true,
+      );
 
-      final success = await wishlistProvider.toggleWishlist(widget.product);
-
-      if (success && mounted && context.mounted) {
-        final isNowInWishlist =
-            wishlistProvider.isInWishlist(widget.product.id);
-
-        // Show feedback message
-        final message =
-            isNowInWishlist ? 'Added to wishlist' : 'Removed from wishlist';
-
-        final snackBarColor = isNowInWishlist
-            ? AppConstants.favoriteColor
-            : AppConstants.textSecondary;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isNowInWishlist ? Icons.favorite : Icons.favorite_border,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: snackBarColor,
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          ),
-        );
-      }
+      debugPrint(
+          '✅ WishlistButton: Toggle ${success ? 'successful' : 'failed'} for product ${widget.product.id}');
     } catch (e) {
+      debugPrint('❌ WishlistButton: Error toggling wishlist: $e');
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -163,6 +126,16 @@ class _WishlistButtonState extends State<WishlistButton>
   Widget build(BuildContext context) {
     return Consumer<WishlistProvider>(
       builder: (context, wishlistProvider, child) {
+        // Ensure wishlist is initialized before showing the button
+        if (!wishlistProvider.isInitialized) {
+          // Initialize if not already done
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!wishlistProvider.isInitialized) {
+              wishlistProvider.loadWishlistFromStorage();
+            }
+          });
+        }
+
         final isInWishlist = wishlistProvider.isInWishlist(widget.product.id);
         final buttonSize = widget.size ?? (widget.isCompact ? 20.0 : 24.0);
         final containerSize = widget.isCompact ? 28.0 : 32.0;

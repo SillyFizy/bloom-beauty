@@ -154,7 +154,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
       // Navigate with only ID - product detail will fetch fresh data
       if (context.mounted) {
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       }
     } catch (e) {
@@ -162,7 +162,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
       // Even if adding to recently viewed fails, still navigate
       if (context.mounted) {
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       }
     }

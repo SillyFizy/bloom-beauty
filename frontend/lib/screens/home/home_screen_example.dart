@@ -515,7 +515,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
         context.productProvider.addToRecentlyViewed(product);
 
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       },
       child: Container(
@@ -621,7 +621,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
         context.productProvider.addToRecentlyViewed(product);
 
         context.pushNamed('product-detail', pathParameters: {
-          'slug': product.id,
+          'productId': product.id,
         });
       },
       child: Container(

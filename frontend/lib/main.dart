@@ -286,13 +286,13 @@ final GoRouter _router = GoRouter(
 
     // Product Detail Screen (outside shell route to overlay properly)
     GoRoute(
-      path: '/product/:slug',
+      path: '/product/:productId',
       name: 'product-detail',
       pageBuilder: (context, state) {
-        final slug = state.pathParameters['slug']!;
+        final productId = state.pathParameters['productId']!;
         return CustomTransitionPage<void>(
           key: state.pageKey,
-          child: ProductDetailScreen(slug: slug),
+          child: ProductDetailScreen(productId: productId),
           transitionDuration: const Duration(milliseconds: 400),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             // Slide up from bottom for product detail
