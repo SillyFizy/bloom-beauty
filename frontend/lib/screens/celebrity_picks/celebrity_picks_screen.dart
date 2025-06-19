@@ -3,15 +3,18 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
+import 'package:google_fonts/google_fonts.dart';
 import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/celebrity_picks_provider.dart';
+import '../../providers/celebrity_provider.dart';
 import '../../providers/product_provider.dart';
-import '../products/product_detail_screen.dart';
+import '../../widgets/common/loading_widget.dart';
 import 'widgets/celebrity_selector.dart';
 import 'widgets/category_selector.dart';
-import 'widgets/product_card.dart';
+import 'widgets/filter_section.dart';
 import 'widgets/search_bar.dart';
+import 'widgets/product_card.dart';
 
 class CelebrityPicksScreen extends StatefulWidget {
   const CelebrityPicksScreen({super.key});

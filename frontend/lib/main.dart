@@ -10,6 +10,7 @@ import 'screens/products/product_detail_screen.dart';
 import 'screens/cart/cart_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/search/search_screen.dart';
+import 'screens/celebrity/celebrity_screen.dart';
 import 'constants/app_constants.dart';
 import 'providers/app_providers.dart';
 import 'providers/cart_provider.dart';
@@ -298,6 +299,24 @@ final GoRouter _router = GoRouter(
             // Slide up from bottom for product detail
             return _buildSlideTransition(animation, secondaryAnimation, child,
                 SlideDirection.fromBottom);
+          },
+        );
+      },
+    ),
+
+    // Celebrity Screen (outside shell route to overlay properly)
+    GoRoute(
+      path: '/celebrity',
+      name: 'celebrity',
+      pageBuilder: (context, state) {
+        return CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const CelebrityScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            // Slide in from right for celebrity profile
+            return _buildSlideTransition(
+                animation, secondaryAnimation, child, SlideDirection.fromRight);
           },
         );
       },

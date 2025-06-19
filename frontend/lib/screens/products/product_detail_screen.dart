@@ -965,27 +965,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
     return GestureDetector(
       onTap: () async {
-        final celebrityData =
-            await _getCelebrityData(endorsement.celebrityName);
-        if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CelebrityScreen(
-                celebrityName: endorsement.celebrityName,
-                celebrityImage: endorsement.celebrityImage,
-                testimonial: endorsement.testimonial,
-                socialMediaLinks:
-                    celebrityData['socialMediaLinks'] as Map<String, String>,
-                recommendedProducts:
-                    celebrityData['recommendedProducts'] as List<Product>,
-                morningRoutineProducts:
-                    celebrityData['morningRoutineProducts'] as List<Product>,
-                eveningRoutineProducts:
-                    celebrityData['eveningRoutineProducts'] as List<Product>,
+        // Use the provider to select celebrity and navigate
+        final celebrityProvider = context.read<CelebrityProvider>();
+
+        try {
+          // Use provider's loading state instead of dialog to prevent Navigator conflicts
+          await celebrityProvider.selectCelebrity(endorsement.celebrityName);
+
+          // Navigate only after successful selection
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CelebrityScreen(),
               ),
-            ),
-          );
+            );
+          }
+        } catch (e) {
+          // Show error message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to load celebrity: $e'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
         }
       },
       child: Container(

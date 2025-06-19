@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # Local apps
     'users',
     'products',
+    'celebrities',
     'cart',
     'orders',
     'payments',

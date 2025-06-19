@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/celebrity_model.dart';
 import '../models/product_model.dart';
-import '../services/celebrity_service.dart';
+import '../services/celebrity_service.dart' hide CelebrityStatistics;
 
 /// Provider for managing celebrity state throughout the application
 /// Uses the service layer for data operations and notifies listeners of state changes
@@ -125,7 +125,8 @@ class CelebrityProvider with ChangeNotifier {
     if (!forceRefresh &&
         _isCacheValid(_lastCelebrityPicksUpdate) &&
         _celebrityPicks.isNotEmpty) {
-      debugPrint('CelebrityProvider: Using cached celebrity picks');
+      debugPrint(
+          'CelebrityProvider: Using cached celebrity picks (${_celebrityPicks.length} items)');
       return;
     }
 
@@ -134,18 +135,81 @@ class CelebrityProvider with ChangeNotifier {
       if (showLoading) {
         _setLoading(true);
       }
+      _clearError();
+
       final picks =
           await _celebrityService.getCelebrityPicks(forceRefresh: forceRefresh);
-      _celebrityPicks = picks;
+
+      if (picks.isEmpty) {
+        debugPrint(
+            'CelebrityProvider: No celebrity picks received from service');
+        _setError('No celebrity picks available');
+        return;
+      }
+
+      // Validate picks before setting
+      final validPicks = <Map<String, dynamic>>[];
+      for (int i = 0; i < picks.length; i++) {
+        final pick = picks[i];
+        if (_isValidCelebrityPick(pick)) {
+          validPicks.add(pick);
+        } else {
+          debugPrint('CelebrityProvider: Invalid pick at index $i: $pick');
+        }
+      }
+
+      if (validPicks.isEmpty) {
+        debugPrint('CelebrityProvider: No valid celebrity picks found');
+        _setError('No valid celebrity picks available');
+        return;
+      }
+
+      _celebrityPicks = validPicks;
       _lastCelebrityPicksUpdate = DateTime.now();
+      debugPrint(
+          'CelebrityProvider: Successfully loaded ${_celebrityPicks.length} celebrity picks');
+
       notifyListeners();
     } catch (e) {
-      debugPrint('Error loading celebrity picks: $e');
-      _setError('Failed to load celebrity picks');
+      debugPrint('CelebrityProvider: Error loading celebrity picks: $e');
+      _setError('Failed to load celebrity picks: ${e.toString()}');
     } finally {
       if (showLoading) {
         _setLoading(false);
       }
+    }
+  }
+
+  /// Validate celebrity pick data structure
+  bool _isValidCelebrityPick(Map<String, dynamic> pick) {
+    try {
+      // Check required fields
+      if (pick['product'] == null) {
+        debugPrint('CelebrityProvider: Pick missing product field');
+        return false;
+      }
+
+      if (pick['name'] == null || (pick['name'] as String).isEmpty) {
+        debugPrint('CelebrityProvider: Pick missing or empty name field');
+        return false;
+      }
+
+      // Validate product structure
+      final product = pick['product'];
+      if (product is! Map<String, dynamic>) {
+        debugPrint('CelebrityProvider: Product is not a valid map');
+        return false;
+      }
+
+      if (product['id'] == null || product['name'] == null) {
+        debugPrint('CelebrityProvider: Product missing id or name');
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('CelebrityProvider: Error validating pick: $e');
+      return false;
     }
   }
 
@@ -196,151 +260,429 @@ class CelebrityProvider with ChangeNotifier {
       _setLoading(false);
       notifyListeners();
     } catch (e) {
+      debugPrint('CelebrityProvider: ERROR in selectCelebrity: $e');
       _setError('Failed to select celebrity: $e');
       _setLoading(false);
+      notifyListeners(); // Ensure UI updates on error
+      rethrow; // Rethrow so navigation can handle the error
     }
   }
 
-  /// Load detailed celebrity data (products, social media)
-  Future<void> _loadCelebrityDetails(String celebrityName) async {
+  /// Select a celebrity by ID and load their detailed data
+  Future<void> selectCelebrityById(int celebrityId) async {
     try {
-      final futures = await Future.wait([
-        _celebrityService.getAllCelebrityProducts(celebrityName),
-        _celebrityService.getCelebritySocialMedia(celebrityName),
-        _celebrityService.getCelebrityRecommendedProducts(celebrityName),
-        _celebrityService.getCelebrityMorningRoutine(celebrityName),
-        _celebrityService.getCelebrityEveningRoutine(celebrityName),
-      ]);
-
-      _celebrityProducts[celebrityName] = futures[0] as List<Product>;
-      _celebritySocialMedia[celebrityName] = futures[1] as Map<String, String>;
-
-      // Additional products are available if needed for specific functionality
-    } catch (e) {
-      debugPrint('Failed to load celebrity details: $e');
-    }
-  }
-
-  /// Clear selected celebrity
-  void clearSelectedCelebrity() {
-    _selectedCelebrity = null;
-    notifyListeners();
-  }
-
-  /// Search celebrities
-  Future<void> searchCelebrities(String query) async {
-    try {
-      _setSearching(true);
+      _setLoading(true);
       _clearError();
-      _currentSearchQuery = query;
 
-      if (query.isEmpty) {
-        _searchResults = [];
+      debugPrint('CelebrityProvider: Selecting celebrity by ID: $celebrityId');
+
+      _selectedCelebrity =
+          await _celebrityService.getCelebrityById(celebrityId);
+
+      if (_selectedCelebrity != null) {
+        debugPrint(
+            'CelebrityProvider: Found celebrity: ${_selectedCelebrity!.name}');
+        // Load additional celebrity data
+        await _loadCelebrityDetailsById(celebrityId);
       } else {
-        _searchResults = await _celebrityService.searchCelebrities(query);
+        debugPrint(
+            'CelebrityProvider: No celebrity found with ID: $celebrityId');
+        _setError('Celebrity not found');
       }
 
-      _setSearching(false);
+      _setLoading(false);
       notifyListeners();
     } catch (e) {
-      _setError('Failed to search celebrities: $e');
+      debugPrint('CelebrityProvider: ERROR in selectCelebrityById: $e');
+      _setError('Failed to select celebrity: $e');
+      _setLoading(false);
+      notifyListeners(); // Ensure UI updates on error
+      rethrow; // Rethrow so navigation can handle the error
+    }
+  }
+
+  /// Load detailed celebrity information including products and social media
+  Future<void> _loadCelebrityDetails(String celebrityName) async {
+    try {
+      if (_selectedCelebrity == null) {
+        debugPrint('CelebrityProvider: ERROR - _selectedCelebrity is null');
+        return;
+      }
+
+      debugPrint('CelebrityProvider: Loading full details for $celebrityName');
+      debugPrint('CelebrityProvider: Celebrity ID: ${_selectedCelebrity!.id}');
+
+      // Load morning routine products
+      debugPrint('CelebrityProvider: Starting morning routine fetch...');
+      final morningRoutineProducts = await _celebrityService
+          .getCelebrityMorningRoutine(_selectedCelebrity!.id);
+      debugPrint(
+          'CelebrityProvider: Loaded ${morningRoutineProducts.length} morning routine products');
+
+      if (morningRoutineProducts.isNotEmpty) {
+        debugPrint(
+            'CelebrityProvider: Morning routine products: ${morningRoutineProducts.map((p) => p.name).join(', ')}');
+      }
+
+      // Load evening routine products
+      debugPrint('CelebrityProvider: Starting evening routine fetch...');
+      final eveningRoutineProducts = await _celebrityService
+          .getCelebrityEveningRoutine(_selectedCelebrity!.id);
+      debugPrint(
+          'CelebrityProvider: Loaded ${eveningRoutineProducts.length} evening routine products');
+
+      if (eveningRoutineProducts.isNotEmpty) {
+        debugPrint(
+            'CelebrityProvider: Evening routine products: ${eveningRoutineProducts.map((p) => p.name).join(', ')}');
+      }
+
+      // Load celebrity promotions/recommended products
+      debugPrint('CelebrityProvider: Starting promotions fetch...');
+      final recommendedProducts = await _celebrityService
+          .getCelebrityPromotions(_selectedCelebrity!.id);
+      debugPrint(
+          'CelebrityProvider: Loaded ${recommendedProducts.length} recommended products');
+
+      if (recommendedProducts.isNotEmpty) {
+        debugPrint(
+            'CelebrityProvider: Recommended products: ${recommendedProducts.map((p) => p.name).join(', ')}');
+      }
+
+      // Debug current celebrity state before update
+      debugPrint('CelebrityProvider: BEFORE UPDATE:');
+      debugPrint(
+          '  - Morning routine: ${_selectedCelebrity!.morningRoutineProducts.length}');
+      debugPrint(
+          '  - Evening routine: ${_selectedCelebrity!.eveningRoutineProducts.length}');
+      debugPrint(
+          '  - Recommended: ${_selectedCelebrity!.recommendedProducts.length}');
+
+      // Update the selected celebrity with the complete data
+      _selectedCelebrity = _selectedCelebrity!.copyWith(
+        morningRoutineProducts: morningRoutineProducts,
+        eveningRoutineProducts: eveningRoutineProducts,
+        recommendedProducts: recommendedProducts,
+      );
+
+      // Debug celebrity state after update
+      debugPrint('CelebrityProvider: AFTER UPDATE:');
+      debugPrint(
+          '  - Morning routine: ${_selectedCelebrity!.morningRoutineProducts.length}');
+      debugPrint(
+          '  - Evening routine: ${_selectedCelebrity!.eveningRoutineProducts.length}');
+      debugPrint(
+          '  - Recommended: ${_selectedCelebrity!.recommendedProducts.length}');
+
+      // Cache products for navigation compatibility
+      final products = await getCelebrityProducts(celebrityName);
+      _celebrityProducts[celebrityName] = products;
+
+      debugPrint(
+          'CelebrityProvider: Celebrity details loaded successfully - calling notifyListeners()');
+      notifyListeners();
+
+      // Force a rebuild by waiting a brief moment and notifying again
+      await Future.delayed(const Duration(milliseconds: 100));
+      debugPrint('CelebrityProvider: Force rebuild after data loading');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('CelebrityProvider: ERROR loading celebrity details: $e');
+      debugPrint('CelebrityProvider: Stack trace: ${StackTrace.current}');
+      _setError('Failed to load celebrity details: $e');
+    }
+  }
+
+  /// Load detailed celebrity information using celebrity ID
+  Future<void> _loadCelebrityDetailsById(int celebrityId) async {
+    try {
+      if (_selectedCelebrity == null) {
+        debugPrint('CelebrityProvider: ERROR - _selectedCelebrity is null');
+        return;
+      }
+
+      debugPrint(
+          'CelebrityProvider: Loading full details for celebrity ID: $celebrityId');
+
+      // Load morning routine products
+      debugPrint('CelebrityProvider: Starting morning routine fetch...');
+      final morningRoutineProducts =
+          await _celebrityService.getCelebrityMorningRoutine(celebrityId);
+      debugPrint(
+          'CelebrityProvider: Loaded ${morningRoutineProducts.length} morning routine products');
+
+      if (morningRoutineProducts.isNotEmpty) {
+        debugPrint(
+            'CelebrityProvider: Morning routine products: ${morningRoutineProducts.map((p) => p.name).join(', ')}');
+      }
+
+      // Load evening routine products
+      debugPrint('CelebrityProvider: Starting evening routine fetch...');
+      final eveningRoutineProducts =
+          await _celebrityService.getCelebrityEveningRoutine(celebrityId);
+      debugPrint(
+          'CelebrityProvider: Loaded ${eveningRoutineProducts.length} evening routine products');
+
+      if (eveningRoutineProducts.isNotEmpty) {
+        debugPrint(
+            'CelebrityProvider: Evening routine products: ${eveningRoutineProducts.map((p) => p.name).join(', ')}');
+      }
+
+      // Load celebrity promotions/recommended products
+      debugPrint('CelebrityProvider: Starting promotions fetch...');
+      final recommendedProducts =
+          await _celebrityService.getCelebrityPromotions(celebrityId);
+      debugPrint(
+          'CelebrityProvider: Loaded ${recommendedProducts.length} recommended products');
+
+      if (recommendedProducts.isNotEmpty) {
+        debugPrint(
+            'CelebrityProvider: Recommended products: ${recommendedProducts.map((p) => p.name).join(', ')}');
+      }
+
+      // Debug current celebrity state before update
+      debugPrint('CelebrityProvider: BEFORE UPDATE:');
+      debugPrint(
+          '  - Morning routine: ${_selectedCelebrity!.morningRoutineProducts.length}');
+      debugPrint(
+          '  - Evening routine: ${_selectedCelebrity!.eveningRoutineProducts.length}');
+      debugPrint(
+          '  - Recommended: ${_selectedCelebrity!.recommendedProducts.length}');
+
+      // Update the selected celebrity with the complete data
+      _selectedCelebrity = _selectedCelebrity!.copyWith(
+        morningRoutineProducts: morningRoutineProducts,
+        eveningRoutineProducts: eveningRoutineProducts,
+        recommendedProducts: recommendedProducts,
+      );
+
+      // Debug celebrity state after update
+      debugPrint('CelebrityProvider: AFTER UPDATE:');
+      debugPrint(
+          '  - Morning routine: ${_selectedCelebrity!.morningRoutineProducts.length}');
+      debugPrint(
+          '  - Evening routine: ${_selectedCelebrity!.eveningRoutineProducts.length}');
+      debugPrint(
+          '  - Recommended: ${_selectedCelebrity!.recommendedProducts.length}');
+
+      debugPrint(
+          'CelebrityProvider: Celebrity details loaded successfully - calling notifyListeners()');
+      notifyListeners();
+
+      // Force a rebuild by waiting a brief moment and notifying again
+      await Future.delayed(const Duration(milliseconds: 100));
+      debugPrint('CelebrityProvider: Force rebuild after data loading');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('CelebrityProvider: ERROR loading celebrity details: $e');
+      debugPrint('CelebrityProvider: Stack trace: ${StackTrace.current}');
+      _setError('Failed to load celebrity details: $e');
+    }
+  }
+
+  /// Get celebrity products (morning and evening routine)
+  Future<List<Product>> getCelebrityProducts(String celebrityName) async {
+    try {
+      // Find celebrity by name to get ID
+      final celebrity = _celebrities.firstWhere(
+        (c) => c.name == celebrityName || c.fullName == celebrityName,
+        orElse: () => throw Exception('Celebrity not found'),
+      );
+
+      final morningProducts =
+          await _celebrityService.getCelebrityMorningRoutine(celebrity.id);
+      final eveningProducts =
+          await _celebrityService.getCelebrityEveningRoutine(celebrity.id);
+
+      // Combine and return unique products
+      final allProducts = <Product>[];
+      allProducts.addAll(morningProducts);
+      for (final product in eveningProducts) {
+        if (!allProducts.any((p) => p.id == product.id)) {
+          allProducts.add(product);
+        }
+      }
+
+      return allProducts;
+    } catch (e) {
+      debugPrint('Error getting celebrity products: $e');
+      return [];
+    }
+  }
+
+  /// Search celebrities by query
+  Future<void> searchCelebrities(String query) async {
+    if (query.isEmpty) {
+      _searchResults = [];
+      _currentSearchQuery = '';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      _setSearching(true);
+      _currentSearchQuery = query;
+
+      _searchResults = await _celebrityService.searchCelebrities(query);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error searching celebrities: $e');
+      _setError('Failed to search celebrities');
+    } finally {
       _setSearching(false);
     }
   }
 
   /// Clear search results
   void clearSearch() {
-    _currentSearchQuery = '';
     _searchResults = [];
-    _setSearching(false);
+    _currentSearchQuery = '';
     notifyListeners();
   }
 
-  /// Get celebrities by product category
-  Future<List<Celebrity>> getCelebritiesByCategory(String categoryId) async {
+  /// Get celebrities by social media platform - stub implementation
+  Future<List<Celebrity>> getCelebritiesBySocialMediaPlatform(
+      String platform) async {
     try {
-      return await _celebrityService
-          .getCelebritiesByProductCategory(categoryId);
+      // Filter celebrities by social media platform
+      return _celebrities.where((celebrity) {
+        switch (platform.toLowerCase()) {
+          case 'instagram':
+            return celebrity.socialMediaLinks['instagram']?.isNotEmpty ?? false;
+          case 'facebook':
+            return celebrity.socialMediaLinks['facebook']?.isNotEmpty ?? false;
+          case 'snapchat':
+            return celebrity.socialMediaLinks['snapchat']?.isNotEmpty ?? false;
+          default:
+            return false;
+        }
+      }).toList();
     } catch (e) {
-      debugPrint('Failed to get celebrities by category: $e');
+      debugPrint('Error getting celebrities by social media platform: $e');
       return [];
     }
   }
 
-  /// Get celebrities by social media platform
-  Future<List<Celebrity>> getCelebritiesBySocialMedia(String platform) async {
-    try {
-      return await _celebrityService
-          .getCelebritiesBySocialMediaPlatform(platform);
-    } catch (e) {
-      debugPrint('Failed to get celebrities by social media: $e');
-      return [];
-    }
-  }
-
-  /// Get celebrity's recommended products
-  Future<List<Product>> getCelebrityRecommendedProducts(
-      String celebrityName) async {
-    try {
-      return await _celebrityService
-          .getCelebrityRecommendedProducts(celebrityName);
-    } catch (e) {
-      debugPrint('Failed to get celebrity recommended products: $e');
-      return [];
-    }
-  }
-
-  /// Get celebrity's morning routine products
+  /// Get celebrity morning routine
   Future<List<Product>> getCelebrityMorningRoutine(String celebrityName) async {
     try {
-      return await _celebrityService.getCelebrityMorningRoutine(celebrityName);
+      // Find celebrity by name to get ID
+      final celebrity = _celebrities.firstWhere(
+        (c) => c.name == celebrityName || c.fullName == celebrityName,
+        orElse: () => throw Exception('Celebrity not found'),
+      );
+
+      return await _celebrityService.getCelebrityMorningRoutine(celebrity.id);
     } catch (e) {
-      debugPrint('Failed to get celebrity morning routine: $e');
+      debugPrint('Error getting celebrity morning routine: $e');
       return [];
     }
   }
 
-  /// Get celebrity's evening routine products
+  /// Get celebrity evening routine
   Future<List<Product>> getCelebrityEveningRoutine(String celebrityName) async {
     try {
-      return await _celebrityService.getCelebrityEveningRoutine(celebrityName);
+      // Find celebrity by name to get ID
+      final celebrity = _celebrities.firstWhere(
+        (c) => c.name == celebrityName || c.fullName == celebrityName,
+        orElse: () => throw Exception('Celebrity not found'),
+      );
+
+      return await _celebrityService.getCelebrityEveningRoutine(celebrity.id);
     } catch (e) {
-      debugPrint('Failed to get celebrity evening routine: $e');
+      debugPrint('Error getting celebrity evening routine: $e');
       return [];
     }
   }
 
-  /// Get celebrity's social media links
-  Future<Map<String, String>> getCelebritySocialMedia(
-      String celebrityName) async {
-    try {
-      return await _celebrityService.getCelebritySocialMedia(celebrityName);
-    } catch (e) {
-      debugPrint('Failed to get celebrity social media: $e');
-      return {};
-    }
-  }
-
-  /// Get celebrity's top rated products
+  /// Get celebrity top products - stub implementation
   Future<List<Product>> getCelebrityTopProducts(String celebrityName) async {
     try {
-      return await _celebrityService.getCelebrityTopProducts(celebrityName);
+      // Find celebrity by name to get ID
+      final celebrity = _celebrities.firstWhere(
+        (c) => c.name == celebrityName || c.fullName == celebrityName,
+        orElse: () => throw Exception('Celebrity not found'),
+      );
+
+      // Get promotions and return the promoted products
+      final promotions =
+          await _celebrityService.getCelebrityPromotions(celebrity.id);
+      return promotions;
     } catch (e) {
-      debugPrint('Failed to get celebrity top products: $e');
+      debugPrint('Error getting celebrity top products: $e');
       return [];
     }
   }
 
-  /// Get celebrity data for product endorsement
+  /// Validate celebrity data - stub implementation
+  Future<bool> validateCelebrityData() async {
+    try {
+      // Basic validation - check if we have celebrities loaded
+      return _celebrities.isNotEmpty;
+    } catch (e) {
+      debugPrint('Error validating celebrity data: $e');
+      return false;
+    }
+  }
+
+  /// Get celebrity featured picks (similar to celebrity picks but filtered for featured)
+  Future<List<Map<String, dynamic>>> getFeaturedCelebrityPicks(
+      {bool forceRefresh = false}) async {
+    try {
+      final allPicks =
+          await _celebrityService.getCelebrityPicks(forceRefresh: forceRefresh);
+      // Filter for featured picks if needed, for now return all
+      return allPicks;
+    } catch (e) {
+      debugPrint('Error getting featured celebrity picks: $e');
+      return [];
+    }
+  }
+
+  /// Filter celebrities by category
+  List<Celebrity> filterCelebritiesByCategory(String category) {
+    if (category.isEmpty || category.toLowerCase() == 'all') {
+      return _celebrities;
+    }
+
+    // Basic filtering - can be enhanced based on backend data structure
+    return _celebrities.where((celebrity) {
+      return celebrity.bio?.toLowerCase().contains(category.toLowerCase()) ??
+          false;
+    }).toList();
+  }
+
+  /// Get celebrity by ID
+  Future<Celebrity?> getCelebrityById(int id) async {
+    try {
+      return await _celebrityService.getCelebrityById(id);
+    } catch (e) {
+      debugPrint('Error getting celebrity by ID: $e');
+      return null;
+    }
+  }
+
+  /// Refresh all celebrity data
+  Future<void> refreshAllData() async {
+    await loadCelebrities(forceRefresh: true);
+    await loadCelebrityPicks(forceRefresh: true);
+    await loadTrendingCelebrities();
+    await loadCelebrityStatistics();
+  }
+
+  /// Refresh alias for backwards compatibility
+  Future<void> refresh() async {
+    await refreshAllData();
+  }
+
+  /// Get celebrity data for product - backwards compatibility method
   Future<Map<String, dynamic>> getCelebrityDataForProduct(
       String celebrityName) async {
     try {
       final celebrity = _celebrities.firstWhere(
-        (celeb) => celeb.name == celebrityName,
+        (c) => c.name == celebrityName || c.fullName == celebrityName,
         orElse: () => throw Exception('Celebrity not found'),
       );
 
-      // Use the celebrity data we already have
       return {
         'socialMediaLinks': celebrity.socialMediaLinks,
         'recommendedProducts': celebrity.recommendedProducts,
@@ -358,116 +700,64 @@ class CelebrityProvider with ChangeNotifier {
     }
   }
 
-  /// Validate celebrity data
-  Future<CelebrityValidationResult> validateCelebrityData() async {
+  /// Get celebrity data for navigation - backwards compatibility method
+  Future<Map<String, dynamic>> getCelebrityDataForNavigation(
+      String celebrityName) async {
     try {
-      return await _celebrityService.validateCelebrityData();
+      debugPrint('Getting celebrity data for navigation: $celebrityName');
+
+      // Find celebrity
+      final celebrity = _celebrities.firstWhere(
+        (c) => c.name == celebrityName || c.fullName == celebrityName,
+        orElse: () => throw Exception('Celebrity not found'),
+      );
+
+      // Get products
+      final morningRoutine = await getCelebrityMorningRoutine(celebrityName);
+      final eveningRoutine = await getCelebrityEveningRoutine(celebrityName);
+      final topProducts = await getCelebrityTopProducts(celebrityName);
+
+      // Update selected celebrity
+      _selectedCelebrity = celebrity;
+      notifyListeners();
+
+      return {
+        'celebrity': celebrity,
+        'recommendedProducts': topProducts,
+        'socialMediaLinks': celebrity.socialMediaLinks,
+        'morningRoutineProducts': morningRoutine,
+        'eveningRoutineProducts': eveningRoutine,
+        'testimonial': celebrity.testimonial,
+        'followerCount': 0, // Default value
+        'isVerified': true, // Default value
+        'totalEndorsements': topProducts.length,
+      };
     } catch (e) {
-      debugPrint('Failed to validate celebrity data: $e');
-      return CelebrityValidationResult(
-          isValid: false, issues: ['Validation failed']);
+      debugPrint('Error getting celebrity data for navigation: $e');
+      _setError('Failed to load celebrity data: $e');
+      rethrow;
     }
   }
 
-  /// Get all available social media platforms
-  List<String> get availableSocialMediaPlatforms {
-    final platforms = <String>{};
-    for (final celebrity in _celebrities) {
-      platforms.addAll(celebrity.socialMediaLinks.keys);
-    }
-    final platformList = platforms.toList();
-    platformList.sort();
-    return platformList;
-  }
-
-  /// Get celebrity counts by social media platform
-  Map<String, int> get socialMediaPlatformCounts {
-    final counts = <String, int>{};
-    for (final celebrity in _celebrities) {
-      for (final platform in celebrity.socialMediaLinks.keys) {
-        counts[platform] = (counts[platform] ?? 0) + 1;
-      }
-    }
-    return counts;
-  }
-
-  /// Get celebrities with most products
-  List<Celebrity> get celebritiesWithMostProducts {
-    final celebritiesWithCounts = _celebrities.map((celebrity) {
-      final productCount = [
-        ...celebrity.recommendedProducts,
-        ...celebrity.morningRoutineProducts,
-        ...celebrity.eveningRoutineProducts,
-      ].length;
-      return {'celebrity': celebrity, 'count': productCount};
-    }).toList();
-
-    celebritiesWithCounts
-        .sort((a, b) => (b['count'] as int).compareTo(a['count'] as int));
-
-    return celebritiesWithCounts
-        .map((item) => item['celebrity'] as Celebrity)
-        .toList();
-  }
-
-  /// Check if celebrity has products in category
-  bool celebrityHasProductsInCategory(String celebrityName, String categoryId) {
-    final celebrity =
-        _celebrities.where((c) => c.name == celebrityName).firstOrNull;
-    if (celebrity == null) return false;
-
-    final allProducts = [
-      ...celebrity.recommendedProducts,
-      ...celebrity.morningRoutineProducts,
-      ...celebrity.eveningRoutineProducts,
-    ];
-
-    return allProducts.any((product) => product.categoryId == categoryId);
-  }
-
-  /// Get celebrity product count
-  int getCelebrityProductCount(String celebrityName) {
-    final celebrity =
-        _celebrities.where((c) => c.name == celebrityName).firstOrNull;
-    if (celebrity == null) return 0;
-
-    return [
-      ...celebrity.recommendedProducts,
-      ...celebrity.morningRoutineProducts,
-      ...celebrity.eveningRoutineProducts,
-    ].length;
-  }
-
-  /// Refresh all data
-  Future<void> refresh() async {
-    await loadCelebrities(forceRefresh: true);
-    await loadCelebrityPicks(forceRefresh: true);
-    await loadTrendingCelebrities();
-    await loadCelebrityStatistics();
-  }
-
-  /// Private helper methods
+  // Helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;
-    if (loading) _clearError();
     notifyListeners();
   }
 
   void _setSearching(bool searching) {
     _isSearching = searching;
-    if (searching) _clearError();
     notifyListeners();
   }
 
   void _setError(String error) {
     _error = error;
-    _isLoading = false;
-    _isSearching = false;
     notifyListeners();
   }
 
   void _clearError() {
     _error = null;
+    notifyListeners();
   }
 
   /// Clear all cached data
@@ -483,52 +773,16 @@ class CelebrityProvider with ChangeNotifier {
     _currentSearchQuery = '';
     _celebrityProducts = {};
     _celebritySocialMedia = {};
+    _lastCelebritiesUpdate = null;
+    _lastCelebrityPicksUpdate = null;
+    _isInitialized = false;
     _clearError();
     notifyListeners();
   }
 
-  /// Get complete celebrity data for navigation (called from product cards)
-  Future<Map<String, dynamic>> getCelebrityDataForNavigation(
-      String celebrityName) async {
-    try {
-      debugPrint('Getting celebrity data for navigation: $celebrityName');
-
-      // Use the service method for comprehensive data loading
-      final celebrityData =
-          await _celebrityService.getCelebrityDataForNavigation(celebrityName);
-
-      // Update local state with the loaded data
-      _selectedCelebrity = celebrityData['celebrity'] as Celebrity?;
-      _celebrityProducts[celebrityName] =
-          celebrityData['recommendedProducts'] as List<Product>;
-      _celebritySocialMedia[celebrityName] =
-          celebrityData['socialMediaLinks'] as Map<String, String>;
-
-      // Notify listeners of state change
-      notifyListeners();
-
-      // Return data formatted for celebrity screen
-      return {
-        'recommendedProducts': celebrityData['recommendedProducts'],
-        'socialMediaLinks': celebrityData['socialMediaLinks'],
-        'morningRoutineProducts': celebrityData['morningRoutineProducts'],
-        'eveningRoutineProducts': celebrityData['eveningRoutineProducts'],
-        'celebrity': celebrityData['celebrity'],
-        'testimonial': celebrityData['testimonial'],
-        'followerCount': celebrityData['followerCount'],
-        'isVerified': celebrityData['isVerified'],
-        'totalEndorsements': celebrityData['totalEndorsements'],
-      };
-    } catch (e) {
-      debugPrint('Error getting celebrity data for navigation: $e');
-      _setError('Failed to load celebrity data: $e');
-      rethrow;
-    }
-  }
-
   @override
   void dispose() {
-    _celebrityService.dispose();
+    // The service doesn't need disposal in this implementation
     super.dispose();
   }
 }

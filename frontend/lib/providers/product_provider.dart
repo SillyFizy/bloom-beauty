@@ -15,6 +15,7 @@ class ProductProvider with ChangeNotifier {
   List<Product> _trendingProducts = [];
   List<Product> _featuredProducts = [];
   List<Product> _searchResults = [];
+  List<Product> _celebrityPicksProducts = [];
 
   ProductStatistics? _productStatistics;
 
@@ -27,6 +28,8 @@ class ProductProvider with ChangeNotifier {
   DateTime? _lastBestsellingUpdate;
   DateTime? _lastTrendingUpdate;
   DateTime? _lastCelebritiesUpdate;
+  DateTime? _lastCelebrityPicksUpdate;
+
   bool _isInitialized = false;
   static const Duration _cacheExpiry = Duration(minutes: 15);
 
@@ -43,6 +46,8 @@ class ProductProvider with ChangeNotifier {
   List<Product> get trendingProducts => List.unmodifiable(_trendingProducts);
   List<Product> get featuredProducts => List.unmodifiable(_featuredProducts);
   List<Product> get searchResults => List.unmodifiable(_searchResults);
+  List<Product> get celebrityPicksProducts =>
+      List.unmodifiable(_celebrityPicksProducts);
 
   ProductStatistics? get productStatistics => _productStatistics;
 
@@ -90,11 +95,13 @@ class ProductProvider with ChangeNotifier {
   bool _hasValidCache() {
     final hasValidTimestamps = _isCacheValid(_lastNewArrivalsUpdate) &&
         _isCacheValid(_lastBestsellingUpdate) &&
-        _isCacheValid(_lastTrendingUpdate);
+        _isCacheValid(_lastTrendingUpdate) &&
+        _isCacheValid(_lastCelebrityPicksUpdate);
 
     final hasData = _newArrivals.isNotEmpty &&
         _bestsellingProducts.isNotEmpty &&
-        _trendingProducts.isNotEmpty;
+        _trendingProducts.isNotEmpty &&
+        _celebrityPicksProducts.isNotEmpty;
 
     debugPrint(
         'ProductProvider: Cache validation - timestamps: $hasValidTimestamps, data: $hasData');
@@ -189,6 +196,7 @@ class ProductProvider with ChangeNotifier {
       loadNewArrivals(forceRefresh: forceRefresh),
       loadBestsellingProducts(forceRefresh: forceRefresh),
       loadTrendingProducts(forceRefresh: forceRefresh),
+      loadCelebrityPicksProducts(forceRefresh: forceRefresh),
     ]);
 
     // Load featured products (derived from other categories)
@@ -206,6 +214,7 @@ class ProductProvider with ChangeNotifier {
     _lastNewArrivalsUpdate = null;
     _lastBestsellingUpdate = null;
     _lastTrendingUpdate = null;
+    _lastCelebrityPicksUpdate = null;
 
     await initialize();
   }
@@ -493,6 +502,7 @@ class ProductProvider with ChangeNotifier {
       'bestselling': _bestsellingProducts.length,
       'trending': _trendingProducts.length,
       'featured': _featuredProducts.length,
+      'celebrityPicks': _celebrityPicksProducts.length,
     };
   }
 
@@ -554,6 +564,7 @@ class ProductProvider with ChangeNotifier {
     _trendingProducts = [];
     _featuredProducts = [];
     _searchResults = [];
+    _celebrityPicksProducts = [];
     _productStatistics = null;
     _currentSearchQuery = '';
     _currentFilters = {};
@@ -567,6 +578,35 @@ class ProductProvider with ChangeNotifier {
   }
 
   /// Load all products from the service layer
+
+  /// Load celebrity picks products with caching
+  Future<void> loadCelebrityPicksProducts({bool forceRefresh = false}) async {
+    if (!forceRefresh &&
+        _isCacheValid(_lastCelebrityPicksUpdate) &&
+        _celebrityPicksProducts.isNotEmpty) {
+      debugPrint('ProductProvider: Using cached celebrity picks products');
+      return;
+    }
+
+    try {
+      debugPrint('ProductProvider: Fetching fresh celebrity picks products');
+
+      // For now, use trending products as celebrity picks (can be changed later)
+      // This provides a working solution while the complex celebrity API is being fixed
+      if (_trendingProducts.isEmpty) {
+        await loadTrendingProducts(forceRefresh: forceRefresh);
+      }
+
+      // Take the first 4 trending products as celebrity picks
+      _celebrityPicksProducts = _trendingProducts.take(4).toList();
+
+      _lastCelebrityPicksUpdate = DateTime.now();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('ProductProvider: Error loading celebrity picks products: $e');
+      _setError('Failed to load celebrity picks: $e');
+    }
+  }
 
   @override
   void dispose() {

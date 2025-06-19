@@ -4,31 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../models/product_model.dart';
+import '../../models/celebrity_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/celebrity_provider.dart';
 
 class CelebrityScreen extends StatefulWidget {
-  final String celebrityName;
-  final String celebrityImage;
-  final String? testimonial;
-  final List<String> routineProducts;
-  final List<Product> recommendedProducts;
-  final Map<String, String>
-      socialMediaLinks; // New field for social media links
-  final List<Product> morningRoutineProducts; // New field for morning routine
-  final List<Product> eveningRoutineProducts; // New field for evening routine
-
   const CelebrityScreen({
     super.key,
-    required this.celebrityName,
-    required this.celebrityImage,
-    this.testimonial,
-    this.routineProducts = const [],
-    this.recommendedProducts = const [],
-    this.socialMediaLinks = const {},
-    this.morningRoutineProducts = const [], // New parameter
-    this.eveningRoutineProducts = const [], // New parameter
   });
 
   @override
@@ -169,13 +152,9 @@ class _CelebrityScreenState extends State<CelebrityScreen>
   }
 
   Future<void> _loadCelebrityData() async {
-    try {
-      final celebrityProvider = context.read<CelebrityProvider>();
-      await celebrityProvider.selectCelebrity(widget.celebrityName);
-    } catch (e) {
-      debugPrint('Error loading celebrity data: $e');
-      // Error handling is done in the provider
-    }
+    // Celebrity data should already be loaded by the provider
+    // when navigating to this screen. This method is kept for
+    // consistency but doesn't need to do anything.
   }
 
   @override
@@ -202,6 +181,45 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                     celebrityProvider.error!, isSmallScreen);
               }
 
+              // Get celebrity data from provider instead of widget
+              final celebrity = celebrityProvider.selectedCelebrity;
+
+              // If no celebrity data is available, show error
+              if (celebrity == null) {
+                return _buildErrorState(
+                    'Celebrity data not found', isSmallScreen);
+              }
+
+              // DEBUG: Log celebrity data state for UI debugging
+              debugPrint('=== CELEBRITY SCREEN UI DEBUG ===');
+              debugPrint('Celebrity name: ${celebrity.name}');
+              debugPrint(
+                  'Morning routine products: ${celebrity.morningRoutineProducts.length}');
+              debugPrint(
+                  'Evening routine products: ${celebrity.eveningRoutineProducts.length}');
+              debugPrint(
+                  'Recommended products: ${celebrity.recommendedProducts.length}');
+              debugPrint(
+                  'Has testimonial: ${celebrity.testimonial != null && celebrity.testimonial!.isNotEmpty}');
+              debugPrint(
+                  'Has bio: ${celebrity.bio != null && celebrity.bio!.isNotEmpty}');
+              debugPrint(
+                  'Social media links: ${celebrity.socialMediaLinks.length}');
+
+              if (celebrity.morningRoutineProducts.isNotEmpty) {
+                debugPrint(
+                    'Morning routine product names: ${celebrity.morningRoutineProducts.map((p) => p.name).join(', ')}');
+              }
+              if (celebrity.eveningRoutineProducts.isNotEmpty) {
+                debugPrint(
+                    'Evening routine product names: ${celebrity.eveningRoutineProducts.map((p) => p.name).join(', ')}');
+              }
+              if (celebrity.recommendedProducts.isNotEmpty) {
+                debugPrint(
+                    'Recommended product names: ${celebrity.recommendedProducts.map((p) => p.name).join(', ')}');
+              }
+              debugPrint('=== END UI DEBUG ===');
+
               return Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -218,7 +236,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                   controller: _scrollController,
                   slivers: [
                     // Responsive App Bar with animated title
-                    _buildResponsiveSliverAppBar(isSmallScreen),
+                    _buildResponsiveSliverAppBar(isSmallScreen, celebrity),
 
                     // Celebrity content
                     SliverToBoxAdapter(
@@ -240,30 +258,51 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                               const SizedBox(height: 30),
 
                               // Celebrity header
-                              _buildCelebrityHeader(isSmallScreen),
+                              _buildCelebrityHeader(isSmallScreen, celebrity),
 
-                              // Testimonial section
-                              if (widget.testimonial != null &&
-                                  widget.testimonial!.isNotEmpty)
-                                _buildTestimonial(isSmallScreen),
+                              // Testimonial section - Only show if celebrity has testimonial
+                              if (celebrity.testimonial != null &&
+                                  celebrity.testimonial!.isNotEmpty) ...[
+                                _buildTestimonial(isSmallScreen,
+                                    celebrity.testimonial!, celebrity),
+                              ] else ...[
+                                Container(), // Placeholder for debug - testimonial hidden
+                              ],
 
-                              // Morning and Evening routine - FIRST
-                              if (widget.morningRoutineProducts.isNotEmpty ||
-                                  widget.eveningRoutineProducts.isNotEmpty)
-                                _buildResponsiveRoutineSection(
-                                    context, isSmallScreen, isMediumScreen),
+                              // Morning and Evening routine - Only show if celebrity has routines
+                              if (celebrity.morningRoutineProducts.isNotEmpty ||
+                                  celebrity
+                                      .eveningRoutineProducts.isNotEmpty) ...[
+                                _buildResponsiveRoutineSection(context,
+                                    isSmallScreen, isMediumScreen, celebrity),
+                              ] else ...[
+                                Container(), // Placeholder for debug - routines hidden
+                              ],
 
-                              // Recommended products - SECOND
-                              if (widget.recommendedProducts.isNotEmpty)
-                                _buildResponsiveRecommendedProducts(
-                                    context, isSmallScreen, isMediumScreen),
+                              // Recommended products - Only show if celebrity has recommended products
+                              if (celebrity.recommendedProducts.isNotEmpty) ...[
+                                _buildResponsiveRecommendedProducts(context,
+                                    isSmallScreen, isMediumScreen, celebrity),
+                              ] else ...[
+                                Container(), // Placeholder for debug - recommended products hidden
+                              ],
 
-                              // Beauty secrets video - THIRD
-                              _buildBeautySecrets(isSmallScreen),
+                              // Beauty secrets video - Only show if we have more content
+                              if (celebrity.bio != null &&
+                                  celebrity.bio!.isNotEmpty) ...[
+                                _buildBeautySecrets(
+                                    isSmallScreen, celebrity.bio!),
+                              ] else ...[
+                                Container(), // Placeholder for debug - beauty secrets hidden
+                              ],
 
-                              // Social media - LAST (Connect with Celebrity section)
-                              if (widget.socialMediaLinks.isNotEmpty)
-                                _buildResponsiveSocialMedia(isSmallScreen),
+                              // Social media - Only show if celebrity has social media links
+                              if (celebrity.socialMediaLinks.isNotEmpty) ...[
+                                _buildResponsiveSocialMedia(
+                                    isSmallScreen, celebrity.socialMediaLinks),
+                              ] else ...[
+                                Container(), // Placeholder for debug - social media hidden
+                              ],
 
                               const SizedBox(height: 40),
                             ],
@@ -292,7 +331,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          widget.celebrityName,
+          'Celebrity Profile',
           style: TextStyle(
             fontSize: isSmallScreen ? 18 : 20,
             fontWeight: FontWeight.w600,
@@ -305,15 +344,45 @@ class _CelebrityScreenState extends State<CelebrityScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(
-              color: AppConstants.accentColor,
-            ),
-            SizedBox(height: isSmallScreen ? 16 : 20),
-            Text(
-              'Loading celebrity profile...',
-              style: TextStyle(
-                fontSize: isSmallScreen ? 14 : 16,
-                color: AppConstants.textSecondary,
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: AppConstants.surfaceColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppConstants.textSecondary.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(
+                    color: AppConstants.accentColor,
+                    strokeWidth: 3,
+                  ),
+                  SizedBox(height: isSmallScreen ? 16 : 20),
+                  Text(
+                    'Loading Celebrity Profile',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 16 : 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppConstants.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: isSmallScreen ? 8 : 12),
+                  Text(
+                    'Fetching routines and products...',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 14 : 16,
+                      color: AppConstants.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
           ],
@@ -333,7 +402,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          widget.celebrityName,
+          'Celebrity Profile',
           style: TextStyle(
             fontSize: isSmallScreen ? 18 : 20,
             fontWeight: FontWeight.w600,
@@ -398,7 +467,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
     );
   }
 
-  Widget _buildResponsiveSliverAppBar(bool isSmallScreen) {
+  Widget _buildResponsiveSliverAppBar(bool isSmallScreen, Celebrity celebrity) {
     return SliverAppBar(
       expandedHeight: isSmallScreen ? 280 : 320,
       pinned: true,
@@ -419,7 +488,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
             child: Transform.translate(
               offset: Offset(0, 20 * (1 - _titleAnimation.value)),
               child: Text(
-                widget.celebrityName,
+                celebrity.name,
                 style: TextStyle(
                   fontSize: isSmallScreen ? 18 : 20,
                   fontWeight: FontWeight.w600,
@@ -520,23 +589,24 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                       ],
                     ),
                     child: ClipOval(
-                      child: widget.celebrityImage.isNotEmpty
-                          ? Image.network(
-                              widget.celebrityImage,
-                              fit: BoxFit.cover,
-                              width: isSmallScreen ? 164 : 204,
-                              height: isSmallScreen ? 164 : 204,
-                              errorBuilder: (context, error, stackTrace) {
-                                return _buildFallbackImage(isSmallScreen);
-                              },
-                              loadingBuilder:
-                                  (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return _buildLoadingImage(
-                                    isSmallScreen, loadingProgress);
-                              },
-                            )
-                          : _buildFallbackImage(isSmallScreen),
+                      child:
+                          celebrity.image != null && celebrity.image!.isNotEmpty
+                              ? Image.network(
+                                  celebrity.image!,
+                                  fit: BoxFit.cover,
+                                  width: isSmallScreen ? 164 : 204,
+                                  height: isSmallScreen ? 164 : 204,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return _buildFallbackImage(isSmallScreen);
+                                  },
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return _buildLoadingImage(
+                                        isSmallScreen, loadingProgress);
+                                  },
+                                )
+                              : _buildFallbackImage(isSmallScreen),
                     ),
                   ),
                 ),
@@ -628,14 +698,14 @@ class _CelebrityScreenState extends State<CelebrityScreen>
     );
   }
 
-  Widget _buildCelebrityHeader(bool isSmallScreen) {
+  Widget _buildCelebrityHeader(bool isSmallScreen, Celebrity celebrity) {
     return Container(
       padding: EdgeInsets.symmetric(
           horizontal: isSmallScreen ? 20 : 30, vertical: 20),
       child: Column(
         children: [
           Text(
-            widget.celebrityName,
+            celebrity.name,
             style: TextStyle(
               fontSize: isSmallScreen ? 28 : 32,
               fontWeight: FontWeight.bold,
@@ -672,7 +742,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'Discover the secrets behind ${widget.celebrityName}\'s radiant glow with their exclusive beauty philosophy and skincare routine.',
+            celebrity.bio ??
+                'Discover the secrets behind ${celebrity.name}\'s radiant glow with their exclusive beauty philosophy and skincare routine.',
             style: TextStyle(
               fontSize: isSmallScreen ? 15 : 16,
               color: AppConstants.textSecondary,
@@ -685,7 +756,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
     );
   }
 
-  Widget _buildTestimonial(bool isSmallScreen) {
+  Widget _buildTestimonial(
+      bool isSmallScreen, String testimonial, Celebrity celebrity) {
     return Container(
       margin: EdgeInsets.symmetric(
           horizontal: isSmallScreen ? 8 : 20, vertical: 20),
@@ -714,7 +786,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
           ),
           SizedBox(height: isSmallScreen ? 12 : 16),
           Text(
-            widget.testimonial!,
+            testimonial,
             style: TextStyle(
               fontSize: isSmallScreen ? 14 : 18,
               fontStyle: FontStyle.italic,
@@ -725,7 +797,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
           ),
           SizedBox(height: isSmallScreen ? 12 : 16),
           Text(
-            '— ${widget.celebrityName}',
+            '— ${celebrity.name}',
             style: TextStyle(
               fontSize: isSmallScreen ? 13 : 16,
               fontWeight: FontWeight.bold,
@@ -737,8 +809,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
     );
   }
 
-  Widget _buildResponsiveRoutineSection(
-      BuildContext context, bool isSmallScreen, bool isMediumScreen) {
+  Widget _buildResponsiveRoutineSection(BuildContext context,
+      bool isSmallScreen, bool isMediumScreen, Celebrity celebrity) {
     return Container(
       margin:
           EdgeInsets.symmetric(horizontal: isSmallScreen ? 0 : 0, vertical: 20),
@@ -760,10 +832,10 @@ class _CelebrityScreenState extends State<CelebrityScreen>
             Column(
               children: [
                 _buildRoutineSection(context, 'Morning',
-                    widget.morningRoutineProducts, isSmallScreen),
+                    celebrity.morningRoutineProducts, isSmallScreen),
                 const SizedBox(height: 20),
                 _buildRoutineSection(context, 'Evening',
-                    widget.eveningRoutineProducts, isSmallScreen),
+                    celebrity.eveningRoutineProducts, isSmallScreen),
               ],
             )
           else
@@ -773,12 +845,12 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                 children: [
                   Expanded(
                     child: _buildRoutineSection(context, 'Morning',
-                        widget.morningRoutineProducts, isSmallScreen),
+                        celebrity.morningRoutineProducts, isSmallScreen),
                   ),
                   const SizedBox(width: 20),
                   Expanded(
                     child: _buildRoutineSection(context, 'Evening',
-                        widget.eveningRoutineProducts, isSmallScreen),
+                        celebrity.eveningRoutineProducts, isSmallScreen),
                   ),
                 ],
               ),
@@ -997,8 +1069,8 @@ class _CelebrityScreenState extends State<CelebrityScreen>
     );
   }
 
-  Widget _buildResponsiveRecommendedProducts(
-      BuildContext context, bool isSmallScreen, bool isMediumScreen) {
+  Widget _buildResponsiveRecommendedProducts(BuildContext context,
+      bool isSmallScreen, bool isMediumScreen, Celebrity celebrity) {
     // Calculate grid columns based on screen size
     int crossAxisCount;
     double childAspectRatio;
@@ -1045,9 +1117,9 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                   crossAxisSpacing: spacing,
                   childAspectRatio: childAspectRatio,
                 ),
-                itemCount: widget.recommendedProducts.length,
+                itemCount: celebrity.recommendedProducts.length,
                 itemBuilder: (context, index) {
-                  final product = widget.recommendedProducts[index];
+                  final product = celebrity.recommendedProducts[index];
                   return _buildResponsiveProductCard(
                       context, product, isSmallScreen);
                 },
@@ -1221,7 +1293,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
     );
   }
 
-  Widget _buildBeautySecrets(bool isSmallScreen) {
+  Widget _buildBeautySecrets(bool isSmallScreen, String bio) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 20),
       padding: EdgeInsets.all(isSmallScreen ? 20 : 24),
@@ -1268,7 +1340,7 @@ class _CelebrityScreenState extends State<CelebrityScreen>
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
-                      'Watch ${widget.celebrityName} share their beauty tips and secrets.',
+                      bio,
                       style: TextStyle(
                         fontSize: isSmallScreen ? 14 : 16,
                         color: AppConstants.textSecondary,
@@ -1285,37 +1357,38 @@ class _CelebrityScreenState extends State<CelebrityScreen>
     );
   }
 
-  Widget _buildResponsiveSocialMedia(bool isSmallScreen) {
+  Widget _buildResponsiveSocialMedia(
+      bool isSmallScreen, Map<String, String> socialMediaLinks) {
     final availableLinks = <String, Map<String, dynamic>>{};
 
     // Check which social media platforms are available
-    if (widget.socialMediaLinks.containsKey('facebook')) {
+    if (socialMediaLinks.containsKey('facebook')) {
       availableLinks['facebook'] = {
         'icon': FontAwesomeIcons.facebookF,
         'color': const Color(0xFF1877F2),
         'bgColor': const Color(0xFF1877F2),
         'label': 'Facebook',
-        'url': widget.socialMediaLinks['facebook']!,
+        'url': socialMediaLinks['facebook']!,
       };
     }
 
-    if (widget.socialMediaLinks.containsKey('instagram')) {
+    if (socialMediaLinks.containsKey('instagram')) {
       availableLinks['instagram'] = {
         'icon': FontAwesomeIcons.instagram,
         'color': const Color(0xFFE4405F),
         'bgColor': const Color(0xFFE4405F),
         'label': 'Instagram',
-        'url': widget.socialMediaLinks['instagram']!,
+        'url': socialMediaLinks['instagram']!,
       };
     }
 
-    if (widget.socialMediaLinks.containsKey('snapchat')) {
+    if (socialMediaLinks.containsKey('snapchat')) {
       availableLinks['snapchat'] = {
         'icon': FontAwesomeIcons.snapchat,
         'color': const Color(0xFF000000),
         'bgColor': const Color(0xFFFFFC00),
         'label': 'Snapchat',
-        'url': widget.socialMediaLinks['snapchat']!,
+        'url': socialMediaLinks['snapchat']!,
       };
     }
 

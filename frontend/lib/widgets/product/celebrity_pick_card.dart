@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_constants.dart';
+import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
-import '../../screens/celebrity/celebrity_screen.dart';
+import '../../constants/app_constants.dart';
+import '../../providers/celebrity_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class CelebrityPickCard extends StatefulWidget {
   final Product product;
@@ -15,6 +17,7 @@ class CelebrityPickCard extends StatefulWidget {
   final List<Product> recommendedProducts;
   final List<Product> morningRoutineProducts;
   final List<Product> eveningRoutineProducts;
+  final int? celebrityId;
 
   const CelebrityPickCard({
     super.key,
@@ -29,6 +32,7 @@ class CelebrityPickCard extends StatefulWidget {
     this.recommendedProducts = const [],
     this.morningRoutineProducts = const [],
     this.eveningRoutineProducts = const [],
+    this.celebrityId,
   });
 
   @override
@@ -39,17 +43,17 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
     with TickerProviderStateMixin {
   late AnimationController _primaryController;
   late AnimationController _shimmerController;
-  
+
   // Primary entrance animations
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<double> _rotateAnimation;
-  
+
   // Shimmer/highlight animation
   late Animation<double> _shimmerAnimation;
   late Animation<Offset> _shimmerPositionAnimation;
-  
+
   bool _isPressed = false;
 
   @override
@@ -127,7 +131,7 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
     Future.delayed(Duration(milliseconds: widget.index * 30), () {
       if (mounted) {
         _primaryController.forward();
-        
+
         Future.delayed(const Duration(milliseconds: 200), () {
           if (mounted) {
             _shimmerController.repeat(reverse: true);
@@ -170,11 +174,12 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
         ]),
         builder: (context, child) {
           // Clamp animation values to prevent assertion failures
-          final scaleValue = (_scaleAnimation.value * (_isPressed ? 0.98 : 1.0)).clamp(0.0, 2.0);
+          final scaleValue = (_scaleAnimation.value * (_isPressed ? 0.98 : 1.0))
+              .clamp(0.0, 2.0);
           final fadeValue = _fadeAnimation.value.clamp(0.0, 1.0);
           final rotateValue = _rotateAnimation.value.clamp(-1.0, 1.0);
           final shimmerValue = _shimmerAnimation.value.clamp(0.0, 1.0);
-          
+
           return Transform.rotate(
             angle: rotateValue,
             child: Transform.scale(
@@ -219,7 +224,8 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                 gradient: LinearGradient(
                                   colors: [
                                     AppConstants.accentColor.withOpacity(0.05),
-                                    AppConstants.favoriteColor.withOpacity(0.05),
+                                    AppConstants.favoriteColor
+                                        .withOpacity(0.05),
                                     Colors.transparent,
                                   ],
                                   begin: Alignment.topLeft,
@@ -228,7 +234,7 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                 ),
                               ),
                             ),
-                            
+
                             // Product display area
                             Positioned.fill(
                               child: Container(
@@ -243,8 +249,10 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                           shape: BoxShape.circle,
                                           gradient: LinearGradient(
                                             colors: [
-                                              AppConstants.accentColor.withOpacity(0.15),
-                                              AppConstants.favoriteColor.withOpacity(0.15),
+                                              AppConstants.accentColor
+                                                  .withOpacity(0.15),
+                                              AppConstants.favoriteColor
+                                                  .withOpacity(0.15),
                                             ],
                                             begin: Alignment.topLeft,
                                             end: Alignment.bottomRight,
@@ -254,20 +262,20 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
                                           child: Icon(
                                             Icons.spa_rounded,
                                             size: 42,
-                                            color: AppConstants.accentColor.withOpacity(0.8),
+                                            color: AppConstants.accentColor
+                                                .withOpacity(0.8),
                                           ),
                                         ),
                                       ),
                                     ),
-                                    
+
                                     const SizedBox(height: 12),
-                                    
+
                                     // Product name
                                     Flexible(
                                       child: Text(
                                         widget.product.name,
-style: const TextStyle(
-
+                                        style: const TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
                                           color: AppConstants.textPrimary,
@@ -282,80 +290,83 @@ style: const TextStyle(
                                 ),
                               ),
                             ),
-                            
+
                             // Celebrity pick badge - top right
                             Positioned(
                               top: 12,
                               right: 12,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppConstants.accentColor,
-                                      AppConstants.accentColor.withOpacity(0.8),
+                              child: GestureDetector(
+                                onTap: () async {
+                                  // Use external callback if provided, otherwise use internal navigation
+                                  if (widget.onCelebrityTap != null) {
+                                    widget.onCelebrityTap!();
+                                  } else {
+                                    await _navigateToCelebrity(context);
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppConstants.accentColor,
+                                        AppConstants.accentColor
+                                            .withOpacity(0.8),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppConstants.accentColor
+                                            .withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppConstants.accentColor.withOpacity(0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-const Icon(
-
-                                      Icons.star_rounded,
-                                      size: 10,
-                                      color: Colors.white,
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Flexible(
-                                      child: Text(
-                                        widget.celebrityName.split(' ')[0],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.3,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.star_rounded,
+                                        size: 10,
+                                        color: Colors.white,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 3),
+                                      Flexible(
+                                        child: Text(
+                                          widget.celebrityName.split(' ')[0],
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.3,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                            
+
                             // Celebrity info bottom section
                             Positioned(
                               bottom: 0,
                               left: 0,
                               right: 0,
                               child: GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CelebrityScreen(
-                                        celebrityName: widget.celebrityName,
-                                        celebrityImage: widget.celebrityImage,
-                                        testimonial: widget.testimonial,
-                                        socialMediaLinks: widget.socialMediaLinks,
-                                        recommendedProducts: widget.recommendedProducts,
-                                        morningRoutineProducts: widget.morningRoutineProducts,
-                                        eveningRoutineProducts: widget.eveningRoutineProducts,
-                                      ),
-                                    ),
-                                  );
+                                onTap: () async {
+                                  // Use external callback if provided, otherwise use internal navigation
+                                  if (widget.onCelebrityTap != null) {
+                                    widget.onCelebrityTap!();
+                                  } else {
+                                    await _navigateToCelebrity(context);
+                                  }
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.all(12),
@@ -384,67 +395,95 @@ const Icon(
                                           ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.black.withOpacity(0.2),
+                                              color:
+                                                  Colors.black.withOpacity(0.2),
                                               blurRadius: 6,
                                               offset: const Offset(0, 2),
                                             ),
                                           ],
                                         ),
                                         child: ClipOval(
-                                          child: widget.celebrityImage.isNotEmpty
+                                          child: widget
+                                                  .celebrityImage.isNotEmpty
                                               ? Image.network(
                                                   widget.celebrityImage,
                                                   width: 28,
                                                   height: 28,
                                                   fit: BoxFit.cover,
-                                                  errorBuilder: (context, error, stackTrace) {
+                                                  errorBuilder: (context, error,
+                                                      stackTrace) {
                                                     return Container(
-decoration: const BoxDecoration(
-
-                                                        gradient: LinearGradient(
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                        gradient:
+                                                            LinearGradient(
                                                           colors: [
-                                                            AppConstants.accentColor,
-                                                            AppConstants.favoriteColor,
+                                                            AppConstants
+                                                                .accentColor,
+                                                            AppConstants
+                                                                .favoriteColor,
                                                           ],
-                                                          begin: Alignment.topLeft,
-                                                          end: Alignment.bottomRight,
+                                                          begin:
+                                                              Alignment.topLeft,
+                                                          end: Alignment
+                                                              .bottomRight,
                                                         ),
                                                       ),
                                                       child: Center(
                                                         child: Text(
-                                                          widget.celebrityName[0],
-                                                          style: const TextStyle(
+                                                          widget
+                                                              .celebrityName[0],
+                                                          style:
+                                                              const TextStyle(
                                                             color: Colors.white,
                                                             fontSize: 12,
-                                                            fontWeight: FontWeight.bold,
+                                                            fontWeight:
+                                                                FontWeight.bold,
                                                           ),
                                                         ),
                                                       ),
                                                     );
                                                   },
-                                                  loadingBuilder: (context, child, loadingProgress) {
-                                                    if (loadingProgress == null) return child;
+                                                  loadingBuilder: (context,
+                                                      child, loadingProgress) {
+                                                    if (loadingProgress == null)
+                                                      return child;
                                                     return Container(
                                                       decoration: BoxDecoration(
-                                                        gradient: LinearGradient(
+                                                        gradient:
+                                                            LinearGradient(
                                                           colors: [
-                                                            AppConstants.accentColor.withOpacity(0.5),
-                                                            AppConstants.favoriteColor.withOpacity(0.5),
+                                                            AppConstants
+                                                                .accentColor
+                                                                .withOpacity(
+                                                                    0.5),
+                                                            AppConstants
+                                                                .favoriteColor
+                                                                .withOpacity(
+                                                                    0.5),
                                                           ],
-                                                          begin: Alignment.topLeft,
-                                                          end: Alignment.bottomRight,
+                                                          begin:
+                                                              Alignment.topLeft,
+                                                          end: Alignment
+                                                              .bottomRight,
                                                         ),
                                                       ),
                                                       child: Center(
                                                         child: SizedBox(
                                                           width: 12,
                                                           height: 12,
-                                                          child: CircularProgressIndicator(
+                                                          child:
+                                                              CircularProgressIndicator(
                                                             color: Colors.white,
                                                             strokeWidth: 1.5,
-                                                            value: loadingProgress.expectedTotalBytes != null
-                                                                ? loadingProgress.cumulativeBytesLoaded /
-                                                                    (loadingProgress.expectedTotalBytes ?? 1)
+                                                            value: loadingProgress
+                                                                        .expectedTotalBytes !=
+                                                                    null
+                                                                ? loadingProgress
+                                                                        .cumulativeBytesLoaded /
+                                                                    (loadingProgress
+                                                                            .expectedTotalBytes ??
+                                                                        1)
                                                                 : null,
                                                           ),
                                                         ),
@@ -453,15 +492,18 @@ decoration: const BoxDecoration(
                                                   },
                                                 )
                                               : Container(
-decoration: const BoxDecoration(
-
+                                                  decoration:
+                                                      const BoxDecoration(
                                                     gradient: LinearGradient(
                                                       colors: [
-                                                        AppConstants.accentColor,
-                                                        AppConstants.favoriteColor,
+                                                        AppConstants
+                                                            .accentColor,
+                                                        AppConstants
+                                                            .favoriteColor,
                                                       ],
                                                       begin: Alignment.topLeft,
-                                                      end: Alignment.bottomRight,
+                                                      end:
+                                                          Alignment.bottomRight,
                                                     ),
                                                   ),
                                                   child: Center(
@@ -470,20 +512,22 @@ decoration: const BoxDecoration(
                                                       style: const TextStyle(
                                                         color: Colors.white,
                                                         fontSize: 12,
-                                                        fontWeight: FontWeight.bold,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                       ),
                                                     ),
                                                   ),
                                                 ),
                                         ),
                                       ),
-                                      
+
                                       const SizedBox(width: 10),
-                                      
+
                                       // Celebrity name
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
@@ -501,7 +545,8 @@ decoration: const BoxDecoration(
                                             Text(
                                               'Celebrity Pick',
                                               style: TextStyle(
-                                                color: AppConstants.accentColor.withOpacity(0.9),
+                                                color: AppConstants.accentColor
+                                                    .withOpacity(0.9),
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.w500,
                                                 letterSpacing: 0.3,
@@ -515,7 +560,7 @@ decoration: const BoxDecoration(
                                 ),
                               ),
                             ),
-                            
+
                             // Shimmer overlay for premium feel
                             if (shimmerValue > 0)
                               Positioned.fill(
@@ -531,12 +576,21 @@ decoration: const BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: [
                                             Colors.transparent,
-                                            Colors.white.withOpacity(0.1 * shimmerValue),
-                                            Colors.white.withOpacity(0.2 * shimmerValue),
-                                            Colors.white.withOpacity(0.1 * shimmerValue),
+                                            Colors.white.withOpacity(
+                                                0.1 * shimmerValue),
+                                            Colors.white.withOpacity(
+                                                0.2 * shimmerValue),
+                                            Colors.white.withOpacity(
+                                                0.1 * shimmerValue),
                                             Colors.transparent,
                                           ],
-                                          stops: const [0.0, 0.4, 0.5, 0.6, 1.0],
+                                          stops: const [
+                                            0.0,
+                                            0.4,
+                                            0.5,
+                                            0.6,
+                                            1.0
+                                          ],
                                           begin: const Alignment(-1.0, -0.3),
                                           end: const Alignment(1.0, 0.3),
                                         ),
@@ -545,7 +599,7 @@ decoration: const BoxDecoration(
                                   ),
                                 ),
                               ),
-                            
+
                             // Touch feedback overlay
                             if (_isPressed)
                               Positioned.fill(
@@ -569,4 +623,38 @@ decoration: const BoxDecoration(
       ),
     );
   }
-} 
+
+  Future<void> _navigateToCelebrity(BuildContext context) async {
+    try {
+      final celebrityProvider = context.read<CelebrityProvider>();
+
+      // Use celebrity ID if available, otherwise fall back to name
+      if (widget.celebrityId != null) {
+        debugPrint(
+            'CelebrityPickCard: Navigating to celebrity by ID: ${widget.celebrityId}');
+        await celebrityProvider.selectCelebrityById(widget.celebrityId!);
+      } else {
+        debugPrint(
+            'CelebrityPickCard: Navigating to celebrity by name: ${widget.celebrityName}');
+        await celebrityProvider.selectCelebrity(widget.celebrityName);
+      }
+
+      // Navigate only after successful selection
+      if (context.mounted) {
+        context.pushNamed('celebrity');
+      }
+    } catch (e) {
+      debugPrint('CelebrityPickCard: Error navigating to celebrity: $e');
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load celebrity: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+}

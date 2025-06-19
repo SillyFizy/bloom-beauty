@@ -140,6 +140,38 @@ class Product(models.Model):
         if created or rating_stats.total_reviews == 0:
             rating_stats.update_stats()
         return rating_stats
+    
+    # Celebrity-related methods
+    @property
+    def celebrity_promotions_active(self):
+        """Get active celebrity promotions for this product"""
+        return self.celebrity_promotions.filter(celebrity__is_active=True)
+    
+    @property
+    def is_celebrity_endorsed(self):
+        """Check if this product is endorsed by any active celebrity"""
+        return self.celebrity_promotions_active.exists()
+    
+    @property
+    def featured_celebrity_promotion(self):
+        """Get the featured celebrity promotion for this product"""
+        return self.celebrity_promotions_active.filter(is_featured=True).first()
+    
+    def get_celebrity_endorsers(self):
+        """Get all celebrities who endorse this product"""
+        return [promo.celebrity for promo in self.celebrity_promotions_active]
+    
+    def get_celebrity_testimonials(self):
+        """Get celebrity testimonials for this product"""
+        return self.celebrity_promotions_active.exclude(testimonial__isnull=True).exclude(testimonial='')
+    
+    def is_in_celebrity_morning_routine(self):
+        """Check if this product is part of any celebrity's morning routine"""
+        return self.celebrity_morning_routines.filter(celebrity__is_active=True).exists()
+    
+    def is_in_celebrity_evening_routine(self):
+        """Check if this product is part of any celebrity's evening routine"""
+        return self.celebrity_evening_routines.filter(celebrity__is_active=True).exists()
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')

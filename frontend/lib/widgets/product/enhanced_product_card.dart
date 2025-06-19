@@ -32,11 +32,12 @@ class EnhancedProductCard extends StatelessWidget {
 
     _isNavigating = true;
     try {
-      // Get celebrity provider and data in a single operation
+      // Use the provider to select celebrity and navigate
       final celebrityProvider = context.read<CelebrityProvider>();
-      final celebrityData =
-          await celebrityProvider.getCelebrityDataForNavigation(
-              product.celebrityEndorsement!.celebrityName);
+
+      // Use provider's loading state instead of dialog to prevent Navigator conflicts
+      await celebrityProvider
+          .selectCelebrity(product.celebrityEndorsement!.celebrityName);
 
       // Check context is still valid before navigation
       if (!context.mounted) return;
@@ -45,29 +46,19 @@ class EnhancedProductCard extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CelebrityScreen(
-            celebrityName: product.celebrityEndorsement!.celebrityName,
-            celebrityImage: product.celebrityEndorsement!.celebrityImage,
-            testimonial: product.celebrityEndorsement!.testimonial,
-            recommendedProducts: celebrityData['recommendedProducts'] ?? [],
-            socialMediaLinks: celebrityData['socialMediaLinks'] ?? {},
-            morningRoutineProducts:
-                celebrityData['morningRoutineProducts'] ?? [],
-            eveningRoutineProducts:
-                celebrityData['eveningRoutineProducts'] ?? [],
-          ),
+          builder: (context) => const CelebrityScreen(),
         ),
       );
     } catch (e) {
       debugPrint('Error navigating to celebrity profile: $e');
 
-      // Show error only if context is still valid
+      // Show error message
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to load celebrity profile'),
+          SnackBar(
+            content: Text('Failed to load celebrity profile: $e'),
             backgroundColor: AppConstants.errorColor,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
           ),
         );
       }

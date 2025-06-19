@@ -252,12 +252,25 @@ class Product {
   }
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    // Parse price properly (API returns as string)
+    final priceStr = json['price']?.toString() ?? '0';
+    final price = double.tryParse(priceStr) ?? 0.0;
+
+    // Parse discount price properly (API returns as string)
+    double? discountPrice;
+    if (json['discount_price'] != null) {
+      final discountPriceStr = json['discount_price'].toString();
+      discountPrice = double.tryParse(discountPriceStr);
+    }
+
     return Product(
-      id: json['id'].toString(),
+      id: json['slug'] ??
+          json['id']
+              .toString(), // ✅ CRITICAL FIX: Use slug as ID for proper navigation
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
-      discountPrice: json['discount_price']?.toDouble(),
+      price: price,
+      discountPrice: discountPrice,
       images: json['images'] != null ? List<String>.from(json['images']) : [],
       categoryId: json['category_id']?.toString() ?? '',
       brand: json['brand'] ?? '',
@@ -268,7 +281,9 @@ class Product {
       ingredients: json['ingredients'] != null
           ? List<String>.from(json['ingredients'])
           : [],
-      beautyPoints: (json['beauty_points'] ?? 0).toInt(),
+      beautyPoints: json['beauty_points'] != null
+          ? int.tryParse(json['beauty_points'].toString()) ?? 0
+          : 0,
       variants: json['variants'] != null
           ? (json['variants'] as List)
               .map((v) => ProductVariant.fromJson(v))

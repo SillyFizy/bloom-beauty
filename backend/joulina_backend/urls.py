@@ -41,6 +41,7 @@ schema_view = get_schema_view(
 api_v1_patterns = [
     path('users/', include('users.urls')),
     path('products/', include('products.urls')),
+    path('celebrities/', include('celebrities.urls')),
     path('cart/', include('cart.urls')),
     path('orders/', include('orders.urls')),
     path('payments/', include('payments.urls')),

@@ -55,13 +55,14 @@ class ApiService {
 
   /// Generic GET request with error handling and retries
   static Future<Map<String, dynamic>> get(String endpoint,
-      {int retryCount = 0}) async {
+      {int retryCount = 0, bool requireAuth = true}) async {
     try {
       print('DEBUG: Making GET request to: $baseUrl$endpoint');
+      final headers = requireAuth ? _headersWithAuth : _headers;
       final response = await http
           .get(
             Uri.parse('$baseUrl$endpoint'),
-            headers: _headersWithAuth,
+            headers: headers,
           )
           .timeout(requestTimeout);
 
@@ -91,7 +92,8 @@ class ApiService {
       if (retryCount < maxRetries) {
         debugPrint('Retrying request... Attempt ${retryCount + 1}');
         await Future.delayed(Duration(seconds: retryCount + 1));
-        return get(endpoint, retryCount: retryCount + 1);
+        return get(endpoint,
+            retryCount: retryCount + 1, requireAuth: requireAuth);
       }
       throw ApiException('Request failed after $maxRetries retries: $e');
     }
@@ -192,13 +194,14 @@ class ApiService {
     }
   }
 
-  // Product API endpoints
+  /// Get list of products - basic API wrapper
   static Future<List<Product>> getProducts() async {
     try {
-      final response = await get('/v1/products/');
+      final response = await get('/v1/products/', requireAuth: false);
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
-      return results.map((json) => Product.fromJson(json)).toList();
+      // ✅ CRITICAL FIX: Use fromBackendApi to ensure slug-based IDs
+      return results.map((json) => Product.fromBackendApi(json)).toList();
     } catch (e) {
       throw ApiException('Failed to load products: $e');
     }
@@ -213,7 +216,8 @@ class ApiService {
       while (nextUrl != null) {
         print('DEBUG: Fetching products from: $nextUrl');
         final response = await get(
-            nextUrl.startsWith('/') ? nextUrl : '/v1/products/$nextUrl');
+            nextUrl.startsWith('/') ? nextUrl : '/v1/products/$nextUrl',
+            requireAuth: false);
 
         final List<dynamic> results = response['results'] ?? [];
         final List<Product> pageProducts = results
@@ -257,7 +261,7 @@ class ApiService {
 
   static Future<Product> getProduct(String id) async {
     try {
-      final response = await get('/v1/products/$id/');
+      final response = await get('/v1/products/$id/', requireAuth: false);
       return Product.fromJson(response);
     } catch (e) {
       throw ApiException('Failed to load product: $e');
@@ -267,8 +271,11 @@ class ApiService {
   /// Get product detail by ID - includes images, variants, and full details
   static Future<Product> getProductDetail(String productId) async {
     try {
-      print('DEBUG: Fetching product detail for ID: $productId');
-      final response = await get('/v1/products/$productId/');
+      print('DEBUG: Fetching product detail for slug: $productId');
+
+      // ✅ SIMPLE SLUG-BASED API CALL - Backend expects slug format
+      final response =
+          await get('/v1/products/$productId/', requireAuth: false);
 
       // Convert backend data format to match frontend model expectations
       final productData = Map<String, dynamic>.from(response);
@@ -474,7 +481,8 @@ class ApiService {
       final response = await get('/v1/products/?category=$categoryId');
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
-      return results.map((json) => Product.fromJson(json)).toList();
+      // ✅ CRITICAL FIX: Use fromBackendApi to ensure slug-based IDs
+      return results.map((json) => Product.fromBackendApi(json)).toList();
     } catch (e) {
       throw ApiException('Failed to load category products: $e');
     }
@@ -565,7 +573,7 @@ class ApiService {
         endpoint += '&days=$days';
       }
 
-      final response = await get(endpoint);
+      final response = await get(endpoint, requireAuth: false);
 
       // Handle response - the get method returns Map<String, dynamic>
       List<dynamic> results;
@@ -593,7 +601,7 @@ class ApiService {
         endpoint += '&days=$days';
       }
 
-      final response = await get(endpoint);
+      final response = await get(endpoint, requireAuth: false);
 
       // Handle response - the get method returns Map<String, dynamic>
       List<dynamic> results;
@@ -612,10 +620,10 @@ class ApiService {
     }
   }
 
-  // Celebrity API endpoints
+  // Celebrity API endpoints (public, no authentication required)
   static Future<List<Celebrity>> getCelebrities() async {
     try {
-      final response = await get('/celebrities/');
+      final response = await get('/v1/celebrities/', requireAuth: false);
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
       return results.map((json) => Celebrity.fromJson(json)).toList();
@@ -626,7 +634,7 @@ class ApiService {
 
   static Future<Celebrity> getCelebrity(String id) async {
     try {
-      final response = await get('/celebrities/$id/');
+      final response = await get('/v1/celebrities/$id/', requireAuth: false);
       return Celebrity.fromJson(response);
     } catch (e) {
       throw ApiException('Failed to load celebrity: $e');
@@ -716,15 +724,108 @@ class ApiService {
     }
   }
 
-  // Category API endpoints
+  // Category API endpoints (public, no authentication required)
   static Future<List<Map<String, dynamic>>> getCategories() async {
     try {
-      final response = await get('/categories/');
+      final response = await get('/v1/categories/', requireAuth: false);
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
       return results.cast<Map<String, dynamic>>();
     } catch (e) {
       throw ApiException('Failed to load categories: $e');
+    }
+  }
+
+  // Celebrity API endpoints
+
+  static Future<Celebrity> getCelebrityById(int id) async {
+    try {
+      final response = await get('/v1/celebrities/$id/', requireAuth: false);
+      return Celebrity.fromJson(response);
+    } catch (e) {
+      throw ApiException('Failed to load celebrity: $e');
+    }
+  }
+
+  static Future<List<Product>> getCelebrityPromotions(int celebrityId) async {
+    try {
+      final response = await get('/v1/celebrities/$celebrityId/promotions/',
+          requireAuth: false);
+      final List<dynamic> promotions = response['promotions'] ?? [];
+      return promotions
+          .map((promo) =>
+              Product.fromJson(promo['product'] as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw ApiException('Failed to load celebrity promotions: $e');
+    }
+  }
+
+  static Future<List<Product>> getCelebrityMorningRoutine(
+      int celebrityId) async {
+    try {
+      final response = await get(
+          '/v1/celebrities/$celebrityId/morning-routine/',
+          requireAuth: false);
+      final List<dynamic> routine = response['morning_routine'] ?? [];
+      return routine
+          .map((item) =>
+              Product.fromJson(item['product'] as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw ApiException('Failed to load celebrity morning routine: $e');
+    }
+  }
+
+  static Future<List<Product>> getCelebrityEveningRoutine(
+      int celebrityId) async {
+    try {
+      final response = await get(
+          '/v1/celebrities/$celebrityId/evening-routine/',
+          requireAuth: false);
+      final List<dynamic> routine = response['evening_routine'] ?? [];
+      return routine
+          .map((item) =>
+              Product.fromJson(item['product'] as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw ApiException('Failed to load celebrity evening routine: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getCelebrityPicks(
+      {int limit = 4}) async {
+    try {
+      final response =
+          await get('/v1/celebrities/picks/products/?limit=$limit');
+
+      // Handle response - the get method returns Map<String, dynamic>
+      List<dynamic> results;
+      if (response.containsKey('results')) {
+        results = response['results'] as List<dynamic>;
+      } else if (response.containsKey('data')) {
+        results = response['data'] as List<dynamic>;
+      } else if (response is List) {
+        results = response as List<dynamic>;
+      } else {
+        results = [];
+      }
+
+      return results.cast<Map<String, dynamic>>();
+    } catch (e) {
+      throw ApiException('Failed to load celebrity picks: $e');
+    }
+  }
+
+  static Future<List<Celebrity>> searchCelebrities(String query) async {
+    try {
+      final response = await get(
+          '/v1/celebrities/search/?q=${Uri.encodeComponent(query)}',
+          requireAuth: false);
+      final List<dynamic> results = response['results'] ?? [];
+      return results.map((json) => Celebrity.fromJson(json)).toList();
+    } catch (e) {
+      throw ApiException('Failed to search celebrities: $e');
     }
   }
 

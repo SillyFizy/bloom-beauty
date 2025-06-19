@@ -10,7 +10,6 @@ import '../../widgets/common/optimized_image.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/celebrity_provider.dart';
 import '../../providers/app_providers.dart';
-import '../products/product_detail_screen.dart';
 import '../celebrity_picks/celebrity_picks_screen.dart';
 import 'package:intl/intl.dart';
 // not being used currently
@@ -74,7 +73,8 @@ class _HomeScreenState extends State<HomeScreen>
         productProvider.bestsellingProducts.isEmpty ||
         productProvider.trendingProducts.isEmpty;
 
-    final celebrityNeedsInit = celebrityProvider.celebrities.isEmpty;
+    final celebrityNeedsInit = celebrityProvider.celebrities.isEmpty ||
+        celebrityProvider.celebrityPicks.isEmpty;
 
     if (productNeedsInit) {
       debugPrint('HomeScreen: Product data missing, initializing...');
@@ -103,8 +103,8 @@ class _HomeScreenState extends State<HomeScreen>
 
     await Future.wait([
       productProvider.refreshAllData(),
-      celebrityProvider
-          .initialize(), // Celebrity provider doesn't have refreshAllData yet
+      celebrityProvider.loadCelebrities(forceRefresh: true),
+      celebrityProvider.loadCelebrityPicks(forceRefresh: true),
     ]);
 
     _hasInitialized = true; // Set flag back after refresh
@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen>
     return '${formatter.format(price)} IQD';
   }
 
-  // Helper function to navigate to product with only ID - simplified approach
+  // Helper function to navigate to product with error handling and validation
   Future<void> _navigateToProductWithProvider(
     BuildContext context,
     Product product, {
@@ -125,25 +125,170 @@ class _HomeScreenState extends State<HomeScreen>
     String? testimonial,
   }) async {
     try {
+      // Validate product data
+      if (product.id.isEmpty) {
+        throw Exception('Invalid product ID');
+      }
+
+      if (product.name.isEmpty) {
+        throw Exception('Invalid product name');
+      }
+
       final productProvider = context.read<ProductProvider>();
 
-      // Add to recently viewed using the current product data
-      await productProvider.addToRecentlyViewed(product);
+      // Try to add to recently viewed, but don't fail navigation if it fails
+      try {
+        await productProvider.addToRecentlyViewed(product);
+        debugPrint(
+            'HomeScreen: Added product ${product.name} to recently viewed');
+      } catch (e) {
+        debugPrint(
+            'HomeScreen: Warning - Failed to add to recently viewed: $e');
+        // Continue with navigation even if this fails
+      }
 
-      // Navigate to product detail using GoRouter with only the ID
-      // Product detail screen will fetch fresh data from backend
-      if (context.mounted) {
-        context.pushNamed('product-detail', pathParameters: {
-          'productId': product.id,
-        });
+      // ✅ ENHANCED ERROR HANDLING FOR PRODUCT NAVIGATION
+      try {
+        // First check if product details can be loaded
+        await productProvider.getProductDetail(product.id);
+
+        // If successful, navigate to product detail
+        if (context.mounted) {
+          debugPrint(
+              'HomeScreen: Navigated to product detail for ${product.name}');
+          // ✅ CRITICAL FIX: Use proper GoRouter navigation with pathParameters
+          context.pushNamed('product-detail', pathParameters: {
+            'productId': product.id,
+          }, extra: {
+            'product': product,
+            'celebrityName': celebrityName,
+            'celebrityImage': celebrityImage,
+            'testimonial': testimonial,
+          });
+        }
+      } catch (e) {
+        // ✅ HANDLE 404 AND OTHER API ERRORS GRACEFULLY
+        debugPrint('HomeScreen: Product detail error: $e');
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'This product is currently unavailable. Please try again later.',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.orange[600],
+              duration: Duration(seconds: 3),
+              action: SnackBarAction(
+                label: 'OK',
+                textColor: Colors.white,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                },
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
-      debugPrint('Error navigating to product: $e');
-      // Even if adding to recently viewed fails, still navigate
+      debugPrint('HomeScreen: Navigation error: $e');
+
       if (context.mounted) {
-        context.pushNamed('product-detail', pathParameters: {
-          'productId': product.id,
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Unable to open product. Please try again.',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red[600],
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  // Helper function to navigate to celebrity profile
+  Future<void> _navigateToCelebrity(
+    BuildContext context, {
+    String? celebrityName,
+    int? celebrityId,
+  }) async {
+    try {
+      debugPrint(
+          'HomeScreen: Navigating to celebrity - name: $celebrityName, id: $celebrityId');
+
+      if (celebrityName == null && celebrityId == null) {
+        throw Exception('Missing celebrity name or ID');
+      }
+
+      final celebrityProvider = context.read<CelebrityProvider>();
+
+      // ✅ ENHANCED CELEBRITY NAVIGATION
+      try {
+        // If we have celebrity name, find by name first
+        if (celebrityName != null) {
+          await celebrityProvider.selectCelebrity(celebrityName);
+        }
+        // Otherwise use ID
+        else if (celebrityId != null) {
+          await celebrityProvider.selectCelebrityById(celebrityId);
+        }
+
+        // Verify celebrity was loaded successfully
+        if (celebrityProvider.selectedCelebrity == null) {
+          throw Exception('Celebrity not found');
+        }
+
+        debugPrint(
+            'HomeScreen: Celebrity loaded successfully - ${celebrityProvider.selectedCelebrity!.name}');
+
+        // Navigate to celebrity screen
+        if (context.mounted) {
+          debugPrint('HomeScreen: Navigating to celebrity screen...');
+
+          // ✅ USE GOROUTER FOR CONSISTENT NAVIGATION
+          context.pushNamed('celebrity');
+
+          debugPrint('HomeScreen: Celebrity navigation completed');
+        }
+      } catch (e) {
+        debugPrint('HomeScreen: Celebrity loading error: $e');
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Unable to load celebrity profile. Please try again.',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.orange[600],
+              duration: Duration(seconds: 3),
+              action: SnackBarAction(
+                label: 'OK',
+                textColor: Colors.white,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                },
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('HomeScreen: Celebrity navigation error: $e');
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Unable to open celebrity profile. Please try again.',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red[600],
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
     }
   }
@@ -315,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildCelebritySection(bool isSmallScreen, bool isMediumScreen) {
-    return CelebrityConsumer(
+    return Consumer<CelebrityProvider>(
       builder: (context, celebrityProvider, child) {
         // Handle loading state
         if (celebrityProvider.isLoading) {
@@ -327,7 +472,7 @@ class _HomeScreenState extends State<HomeScreen>
         if (celebrityProvider.hasError) {
           return _buildErrorSection(
             'Failed to load celebrity picks',
-            () => celebrityProvider.refresh(),
+            () => celebrityProvider.loadCelebrityPicks(forceRefresh: true),
             isSmallScreen,
           );
         }
@@ -340,269 +485,226 @@ class _HomeScreenState extends State<HomeScreen>
               'No celebrity picks available', isSmallScreen);
         }
 
-        return TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          builder: (context, value, child) {
-            return Transform.translate(
-              offset: Offset(0, 20 * (1 - value)),
-              child: Opacity(
-                opacity: value,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Animated title section
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                          isSmallScreen ? 12 : 16,
-                          isSmallScreen ? 24 : 32,
-                          isSmallScreen ? 12 : 16,
-                          isSmallScreen ? 16 : 20),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOutBack,
-                        transform: Matrix4.identity()
-                          ..scale(value)
-                          ..rotateZ(-0.01 * (1 - value)),
-                        child: Row(
-                          children: [
-                            TweenAnimationBuilder<double>(
-                              tween: Tween<double>(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.easeOutBack,
-                              builder: (context, starValue, child) {
-                                return Transform.scale(
-                                  scale: starValue,
-                                  child: Transform.rotate(
-                                    angle: (1 - starValue) * 0.3,
-                                    child: Container(
-                                      padding:
-                                          EdgeInsets.all(isSmallScreen ? 6 : 8),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            AppConstants.accentColor
-                                                .withValues(alpha: 0.1),
-                                            AppConstants.favoriteColor
-                                                .withValues(alpha: 0.1),
-                                          ],
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        Icons.star_rounded,
-                                        color: AppConstants.accentColor,
-                                        size: isSmallScreen ? 16 : 20,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            SizedBox(width: isSmallScreen ? 8 : 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  TweenAnimationBuilder<double>(
-                                    tween: Tween<double>(begin: 0.0, end: 1.0),
-                                    duration: const Duration(milliseconds: 300),
-                                    curve: Curves.easeOutCubic,
-                                    builder: (context, textValue, child) {
-                                      return Transform.translate(
-                                        offset: Offset(15 * (1 - textValue), 0),
-                                        child: Opacity(
-                                          opacity: textValue,
-                                          child: Text(
-                                            'CELEBRITY PICKS',
-                                            style: TextStyle(
-                                              fontSize: isSmallScreen ? 16 : 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppConstants.textPrimary,
-                                              letterSpacing:
-                                                  isSmallScreen ? 0.8 : 1.2,
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 4),
-                                  TweenAnimationBuilder<double>(
-                                    tween: Tween<double>(begin: 0.0, end: 1.0),
-                                    duration: const Duration(milliseconds: 400),
-                                    curve: Curves.easeOutCubic,
-                                    builder: (context, subtitleValue, child) {
-                                      return Transform.translate(
-                                        offset:
-                                            Offset(20 * (1 - subtitleValue), 0),
-                                        child: Opacity(
-                                          opacity: subtitleValue * 0.7,
-                                          child: Text(
-                                            'Handpicked by your favorite stars',
-                                            style: TextStyle(
-                                              fontSize: isSmallScreen ? 11 : 13,
-                                              color: AppConstants.textSecondary,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // View All Button
-                            TweenAnimationBuilder<double>(
-                              tween: Tween<double>(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 500),
-                              curve: Curves.easeOutCubic,
-                              builder: (context, buttonValue, child) {
-                                return Transform.translate(
-                                  offset: Offset(30 * (1 - buttonValue), 0),
-                                  child: Opacity(
-                                    opacity: buttonValue,
-                                    child: GestureDetector(
-                                      onTap: null, // Disabled for now
-                                      // onTap: () {
-                                      //   Navigator.push(
-                                      //     context,
-                                      //     MaterialPageRoute(
-                                      //       builder: (context) =>
-                                      //           const CelebrityPicksScreen(),
-                                      //     ),
-                                      //   );
-                                      // },
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: isSmallScreen ? 12 : 16,
-                                          vertical: isSmallScreen ? 6 : 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              AppConstants.textSecondary
-                                                  .withValues(alpha: 0.1),
-                                              AppConstants.textSecondary
-                                                  .withValues(alpha: 0.05),
-                                            ],
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          border: Border.all(
-                                            color: AppConstants.textSecondary
-                                                .withValues(alpha: 0.3),
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'View All',
-                                              style: TextStyle(
-                                                fontSize:
-                                                    isSmallScreen ? 12 : 14,
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    AppConstants.textSecondary,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                                width: isSmallScreen ? 4 : 6),
-                                            Icon(
-                                              Icons.arrow_forward_ios,
-                                              size: isSmallScreen ? 12 : 14,
-                                              color: AppConstants.textSecondary,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section header
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                  isSmallScreen ? 12 : 16,
+                  isSmallScreen ? 24 : 32,
+                  isSmallScreen ? 12 : 16,
+                  isSmallScreen ? 16 : 20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          AppConstants.accentColor.withValues(alpha: 0.1),
+                          AppConstants.favoriteColor.withValues(alpha: 0.1),
+                        ],
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.star_rounded,
+                      color: AppConstants.accentColor,
+                      size: isSmallScreen ? 16 : 20,
+                    ),
+                  ),
+                  SizedBox(width: isSmallScreen ? 8 : 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'CELEBRITY PICKS',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 16 : 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppConstants.textPrimary,
+                            letterSpacing: isSmallScreen ? 0.8 : 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Handpicked by your favorite stars',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 11 : 13,
+                            color: AppConstants.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CelebrityPicksScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isSmallScreen ? 12 : 16,
+                        vertical: isSmallScreen ? 6 : 8,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppConstants.textSecondary.withValues(alpha: 0.1),
+                            AppConstants.textSecondary.withValues(alpha: 0.05),
                           ],
                         ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color:
+                              AppConstants.textSecondary.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'View All',
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 12 : 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppConstants.textSecondary,
+                            ),
+                          ),
+                          SizedBox(width: isSmallScreen ? 4 : 6),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: isSmallScreen ? 12 : 14,
+                            color: AppConstants.textSecondary,
+                          ),
+                        ],
                       ),
                     ),
+                  ),
+                ],
+              ),
+            ),
 
-                    // Enhanced horizontal scrolling list with responsive sizing
-                    SizedBox(
-                      height: isSmallScreen ? 280 : 300,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.symmetric(
-                            horizontal: isSmallScreen ? 12 : 16),
-                        itemCount: celebrityPicks.length,
-                        itemBuilder: (context, index) {
-                          final pick = celebrityPicks[index];
-                          return TweenAnimationBuilder<double>(
-                            tween: Tween<double>(begin: 0.0, end: 1.0),
-                            duration:
-                                Duration(milliseconds: 250 + (index * 50)),
-                            curve: Curves.easeOutCubic,
-                            builder: (context, itemValue, child) {
-                              return Transform.translate(
-                                offset: Offset(0, 30 * (1 - itemValue)),
-                                child: Opacity(
-                                  opacity: itemValue,
-                                  child: Container(
-                                    width: isSmallScreen ? 180 : 200,
-                                    margin: EdgeInsets.only(
-                                        right: isSmallScreen ? 12 : 16),
-                                    child: CelebrityPickCard(
-                                      product: pick['product'] as Product,
-                                      celebrityName: pick['name'] as String,
-                                      celebrityImage: pick['image'] as String,
-                                      testimonial:
-                                          pick['testimonial'] as String?,
-                                      socialMediaLinks: pick['socialMediaLinks']
-                                              as Map<String, String>? ??
-                                          {},
-                                      recommendedProducts:
-                                          pick['recommendedProducts']
-                                                  as List<Product>? ??
-                                              [],
-                                      morningRoutineProducts:
-                                          pick['morningRoutineProducts']
-                                                  as List<Product>? ??
-                                              [],
-                                      eveningRoutineProducts:
-                                          pick['eveningRoutineProducts']
-                                                  as List<Product>? ??
-                                              [],
-                                      index: index,
-                                      onTap: null, // Disabled for now
-                                      // onTap: () async {
-                                      //   await _navigateToProductWithProvider(
-                                      //     context,
-                                      //     pick['product'] as Product,
-                                      //     celebrityName: pick['name'] as String,
-                                      //     celebrityImage:
-                                      //         pick['image'] as String,
-                                      //     testimonial:
-                                      //         pick['testimonial'] as String?,
-                                      //   );
-                                      // },
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          );
+            // Horizontal scroll list with CelebrityPickCard
+            SizedBox(
+              height: isSmallScreen ? 280 : 320,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding:
+                    EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
+                itemCount: celebrityPicks.length,
+                itemBuilder: (context, index) {
+                  final celebrityPick = celebrityPicks[index];
+
+                  try {
+                    // Extract product data from the celebrity pick
+                    final productData =
+                        celebrityPick['product'] as Map<String, dynamic>?;
+                    if (productData == null) {
+                      throw Exception('Invalid product data');
+                    }
+
+                    // Convert to Product model
+                    final product = Product.fromJson(productData);
+
+                    // Extract celebrity data from the pick
+                    final celebrityName =
+                        celebrityPick['name'] as String? ?? 'Celebrity';
+                    final celebrityImage =
+                        celebrityPick['image'] as String? ?? '';
+                    final testimonial =
+                        celebrityPick['testimonial'] as String? ??
+                            'Amazing product!';
+                    // Extract celebrity ID - CRITICAL for navigation
+                    final celebrityId = celebrityPick['id'] as int? ??
+                        celebrityPick['celebrity_id'] as int?;
+
+                    // Convert social media links to Map<String, String>
+                    final socialMediaLinksRaw =
+                        celebrityPick['social_media_links']
+                                as Map<String, dynamic>? ??
+                            {};
+                    final socialMediaLinks = socialMediaLinksRaw
+                        .map((key, value) => MapEntry(key, value.toString()));
+
+                    // Convert product lists to List<Product>
+                    final recommendedProductsRaw =
+                        (celebrityPick['recommended_products'] as List?)
+                                ?.cast<Map<String, dynamic>>() ??
+                            [];
+                    final recommendedProducts = recommendedProductsRaw
+                        .map((productData) => Product.fromJson(productData))
+                        .toList();
+
+                    final morningRoutineProductsRaw =
+                        (celebrityPick['morning_routine_products'] as List?)
+                                ?.cast<Map<String, dynamic>>() ??
+                            [];
+                    final morningRoutineProducts = morningRoutineProductsRaw
+                        .map((productData) => Product.fromJson(productData))
+                        .toList();
+
+                    final eveningRoutineProductsRaw =
+                        (celebrityPick['evening_routine_products'] as List?)
+                                ?.cast<Map<String, dynamic>>() ??
+                            [];
+                    final eveningRoutineProducts = eveningRoutineProductsRaw
+                        .map((productData) => Product.fromJson(productData))
+                        .toList();
+
+                    return Container(
+                      width: isSmallScreen ? 200 : 240,
+                      margin: EdgeInsets.only(right: isSmallScreen ? 12 : 16),
+                      child: CelebrityPickCard(
+                        product: product,
+                        celebrityName: celebrityName,
+                        celebrityImage: celebrityImage,
+                        testimonial: testimonial,
+                        index: index,
+                        socialMediaLinks: socialMediaLinks,
+                        recommendedProducts: recommendedProducts,
+                        morningRoutineProducts: morningRoutineProducts,
+                        eveningRoutineProducts: eveningRoutineProducts,
+                        celebrityId:
+                            celebrityId, // CRITICAL: Pass celebrity ID for navigation
+                        onTap: () async {
+                          await _navigateToProductWithProvider(
+                              context, product);
+                        },
+                        // CRITICAL: Add celebrity tap callback for navigation
+                        onCelebrityTap: () async {
+                          await _navigateToCelebrity(context,
+                              celebrityName: celebrityName,
+                              celebrityId: celebrityId);
                         },
                       ),
-                    ),
-                  ],
-                ),
+                    );
+                  } catch (e) {
+                    debugPrint(
+                        'HomeScreen: Error building celebrity pick card at index $index: $e');
+                    // Return a placeholder on error
+                    return Container(
+                      width: isSmallScreen ? 200 : 240,
+                      margin: EdgeInsets.only(right: isSmallScreen ? 12 : 16),
+                      child: const Card(
+                        child: Center(
+                          child: Text('Unable to load pick'),
+                        ),
+                      ),
+                    );
+                  }
+                },
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     );
@@ -747,54 +849,37 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                   ),
                   Positioned(
-                    top: isSmallScreen ? 6 : 8,
-                    left: isSmallScreen ? 6 : 8,
+                    top: 8,
+                    right: 8,
                     child: WishlistButton(
                       product: product,
-                      size: isSmallScreen ? 14 : 18,
-                      heroTag: 'new_arrivals_wishlist_${product.id}',
+                      size: isSmallScreen ? 20 : 24,
                     ),
                   ),
-                  // Beauty Points positioned at bottom-right of image
-                  Positioned(
-                    bottom: isSmallScreen ? 6 : 8,
-                    right: isSmallScreen ? 6 : 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color:
-                            AppConstants.favoriteColor.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.stars_rounded,
-                            size: isSmallScreen ? 12 : 14,
+                  // Beauty points badge
+                  if (product.beautyPoints > 0)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 6 : 8,
+                          vertical: isSmallScreen ? 2 : 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppConstants.accentColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${product.beautyPoints} pts',
+                          style: TextStyle(
                             color: Colors.white,
+                            fontSize: isSmallScreen ? 10 : 12,
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(width: 2),
-                          Text(
-                            '+${product.beautyPoints}',
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 10 : 12,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -806,111 +891,66 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Product name and brand
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Product name
-                          Text(
-                            product.name,
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 13 : 15,
-                              fontWeight: FontWeight.w600,
-                              color: AppConstants.textPrimary,
-                              height: 1.1,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          // Brand name directly under product name
-                          if (product.brand.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              product.brand,
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 11 : 12,
-                                fontWeight: FontWeight.w500,
-                                color: AppConstants.textSecondary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ],
+                    // Product name
+                    Text(
+                      product.name,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 12 : 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppConstants.textPrimary,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const Spacer(),
+                    // Price and rating
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        // Price on the left
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (product.discountPrice != null) ...[
-                                Text(
-                                  _formatPrice(product.price),
-                                  style: TextStyle(
-                                    fontSize: isSmallScreen ? 11 : 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppConstants.textSecondary,
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
+                        // Price
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (product.discountPrice != null &&
+                                product.discountPrice! < product.price)
+                              Text(
+                                _formatPrice(product.price),
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 10 : 12,
+                                  color: AppConstants.textSecondary,
+                                  decoration: TextDecoration.lineThrough,
                                 ),
-                                Text(
-                                  _formatPrice(product.discountPrice!),
-                                  style: TextStyle(
-                                    fontSize: isSmallScreen ? 13 : 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppConstants.errorColor,
-                                  ),
-                                ),
-                              ] else ...[
-                                Text(
-                                  _formatPrice(product.price),
-                                  style: TextStyle(
-                                    fontSize: isSmallScreen ? 13 : 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppConstants.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
+                              ),
+                            Text(
+                              _formatPrice(
+                                  product.discountPrice ?? product.price),
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 12 : 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppConstants.accentColor,
+                              ),
+                            ),
+                          ],
                         ),
-
-                        // Rating on the right
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color:
-                                AppConstants.accentColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        // Rating
+                        if (product.rating > 0)
+                          Row(
                             children: [
                               Icon(
                                 Icons.star,
-                                size: isSmallScreen ? 14 : 16,
-                                color: AppConstants.accentColor,
+                                size: isSmallScreen ? 12 : 14,
+                                color: Colors.amber,
                               ),
                               const SizedBox(width: 2),
                               Text(
-                                product.rating.toString(),
+                                product.rating.toStringAsFixed(1),
                                 style: TextStyle(
-                                  fontSize: isSmallScreen ? 12 : 14,
-                                  color: AppConstants.accentColor,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: isSmallScreen ? 10 : 12,
+                                  color: AppConstants.textSecondary,
                                 ),
                               ),
                             ],
                           ),
-                        ),
                       ],
                     ),
                   ],
@@ -1422,6 +1462,191 @@ class _HomeScreenState extends State<HomeScreen>
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCelebrityPickCard(Product product, bool isSmallScreen) {
+    return GestureDetector(
+      onTap: () async {
+        await _navigateToProductWithProvider(context, product);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppConstants.surfaceColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image with favorite button and celebrity pick badge
+            Expanded(
+              flex: 3,
+              child: Stack(
+                children: [
+                  // Product image
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      color: AppConstants.backgroundColor,
+                    ),
+                    child: product.images.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(12),
+                            ),
+                            child: OptimizedImage(
+                              imageUrl: product.images.first,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Center(
+                            child: Icon(
+                              Icons.spa_outlined,
+                              size: isSmallScreen ? 32 : 40,
+                              color: AppConstants.accentColor
+                                  .withValues(alpha: 0.5),
+                            ),
+                          ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: WishlistButton(
+                      product: product,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
+                  ),
+                  // Celebrity pick badge
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isSmallScreen ? 6 : 8,
+                        vertical: isSmallScreen ? 2 : 4,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppConstants.favoriteColor,
+                            AppConstants.favoriteColor.withValues(alpha: 0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.star,
+                            size: isSmallScreen ? 10 : 12,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: isSmallScreen ? 2 : 4),
+                          Text(
+                            'PICK',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isSmallScreen ? 9 : 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Product details
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Product name
+                    Text(
+                      product.name,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 12 : 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppConstants.textPrimary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    // Price and rating
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Price
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (product.discountPrice != null &&
+                                product.discountPrice! < product.price)
+                              Text(
+                                _formatPrice(product.price),
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 10 : 12,
+                                  color: AppConstants.textSecondary,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            Text(
+                              _formatPrice(
+                                  product.discountPrice ?? product.price),
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 12 : 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppConstants.accentColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Rating
+                        if (product.rating > 0)
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.star,
+                                size: isSmallScreen ? 12 : 14,
+                                color: Colors.amber,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                product.rating.toStringAsFixed(1),
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 10 : 12,
+                                  color: AppConstants.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

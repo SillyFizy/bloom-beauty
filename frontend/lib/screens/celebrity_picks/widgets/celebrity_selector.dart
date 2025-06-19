@@ -18,7 +18,7 @@ class CelebritySelector extends StatelessWidget {
     return Consumer<CelebrityPicksProvider>(
       builder: (context, provider, child) {
         final celebrities = provider.celebrities;
-        
+
         if (celebrities.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -97,9 +97,10 @@ class CelebritySelector extends StatelessWidget {
                       PopupMenuItem<BrowseMode>(
                         value: BrowseMode.celebrity,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 8),
                           decoration: BoxDecoration(
-                            color: provider.browseMode == BrowseMode.celebrity 
+                            color: provider.browseMode == BrowseMode.celebrity
                                 ? AppConstants.accentColor.withOpacity(0.1)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
@@ -108,9 +109,10 @@ class CelebritySelector extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.star_rounded,
-                                color: provider.browseMode == BrowseMode.celebrity 
-                                    ? AppConstants.accentColor 
-                                    : AppConstants.textSecondary,
+                                color:
+                                    provider.browseMode == BrowseMode.celebrity
+                                        ? AppConstants.accentColor
+                                        : AppConstants.textSecondary,
                                 size: isSmallScreen ? 18 : 20,
                               ),
                               const SizedBox(width: 12),
@@ -118,11 +120,13 @@ class CelebritySelector extends StatelessWidget {
                                 'Browse by Celebrity',
                                 style: TextStyle(
                                   fontSize: isSmallScreen ? 14 : 16,
-                                  fontWeight: provider.browseMode == BrowseMode.celebrity 
-                                      ? FontWeight.w600 
+                                  fontWeight: provider.browseMode ==
+                                          BrowseMode.celebrity
+                                      ? FontWeight.w600
                                       : FontWeight.w500,
-                                  color: provider.browseMode == BrowseMode.celebrity 
-                                      ? AppConstants.accentColor 
+                                  color: provider.browseMode ==
+                                          BrowseMode.celebrity
+                                      ? AppConstants.accentColor
                                       : AppConstants.textPrimary,
                                 ),
                               ),
@@ -133,9 +137,10 @@ class CelebritySelector extends StatelessWidget {
                       PopupMenuItem<BrowseMode>(
                         value: BrowseMode.category,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 8),
                           decoration: BoxDecoration(
-                            color: provider.browseMode == BrowseMode.category 
+                            color: provider.browseMode == BrowseMode.category
                                 ? AppConstants.accentColor.withOpacity(0.1)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
@@ -144,9 +149,10 @@ class CelebritySelector extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.category_rounded,
-                                color: provider.browseMode == BrowseMode.category 
-                                    ? AppConstants.accentColor 
-                                    : AppConstants.textSecondary,
+                                color:
+                                    provider.browseMode == BrowseMode.category
+                                        ? AppConstants.accentColor
+                                        : AppConstants.textSecondary,
                                 size: isSmallScreen ? 18 : 20,
                               ),
                               const SizedBox(width: 12),
@@ -154,12 +160,14 @@ class CelebritySelector extends StatelessWidget {
                                 'Browse by Category',
                                 style: TextStyle(
                                   fontSize: isSmallScreen ? 14 : 16,
-                                  fontWeight: provider.browseMode == BrowseMode.category 
-                                      ? FontWeight.w600 
-                                      : FontWeight.w500,
-                                  color: provider.browseMode == BrowseMode.category 
-                                      ? AppConstants.accentColor 
-                                      : AppConstants.textPrimary,
+                                  fontWeight:
+                                      provider.browseMode == BrowseMode.category
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                  color:
+                                      provider.browseMode == BrowseMode.category
+                                          ? AppConstants.accentColor
+                                          : AppConstants.textPrimary,
                                 ),
                               ),
                             ],
@@ -188,14 +196,14 @@ class CelebritySelector extends StatelessWidget {
                         isSmallScreen,
                       );
                     }
-                    
+
                     final celebrity = celebrities[index - 1];
                     return _buildCelebrityItem(
                       context,
                       provider,
                       celebrity.name,
                       celebrity.name,
-                      celebrity.image,
+                      celebrity.image ?? '',
                       isSmallScreen,
                     );
                   },
@@ -218,7 +226,7 @@ class CelebritySelector extends StatelessWidget {
   ) {
     final isSelected = provider.selectedCelebrityId == celebrityId;
     final size = isSmallScreen ? 65.0 : 75.0;
-    
+
     return GestureDetector(
       onTap: () => provider.selectCelebrity(celebrityId),
       child: Container(
@@ -233,25 +241,26 @@ class CelebritySelector extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected 
-                      ? AppConstants.accentColor 
+                  color: isSelected
+                      ? AppConstants.accentColor
                       : AppConstants.borderColor.withOpacity(0.3),
                   width: isSelected ? 3 : 2,
                 ),
-                boxShadow: isSelected 
+                boxShadow: isSelected
                     ? [
                         BoxShadow(
                           color: AppConstants.accentColor.withOpacity(0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
-                      ] 
+                      ]
                     : [],
               ),
               child: ClipOval(
                 child: celebrityId == null
                     ? _buildAllOption(isSmallScreen)
-                    : _buildCelebrityImage(imageUrl, displayName, isSmallScreen),
+                    : _buildCelebrityImage(
+                        imageUrl, displayName, isSmallScreen),
               ),
             ),
             const SizedBox(height: 8),
@@ -260,8 +269,8 @@ class CelebritySelector extends StatelessWidget {
               style: TextStyle(
                 fontSize: isSmallScreen ? 12 : 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected 
-                    ? AppConstants.accentColor 
+                color: isSelected
+                    ? AppConstants.accentColor
                     : AppConstants.textSecondary,
               ),
               textAlign: TextAlign.center,
@@ -296,7 +305,8 @@ class CelebritySelector extends StatelessWidget {
     );
   }
 
-  Widget _buildCelebrityImage(String imageUrl, String name, bool isSmallScreen) {
+  Widget _buildCelebrityImage(
+      String imageUrl, String name, bool isSmallScreen) {
     return CachedNetworkImage(
       imageUrl: imageUrl,
       fit: BoxFit.cover,
@@ -335,4 +345,4 @@ class CelebritySelector extends StatelessWidget {
       ),
     );
   }
-} 
+}
