@@ -125,7 +125,8 @@ class CategoryProvider with ChangeNotifier {
 
   /// Load all products
   Future<void> _loadAllProducts() async {
-    _allProducts = await _productService.getAllProducts();
+    // ✅ Force refresh to ensure latest data and prevent rating inconsistencies
+    _allProducts = await _productService.getAllProducts(forceRefresh: true);
 
     // Initialize filtered products to show all products initially
     _filteredProducts = List.from(_allProducts);

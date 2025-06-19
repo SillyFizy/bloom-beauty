@@ -16,12 +16,13 @@ from datetime import timedelta
 from .models import (
     Product, Category, ProductImage, Brand, 
     ProductAttribute, ProductAttributeValue, 
-    ProductVariant, InventoryLog
+    ProductVariant, InventoryLog, Review, ProductRating
 )
 from .serializers import (
     ProductSerializer, CategorySerializer, ProductImageSerializer,
     BrandSerializer, ProductAttributeSerializer, ProductAttributeValueSerializer,
-    ProductVariantSerializer, InventoryLogSerializer, ProductListSerializer
+    ProductVariantSerializer, InventoryLogSerializer, ProductListSerializer,
+    ProductRatingSerializer
 )
 from .permissions import IsAdminOrReadOnly
 from .filters import ProductFilter
@@ -199,15 +200,15 @@ class ProductViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductFilter
     search_fields = ['name', 'description', 'meta_keywords', 'sku']
-    ordering_fields = ['price', 'created_at', 'name']
+    ordering_fields = ['price', 'created_at', 'name', 'rating']
     lookup_field = 'slug'
     throttle_classes = [ProductRateThrottle]
     
     def get_queryset(self):
-        queryset = Product.objects.filter(is_active=True)
+        queryset = Product.objects.filter(is_active=True).select_related('rating_stats', 'category', 'brand')
         if self.request.user and self.request.user.is_staff:
             # Staff users can see all products
-            queryset = Product.objects.all()
+            queryset = Product.objects.all().select_related('rating_stats', 'category', 'brand')
         return queryset
     
     def get_serializer_class(self):
@@ -231,7 +232,9 @@ class ProductViewSet(viewsets.ModelViewSet):
         sort_dir = request.query_params.get('sort_dir', 'desc')
         
         order_field = '-' + sort_by if sort_dir == 'desc' else sort_by
-        featured_products = Product.objects.filter(is_featured=True, is_active=True).order_by(order_field)[:limit]
+        featured_products = Product.objects.filter(
+            is_featured=True, is_active=True
+        ).select_related('rating_stats', 'category', 'brand').order_by(order_field)[:limit]
         
         page = self.paginate_queryset(featured_products)
         if page is not None:
@@ -717,6 +720,62 @@ class ProductViewSet(viewsets.ModelViewSet):
         
         serializer = ProductListSerializer(recommended_products, many=True, context={'request': request})
         return Response(serializer.data)
+
+    @method_decorator(cache_page(60*15))  # Cache for 15 minutes
+    @action(detail=True, methods=['get'])
+    def rating(self, request, slug=None):
+        """Get detailed rating information for a specific product"""
+        product = self.get_object()
+        try:
+            rating_stats = product.rating_stats
+            serializer = ProductRatingSerializer(rating_stats)
+            return Response({
+                'product_id': product.id,
+                'product_name': product.name,
+                'product_slug': product.slug,
+                'rating_data': serializer.data
+            })
+        except ProductRating.DoesNotExist:
+            return Response({
+                'product_id': product.id,
+                'product_name': product.name,
+                'product_slug': product.slug,
+                'rating_data': {
+                    'total_reviews': 0,
+                    'average_rating': 0.00,
+                    'rating_1_count': 0,
+                    'rating_2_count': 0,
+                    'rating_3_count': 0,
+                    'rating_4_count': 0,
+                    'rating_5_count': 0,
+                    'rating_distribution': [],
+                    'rating_percentages': [],
+                    'last_calculated': None
+                }
+            })
+    
+    @method_decorator(cache_page(60*30))  # Cache for 30 minutes  
+    @action(detail=False, methods=['get'])
+    def top_rated(self, request):
+        """Get top-rated products"""
+        limit = int(request.query_params.get('limit', 10))
+        min_reviews = int(request.query_params.get('min_reviews', 5))  # Minimum reviews to be considered
+        
+        # Get products with ratings, sorted by average rating
+        top_rated_products = Product.objects.filter(
+            is_active=True,
+            rating_stats__total_reviews__gte=min_reviews
+        ).select_related('rating_stats', 'category', 'brand').order_by(
+            '-rating_stats__average_rating', 
+            '-rating_stats__total_reviews'
+        )[:limit]
+        
+        serializer = self.get_serializer(top_rated_products, many=True)
+        return Response({
+            'count': len(top_rated_products),
+            'min_reviews_filter': min_reviews,
+            'results': serializer.data
+        })
 
 class ProductImageViewSet(viewsets.ModelViewSet):
     queryset = ProductImage.objects.all()

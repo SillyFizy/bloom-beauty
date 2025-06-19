@@ -16,13 +16,12 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  
   double get shipping => 5.99;
 
   void _clearCart() {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     cartProvider.clearCart();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Cart cleared'),
@@ -39,7 +38,7 @@ class _CartScreenState extends State<CartScreen> {
       builder: (context, constraints) {
         // Determine screen size
         final isSmallScreen = constraints.maxWidth < 600;
-        
+
         return Scaffold(
           appBar: AppBar(
             title: Text(
@@ -49,21 +48,23 @@ class _CartScreenState extends State<CartScreen> {
             actions: [
               Consumer<CartProvider>(
                 builder: (context, cart, child) {
-                  return cart.isEmpty ? const SizedBox.shrink() : TextButton(
-                    onPressed: _clearCart,
-                    child: Text(
-                      'Clear All',
-                      style: TextStyle(fontSize: isSmallScreen ? 13 : 14),
-                    ),
-                  );
+                  return cart.isEmpty
+                      ? const SizedBox.shrink()
+                      : TextButton(
+                          onPressed: _clearCart,
+                          child: Text(
+                            'Clear All',
+                            style: TextStyle(fontSize: isSmallScreen ? 13 : 14),
+                          ),
+                        );
                 },
               ),
             ],
           ),
           body: Consumer<CartProvider>(
             builder: (context, cart, child) {
-              return cart.isEmpty 
-                  ? _buildEmptyCart(isSmallScreen) 
+              return cart.isEmpty
+                  ? _buildEmptyCart(isSmallScreen)
                   : _buildCartContent(cart, isSmallScreen);
             },
           ),
@@ -155,7 +156,7 @@ class _CartScreenState extends State<CartScreen> {
             ],
           ),
         ),
-        
+
         // Cart items
         Expanded(
           child: ListView.builder(
@@ -166,22 +167,26 @@ class _CartScreenState extends State<CartScreen> {
             itemCount: cart.items.length,
             itemBuilder: (context, index) {
               final item = cart.items[index];
-              final variant = item.selectedVariant != null 
+              final variant = item.selectedVariant != null
                   ? item.product.variants.firstWhere(
                       (v) => v.id == item.selectedVariant,
                       orElse: () => item.product.variants.first,
                     )
                   : null;
-              
+
               return Padding(
                 padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 4 : 6),
                 child: CartItemWidget(
-                  imageUrl: 'image_placeholder.jpg',
+                  productId: item.product.id,
+                  imageUrl: item.product.images.isNotEmpty
+                      ? item.product.images.first
+                      : '',
                   name: item.product.name,
                   brand: item.product.brand,
                   price: item.product.getCurrentPrice(),
                   quantity: item.quantity,
-                  variant: variant?.name ?? (item.selectedVariant == null ? null : 'Unknown Variant'),
+                  variant: variant?.name ??
+                      (item.selectedVariant == null ? null : 'Unknown Variant'),
                   beautyPoints: item.product.beautyPoints,
                   onIncrement: () {
                     cart.updateItemQuantity(item.id, item.quantity + 1);
@@ -193,17 +198,19 @@ class _CartScreenState extends State<CartScreen> {
                   },
                   onRemove: () {
                     // Debug information
-                    debugPrint('Removing cart item - ID: ${item.id}, Product: ${item.product.name}, Variant: ${item.selectedVariant ?? 'default'}');
-                    
+                    debugPrint(
+                        'Removing cart item - ID: ${item.id}, Product: ${item.product.name}, Variant: ${item.selectedVariant ?? 'default'}');
+
                     // Show which specific variant is being removed
                     final variantText = variant?.name ?? 'Default';
                     final productName = item.product.name;
-                    
+
                     cart.removeItem(item.id);
-                    
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Removed $productName${variant != null ? ' ($variantText)' : ''} from cart'),
+                        content: Text(
+                            'Removed $productName${variant != null ? ' ($variantText)' : ''} from cart'),
                         backgroundColor: AppConstants.errorColor,
                         duration: const Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
@@ -212,16 +219,13 @@ class _CartScreenState extends State<CartScreen> {
                           textColor: AppConstants.surfaceColor,
                           onPressed: () {
                             // Re-add the item
-                            cart.addItem(
-                              item.product, 
-                              item.quantity, 
-                              variant: variant
-                            );
+                            cart.addItem(item.product, item.quantity,
+                                variant: variant);
                           },
                         ),
                       ),
                     );
-                    
+
                     // Debug: Print current cart state after removal
                     cart.debugPrintCart();
                   },
@@ -230,7 +234,7 @@ class _CartScreenState extends State<CartScreen> {
             },
           ),
         ),
-        
+
         // Order summary
         _buildOrderSummary(subtotal, total, isSmallScreen),
       ],
@@ -240,36 +244,38 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildOrderSummary(double subtotal, double total, bool isSmallScreen) {
     return Consumer<CartProvider>(
       builder: (context, cart, child) {
-    return Container(
-      padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Order Summary',
-            style: TextStyle(
-              fontSize: isSmallScreen ? 16 : 18,
-              fontWeight: FontWeight.bold,
+        return Container(
+          padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border(
+              top: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              ),
             ),
           ),
-          SizedBox(height: isSmallScreen ? 8 : 12),
-          _buildSummaryRow('Subtotal', Formatters.formatPrice(subtotal), isSmallScreen),
-          _buildSummaryRow('Shipping', Formatters.formatPrice(shipping), isSmallScreen),
-          const Divider(),
-          _buildSummaryRow(
-            'Total',
-            Formatters.formatPrice(total),
-            isSmallScreen,
-            isTotal: true,
-          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Order Summary',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 16 : 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: isSmallScreen ? 8 : 12),
+              _buildSummaryRow(
+                  'Subtotal', Formatters.formatPrice(subtotal), isSmallScreen),
+              _buildSummaryRow(
+                  'Shipping', Formatters.formatPrice(shipping), isSmallScreen),
+              const Divider(),
+              _buildSummaryRow(
+                'Total',
+                Formatters.formatPrice(total),
+                isSmallScreen,
+                isTotal: true,
+              ),
               SizedBox(height: isSmallScreen ? 8 : 12),
               // Beauty Points section
               Container(
@@ -310,8 +316,8 @@ class _CartScreenState extends State<CartScreen> {
                               color: AppConstants.textSecondary,
                             ),
                           ),
-        ],
-      ),
+                        ],
+                      ),
                     ),
                     Text(
                       '+${cart.totalBeautyPoints}',
@@ -331,7 +337,8 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, bool isSmallScreen, {bool isTotal = false}) {
+  Widget _buildSummaryRow(String label, String value, bool isSmallScreen,
+      {bool isTotal = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 3 : 4),
       child: Row(
@@ -342,9 +349,11 @@ class _CartScreenState extends State<CartScreen> {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: isTotal ? (isSmallScreen ? 15 : 16) : (isSmallScreen ? 13 : 14),
+                fontSize: isTotal
+                    ? (isSmallScreen ? 15 : 16)
+                    : (isSmallScreen ? 13 : 14),
                 fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-                color: isTotal 
+                color: isTotal
                     ? Theme.of(context).colorScheme.onSurface
                     : AppConstants.textSecondary,
               ),
@@ -361,9 +370,11 @@ class _CartScreenState extends State<CartScreen> {
               child: Text(
                 value,
                 style: TextStyle(
-                  fontSize: isTotal ? (isSmallScreen ? 15 : 16) : (isSmallScreen ? 13 : 14),
+                  fontSize: isTotal
+                      ? (isSmallScreen ? 15 : 16)
+                      : (isSmallScreen ? 13 : 14),
                   fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-                  color: isTotal 
+                  color: isTotal
                       ? Theme.of(context).colorScheme.primary
                       : Theme.of(context).colorScheme.onSurface,
                 ),
@@ -442,9 +453,9 @@ class _CartScreenState extends State<CartScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const CheckoutScreen(),
-                  ),
-                );
-              },
+                        ),
+                      );
+                    },
             ),
           ],
         ),

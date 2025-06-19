@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../constants/app_constants.dart';
+import '../common/optimized_image.dart';
 
 class CartItemWidget extends StatelessWidget {
+  final String productId; // Product ID for navigation
   final String imageUrl;
   final String name;
   final String brand;
@@ -16,6 +19,7 @@ class CartItemWidget extends StatelessWidget {
 
   const CartItemWidget({
     super.key,
+    required this.productId,
     required this.imageUrl,
     required this.name,
     required this.brand,
@@ -31,6 +35,11 @@ class CartItemWidget extends StatelessWidget {
   String _formatPrice(double price) {
     final formatter = NumberFormat('#,###');
     return '${formatter.format(price)} IQD';
+  }
+
+  /// Navigate to product detail screen
+  void _navigateToProductDetail(BuildContext context) {
+    context.push('/product/$productId');
   }
 
   @override
@@ -49,22 +58,13 @@ class CartItemWidget extends StatelessWidget {
             padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
             child: Row(
               children: [
-                // Product Image
-                Container(
-                  width: isSmallScreen ? 60 : (isMediumScreen ? 70 : 80),
-                  height: isSmallScreen ? 60 : (isMediumScreen ? 70 : 80),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: AppConstants.backgroundColor,
-                    border: Border.all(
-                      color: AppConstants.borderColor,
-                      width: 1,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.image,
-                    size: isSmallScreen ? 24 : (isMediumScreen ? 32 : 40),
-                    color: AppConstants.textSecondary,
+                // Product Image - Clickable
+                GestureDetector(
+                  onTap: () => _navigateToProductDetail(context),
+                  child: _buildProductImage(
+                    isSmallScreen ? 60 : (isMediumScreen ? 70 : 80),
+                    isSmallScreen ? 60 : (isMediumScreen ? 70 : 80),
+                    isSmallScreen,
                   ),
                 ),
 
@@ -90,17 +90,21 @@ class CartItemWidget extends StatelessWidget {
 
                       SizedBox(height: isSmallScreen ? 2 : 4),
 
-                      // Product Name
-                      Text(
-                        name,
-                        style: TextStyle(
-                          fontSize:
-                              isSmallScreen ? 13 : (isMediumScreen ? 14 : 16),
-                          fontWeight: FontWeight.w600,
-                          color: AppConstants.textPrimary,
+                      // Product Name - Clickable
+                      GestureDetector(
+                        onTap: () => _navigateToProductDetail(context),
+                        child: Text(
+                          name,
+                          style: TextStyle(
+                            fontSize:
+                                isSmallScreen ? 13 : (isMediumScreen ? 14 : 16),
+                            fontWeight: FontWeight.w600,
+                            color: AppConstants
+                                .accentColor, // Make it accent color to indicate it's clickable
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
 
                       // Variant (if exists)
@@ -356,6 +360,103 @@ class CartItemWidget extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  /// Build product image with fallback support using the same approach as other screens
+  Widget _buildProductImage(double width, double height, bool isSmallScreen) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: AppConstants.backgroundColor,
+        border: Border.all(
+          color: AppConstants.borderColor,
+          width: 1,
+        ),
+        // Add subtle shadow to indicate it's clickable
+        boxShadow: [
+          BoxShadow(
+            color: AppConstants.accentColor.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius:
+            BorderRadius.circular(7), // Slightly smaller to account for border
+        child: _buildImageContent(width, height, isSmallScreen),
+      ),
+    );
+  }
+
+  /// Build the actual image content with backend image and fallback logic
+  Widget _buildImageContent(double width, double height, bool isSmallScreen) {
+    // If imageUrl is provided and not empty, use it
+    if (imageUrl.isNotEmpty && imageUrl != 'null') {
+      return OptimizedImage(
+        imageUrl: imageUrl,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        memCacheWidth: width.toInt(),
+        memCacheHeight: height.toInt(),
+        borderRadius: BorderRadius.circular(7),
+        errorWidget: _buildFallbackImage(width, height, isSmallScreen),
+      );
+    }
+
+    // Fallback to backend media images
+    return _buildFallbackImage(width, height, isSmallScreen);
+  }
+
+  /// Build fallback image using backend/media/products approach like other screens
+  Widget _buildFallbackImage(double width, double height, bool isSmallScreen) {
+    // List of verified fallback images from backend/media/products
+    final List<String> fallbackImages = [
+      'tiana-eyeshadow-palette_1_product_33_20250507_195811.jpg',
+      'riding-solo-single-shadow_1_product_312_20250508_214207.jpg',
+      'tease-me-shadow-palette_1_product_460_20250509_210720.jpg',
+      'nude-x-shadow-palette_1_product_283_20250508_212340.jpg',
+      'yerimua-bad-lip-duo_1_product_350_20250508_220246.jpg',
+      'must-be-cindy-lip-kits_1_product_10_20250507_194300.jpg',
+      'nude-x-soft-matte-lipstick_1_product_464_20250509_212000.jpg',
+      'volumizing-mascara_1_product_456_20250509_205844.jpg',
+      'stay-blushing-cute-lip-and-cheek-balm_1_product_299_20250508_213502.jpg',
+      'rosy-mcmichael-vol-2-pink-dream-blushes_5_product_292_20250508_212928.jpg',
+      'final-finish-baked-highlighter_1_product_173_20250508_162654.jpg',
+      'loose-powder_2_product_99_20250508_151153.jpg',
+      'sand-snatchural-palette_1_product_445_20250509_204951.jpg',
+      'nude-x-12-piece-brush-set_1_product_125_20250508_153613.jpg',
+      'eyebrow-911-essentials-various-shades_1_product_441_20250509_204423.jpg',
+      'flawless-stay-powder-foundation_6_product_225_20250508_203603.jpg',
+    ];
+
+    // Use product name hash to select a consistent fallback image
+    final productHashIndex = name.hashCode.abs() % fallbackImages.length;
+    final fallbackImageUrl =
+        '${AppConstants.baseUrl}/media/products/${fallbackImages[productHashIndex]}';
+
+    return OptimizedImage(
+      imageUrl: fallbackImageUrl,
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      memCacheWidth: width.toInt(),
+      memCacheHeight: height.toInt(),
+      borderRadius: BorderRadius.circular(7),
+      errorWidget: Container(
+        width: width,
+        height: height,
+        color: AppConstants.backgroundColor,
+        child: Icon(
+          Icons.image,
+          size: isSmallScreen ? 24 : 32,
+          color: AppConstants.textSecondary,
+        ),
+      ),
     );
   }
 }

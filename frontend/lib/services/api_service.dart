@@ -195,7 +195,7 @@ class ApiService {
   // Product API endpoints
   static Future<List<Product>> getProducts() async {
     try {
-      final response = await get('/products/');
+      final response = await get('/v1/products/');
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
       return results.map((json) => Product.fromJson(json)).toList();
@@ -257,7 +257,7 @@ class ApiService {
 
   static Future<Product> getProduct(String id) async {
     try {
-      final response = await get('/products/$id/');
+      final response = await get('/v1/products/$id/');
       return Product.fromJson(response);
     } catch (e) {
       throw ApiException('Failed to load product: $e');
@@ -281,12 +281,8 @@ class ApiService {
         productData['description'] = 'Product description coming soon.';
       }
 
-      // Add mock rating and review count (beauty points come from backend)
-      final productIdNum = int.tryParse(productData['id'].toString()) ?? 0;
-      productData['rating'] =
-          4.5 + (productIdNum % 10) / 10.0; // Mock rating 4.5-5.4
-      productData['review_count'] =
-          50 + (productIdNum % 200); // Mock review count 50-249
+      // ✅ USE REAL BACKEND RATING DATA (no more mock data)
+      // Rating and review count come directly from backend API response
 
       // Safe price conversion - handle both string and number formats
       double price = 0.0;
@@ -359,6 +355,7 @@ class ApiService {
         ];
 
         // Use product ID to select a consistent random image
+        final productIdNum = int.tryParse(productData['id'].toString()) ?? 0;
         final imageIndex = productIdNum % fallbackImages.length;
         final fallbackImage = fallbackImages[imageIndex];
         final imageUrl = '$baseImageUrl/media/products/$fallbackImage';
@@ -415,6 +412,8 @@ class ApiService {
       print('  Numeric ID: ${productData['id']}');
       print('  Slug: ${productData['slug']}');
       print('  Using slug as ID: $productSlug');
+      print('  Backend Rating: ${productData['rating']}');
+      print('  Backend Review Count: ${productData['review_count']}');
 
       // Format the data to match what fromBackendApi expects
       final formattedData = {
@@ -430,6 +429,9 @@ class ApiService {
             : null,
         'category_name': productData['category_id'],
         'brand_name': productData['brand'],
+        // ✅ CRITICAL FIX: Include rating and review_count from backend
+        'rating': productData['rating'],
+        'review_count': productData['review_count'],
       };
 
       print('DEBUG: Using fromBackendApi for consistency');
@@ -439,6 +441,9 @@ class ApiService {
 
       // Use fromBackendApi for consistency with other screens
       final product = Product.fromBackendApi(formattedData);
+
+      print(
+          'DEBUG: Product created with rating: ${product.rating}, reviewCount: ${product.reviewCount}');
 
       // Override with detailed data from product detail API
       return Product(

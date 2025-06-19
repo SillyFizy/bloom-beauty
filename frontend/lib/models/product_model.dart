@@ -207,6 +207,50 @@ class Product {
     return images;
   }
 
+  /// Helper method to ensure consistent rating parsing across all factory methods
+  static double _parseRating(dynamic ratingValue) {
+    if (ratingValue == null) return 0.0;
+
+    double rawRating;
+
+    // Handle string values (from Django DecimalField serialization)
+    if (ratingValue is String) {
+      rawRating = double.tryParse(ratingValue) ?? 0.0;
+    }
+    // Handle numeric values
+    else if (ratingValue is num) {
+      rawRating = ratingValue.toDouble();
+    } else {
+      rawRating = 0.0;
+    }
+
+    // ✅ CRITICAL FIX: Round to 1 decimal place to ensure consistency
+    // This prevents floating point precision issues between different endpoints
+    final finalRating = double.parse(rawRating.toStringAsFixed(1));
+
+    // Debug logging for rating consistency (can be removed in production)
+    if (rawRating != finalRating) {
+      print('Rating normalized: $rawRating -> $finalRating');
+    }
+
+    return finalRating;
+  }
+
+  /// Helper method to ensure consistent review count parsing
+  static int _parseReviewCount(dynamic reviewCountValue) {
+    if (reviewCountValue == null) return 0;
+
+    if (reviewCountValue is String) {
+      return int.tryParse(reviewCountValue) ?? 0;
+    }
+
+    if (reviewCountValue is num) {
+      return reviewCountValue.toInt();
+    }
+
+    return 0;
+  }
+
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: json['id'].toString(),
@@ -217,13 +261,14 @@ class Product {
       images: json['images'] != null ? List<String>.from(json['images']) : [],
       categoryId: json['category_id']?.toString() ?? '',
       brand: json['brand'] ?? '',
-      rating: (json['rating'] ?? 0).toDouble(),
-      reviewCount: (json['review_count'] ?? 0).toInt(), // Fix type conversion
+      rating: _parseRating(json['rating']), // ✅ Consistent parsing
+      reviewCount:
+          _parseReviewCount(json['review_count']), // ✅ Consistent parsing
       isInStock: json['is_in_stock'] ?? true,
       ingredients: json['ingredients'] != null
           ? List<String>.from(json['ingredients'])
           : [],
-      beautyPoints: (json['beauty_points'] ?? 0).toInt(), // Fix type conversion
+      beautyPoints: (json['beauty_points'] ?? 0).toInt(),
       variants: json['variants'] != null
           ? (json['variants'] as List)
               .map((v) => ProductVariant.fromJson(v))
@@ -277,13 +322,9 @@ class Product {
     // Use beauty points from backend (no more mock data)
     final beautyPoints = (json['beauty_points'] ?? 0).toInt();
 
-    // Generate consistent realistic rating (4.0-4.9 range)
-    final ratingBase = 4.0 + ((json['id'].hashCode % 10) / 10.0); // 4.0-4.9
-    final rating = double.parse(ratingBase.toStringAsFixed(1));
-
-    // Generate review count based on rating (higher rating = more reviews)
-    final reviewCount =
-        ((rating - 4.0) * 100 + 50 + (json['id'].hashCode % 30)).toInt();
+    // ✅ USE CONSISTENT RATING PARSING
+    final rating = _parseRating(json['rating']);
+    final reviewCount = _parseReviewCount(json['review_count']);
 
     // Handle featured_image with platform-aware URL
     List<String> images = [];
@@ -366,13 +407,9 @@ class Product {
     // Use beauty points from backend (no more mock data)
     final beautyPoints = (json['beauty_points'] ?? 0).toInt();
 
-    // Generate higher ratings for bestselling products (4.2-4.9 range)
-    final ratingBase = 4.2 + ((json['id'].hashCode % 8) / 10.0); // 4.2-4.9
-    final rating = double.parse(ratingBase.toStringAsFixed(1));
-
-    // Generate higher review count for bestselling products (they're popular!)
-    final reviewCount =
-        ((rating - 4.0) * 150 + 100 + (json['id'].hashCode % 50)).toInt();
+    // ✅ USE CONSISTENT RATING PARSING
+    final rating = _parseRating(json['rating']);
+    final reviewCount = _parseReviewCount(json['review_count']);
 
     // Handle featured_image with platform-aware URL
     List<String> images = [];
@@ -455,13 +492,9 @@ class Product {
     // Use beauty points from backend (no more mock data)
     final beautyPoints = (json['beauty_points'] ?? 0).toInt();
 
-    // Generate higher ratings for trending products (4.3-4.9 range - they're trending for a reason!)
-    final ratingBase = 4.3 + ((json['id'].hashCode % 7) / 10.0); // 4.3-4.9
-    final rating = double.parse(ratingBase.toStringAsFixed(1));
-
-    // Generate high review count for trending products (they're getting attention!)
-    final reviewCount =
-        ((rating - 4.0) * 200 + 150 + (json['id'].hashCode % 75)).toInt();
+    // ✅ USE CONSISTENT RATING PARSING
+    final rating = _parseRating(json['rating']);
+    final reviewCount = _parseReviewCount(json['review_count']);
 
     // Handle featured_image with platform-aware URL
     List<String> images = [];
@@ -533,13 +566,9 @@ class Product {
     final productId = json['id'] ?? 0;
     final beautyPoints = (json['beauty_points'] ?? 0).toInt();
 
-    // Generate consistent realistic rating (4.0-4.9 range) (MOCKUP)
-    final ratingBase = 4.0 + ((productId.hashCode % 10) / 10.0); // 4.0-4.9
-    final rating = double.parse(ratingBase.toStringAsFixed(1));
-
-    // Generate review count based on rating (higher rating = more reviews) (MOCKUP)
-    final reviewCount =
-        ((rating - 4.0) * 100 + 50 + (productId.hashCode % 30)).toInt();
+    // ✅ USE CONSISTENT RATING PARSING
+    final rating = _parseRating(json['rating']);
+    final reviewCount = _parseReviewCount(json['review_count']);
 
     // Handle featured_image with platform-aware URL and random fallback
     List<String> images = [];
@@ -598,8 +627,8 @@ class Product {
       categoryId: json['category_name'] ??
           'Unknown', // Using category_name as categoryId for filtering
       brand: json['brand_name'] ?? '',
-      rating: rating, // MOCKUP
-      reviewCount: reviewCount, // MOCKUP
+      rating: rating, // REAL DATA - consistent parsing
+      reviewCount: reviewCount, // REAL DATA - consistent parsing
       isInStock: json['stock'] != null ? (json['stock'] as int) > 0 : true,
       ingredients: [], // Backend doesn't provide ingredients yet
       beautyPoints: beautyPoints, // FROM BACKEND

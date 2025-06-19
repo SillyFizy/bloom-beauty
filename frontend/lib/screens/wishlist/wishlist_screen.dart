@@ -466,7 +466,7 @@ class _WishlistScreenState extends State<WishlistScreen>
                         ),
                         SizedBox(width: isSmallScreen ? 6 : 8),
                         Text(
-                          product.rating.toString(),
+                          product.rating.toStringAsFixed(1),
                           style: TextStyle(
                             fontSize: isSmallScreen ? 12 : 14,
                             color: AppConstants.textSecondary,

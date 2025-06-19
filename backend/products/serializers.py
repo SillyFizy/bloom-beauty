@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     Category, Product, ProductImage, Brand, 
     ProductAttribute, ProductAttributeValue, 
-    ProductVariant, InventoryLog
+    ProductVariant, InventoryLog, Review, ProductRating
 )
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -79,18 +79,37 @@ class ProductVariantSerializer(serializers.ModelSerializer):
                  'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at', 'price']
 
+class ProductRatingSerializer(serializers.ModelSerializer):
+    """Serializer for product rating statistics"""
+    rating_distribution = serializers.ReadOnlyField()
+    rating_percentages = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = ProductRating
+        fields = [
+            'total_reviews', 'average_rating', 'last_calculated',
+            'rating_1_count', 'rating_2_count', 'rating_3_count', 
+            'rating_4_count', 'rating_5_count', 'rating_distribution', 
+            'rating_percentages'
+        ]
+
 class ProductListSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
     brand_name = serializers.ReadOnlyField(source='brand.name', default=None)
     discount_percentage = serializers.ReadOnlyField()
     is_on_sale = serializers.ReadOnlyField()
     
+    # Rating fields for frontend
+    rating = serializers.ReadOnlyField()
+    review_count = serializers.ReadOnlyField()
+    has_reviews = serializers.ReadOnlyField()
+    
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'sale_price', 'category_name', 
                   'brand_name', 'featured_image', 'stock', 'slug', 
                   'is_active', 'is_featured', 'is_on_sale', 'discount_percentage',
-                  'beauty_points']
+                  'beauty_points', 'rating', 'review_count', 'has_reviews']
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -117,6 +136,12 @@ class ProductSerializer(serializers.ModelSerializer):
         required=False
     )
     
+    # Rating fields for frontend - comprehensive details
+    rating = serializers.ReadOnlyField()
+    review_count = serializers.ReadOnlyField()
+    has_reviews = serializers.ReadOnlyField()
+    rating_stats = ProductRatingSerializer(read_only=True)
+    
     class Meta:
         model = Product
         fields = ['id', 'name', 'description', 'price', 'sale_price', 
@@ -126,6 +151,7 @@ class ProductSerializer(serializers.ModelSerializer):
                   'weight', 'dimensions', 'meta_keywords', 'meta_description',
                   'low_stock_threshold', 'is_on_sale', 'discount_percentage',
                   'is_low_stock', 'images', 'variants', 'beauty_points', 
+                  'rating', 'review_count', 'has_reviews', 'rating_stats',
                   'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
     

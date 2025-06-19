@@ -902,7 +902,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               ),
               const SizedBox(width: 12),
               Text(
-                currentProduct!.rating.toString(),
+                currentProduct!.rating.toStringAsFixed(1),
                 style: TextStyle(
                   fontSize: isSmallScreen ? 12 : 16,
                   fontWeight: FontWeight.w600,

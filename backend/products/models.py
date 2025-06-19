@@ -1,6 +1,10 @@
 # products/models.py
 from django.db import models
 from django.utils.text import slugify
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models import Avg, Count
+import math
+from datetime import datetime, timedelta
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -107,6 +111,35 @@ class Product(models.Model):
     
     def get_absolute_url(self):
         return f"/products/{self.slug}/"
+    
+    @property
+    def rating(self):
+        """Get the average rating for this product"""
+        try:
+            return self.rating_stats.average_rating
+        except ProductRating.DoesNotExist:
+            from decimal import Decimal
+            return Decimal('0.00')
+    
+    @property 
+    def review_count(self):
+        """Get the total number of approved reviews"""
+        try:
+            return self.rating_stats.total_reviews
+        except ProductRating.DoesNotExist:
+            return 0
+    
+    @property
+    def has_reviews(self):
+        """Check if product has any reviews"""
+        return self.review_count > 0
+    
+    def get_or_create_rating_stats(self):
+        """Get or create rating stats for this product"""
+        rating_stats, created = ProductRating.objects.get_or_create(product=self)
+        if created or rating_stats.total_reviews == 0:
+            rating_stats.update_stats()
+        return rating_stats
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
@@ -160,3 +193,118 @@ class InventoryLog(models.Model):
     
     def __str__(self):
         return f"{self.adjustment_type} - {self.quantity} - {self.product.name}"
+
+class Review(models.Model):
+    """User reviews for products - Clean and Simple"""
+    
+    # Core fields
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='reviews')
+    rating = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Rating from 1 to 5 stars"
+    )
+    
+    # Review content
+    title = models.CharField(max_length=255, blank=True, null=True)
+    comment = models.TextField(blank=True, null=True)
+    
+    # Status fields
+    is_verified_purchase = models.BooleanField(default=False, help_text="User purchased this product")
+    is_approved = models.BooleanField(default=True, help_text="Review is approved for display")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('product', 'user')  # One review per user per product
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['product', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['is_approved', '-created_at']),
+            models.Index(fields=['rating', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name} - {self.rating} stars"
+
+
+
+class ProductRating(models.Model):
+    """Aggregated rating statistics for products - Simple and Clean"""
+    
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='rating_stats')
+    
+    # Basic statistics
+    total_reviews = models.PositiveIntegerField(default=0)
+    average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
+    
+    # Rating distribution (for showing star breakdown)
+    rating_1_count = models.PositiveIntegerField(default=0)
+    rating_2_count = models.PositiveIntegerField(default=0) 
+    rating_3_count = models.PositiveIntegerField(default=0)
+    rating_4_count = models.PositiveIntegerField(default=0)
+    rating_5_count = models.PositiveIntegerField(default=0)
+    
+    # Metadata
+    last_calculated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['-average_rating']),
+            models.Index(fields=['-total_reviews']),
+        ]
+    
+    def __str__(self):
+        return f"{self.product.name} - {self.average_rating} ({self.total_reviews} reviews)"
+    
+    def update_stats(self):
+        """Update rating statistics from approved reviews"""
+        from decimal import Decimal
+        
+        approved_reviews = self.product.reviews.filter(is_approved=True)
+        
+        # Update total count
+        self.total_reviews = approved_reviews.count()
+        
+        if self.total_reviews > 0:
+            # Calculate average rating
+            avg_result = approved_reviews.aggregate(avg=Avg('rating'))
+            self.average_rating = Decimal(str(avg_result['avg'] or 0))
+            
+            # Update rating distribution
+            for i in range(1, 6):
+                count = approved_reviews.filter(rating=i).count()
+                setattr(self, f'rating_{i}_count', count)
+        else:
+            # No reviews
+            self.average_rating = Decimal('0.00')
+            for i in range(1, 6):
+                setattr(self, f'rating_{i}_count', 0)
+        
+        self.save()
+    
+    @property
+    def rating_distribution(self):
+        """Get rating distribution as a list"""
+        return [
+            self.rating_1_count,
+            self.rating_2_count, 
+            self.rating_3_count,
+            self.rating_4_count,
+            self.rating_5_count
+        ]
+    
+    @property
+    def rating_percentages(self):
+        """Get rating distribution as percentages"""
+        if self.total_reviews == 0:
+            return [0, 0, 0, 0, 0]
+        
+        return [
+            round((count / self.total_reviews) * 100, 1) 
+            for count in self.rating_distribution
+        ]
+

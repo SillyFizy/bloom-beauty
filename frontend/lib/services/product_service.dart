@@ -18,7 +18,7 @@ class ProductService {
   // Cache for frequently accessed data
   List<Product>? _cachedProducts;
   DateTime? _lastCacheUpdate;
-  static const Duration _cacheExpiry = Duration(minutes: 30);
+  static const Duration _cacheExpiry = Duration(minutes: 5);
 
   // Recently viewed products storage key
   static const String _recentlyViewedKey = 'recently_viewed_products';
