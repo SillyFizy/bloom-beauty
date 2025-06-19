@@ -1,7 +1,8 @@
 from rest_framework import generics, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch, Q
 from django.conf import settings
@@ -16,10 +17,16 @@ from products.models import Product
 from products.serializers import ProductSerializer, ProductListSerializer
 
 
+# Custom throttle class for celebrity endpoints with higher limits
+class CelebrityRateThrottle(AnonRateThrottle):
+    scope = 'celebrity'
+
+
 class CelebrityListView(generics.ListAPIView):
     """List all active celebrities with summary information"""
     serializer_class = CelebrityListSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [CelebrityRateThrottle]
     
     def get_queryset(self):
         return Celebrity.objects.filter(is_active=True).prefetch_related(
@@ -31,6 +38,7 @@ class CelebrityDetailView(generics.RetrieveAPIView):
     """Get detailed celebrity information by ID"""
     serializer_class = CelebrityDetailSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [CelebrityRateThrottle]
     lookup_field = 'pk'
     
     def get_queryset(self):
@@ -52,6 +60,7 @@ class CelebrityDetailView(generics.RetrieveAPIView):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([CelebrityRateThrottle])
 def celebrity_promotions(request, celebrity_id):
     """Get all product promotions for a specific celebrity"""
     celebrity = get_object_or_404(Celebrity, id=celebrity_id, is_active=True)
@@ -74,6 +83,7 @@ def celebrity_promotions(request, celebrity_id):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([CelebrityRateThrottle])
 def celebrity_morning_routine(request, celebrity_id):
     """Get celebrity's morning routine products"""
     celebrity = get_object_or_404(Celebrity, id=celebrity_id, is_active=True)
@@ -99,6 +109,7 @@ def celebrity_morning_routine(request, celebrity_id):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([CelebrityRateThrottle])
 def celebrity_evening_routine(request, celebrity_id):
     """Get celebrity's evening routine products"""
     celebrity = get_object_or_404(Celebrity, id=celebrity_id, is_active=True)
@@ -124,6 +135,7 @@ def celebrity_evening_routine(request, celebrity_id):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([CelebrityRateThrottle])
 def celebrity_picks(request):
     """Get featured celebrity picks - products promoted by celebrities"""
     
@@ -163,6 +175,7 @@ def celebrity_picks(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([CelebrityRateThrottle])
 def celebrity_picks_products(request):
     """Get celebrity picks in the original complex format for the existing UI"""
     
@@ -295,6 +308,7 @@ def celebrity_picks_products(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([CelebrityRateThrottle])
 def product_celebrity_endorsements(request, product_id):
     """Get celebrity endorsements for a specific product"""
     product = get_object_or_404(Product, id=product_id)
@@ -314,6 +328,7 @@ def product_celebrity_endorsements(request, product_id):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([CelebrityRateThrottle])
 def celebrities_by_category(request):
     """Get celebrities who promote products in specific categories"""
     category_id = request.GET.get('category_id')
@@ -336,6 +351,7 @@ def celebrities_by_category(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([CelebrityRateThrottle])
 def search_celebrities(request):
     """Search celebrities by name"""
     query = request.GET.get('q', '').strip()

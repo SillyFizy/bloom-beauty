@@ -222,6 +222,13 @@ class _HomeScreenState extends State<HomeScreen>
         throw Exception('Missing celebrity name or ID');
       }
 
+      // ✅ CRITICAL FIX: Check context BEFORE starting async operations
+      if (!context.mounted) {
+        debugPrint(
+            'HomeScreen: Context not mounted at start, aborting navigation');
+        return;
+      }
+
       final celebrityProvider = context.read<CelebrityProvider>();
 
       // ✅ ENHANCED CELEBRITY NAVIGATION
@@ -235,6 +242,13 @@ class _HomeScreenState extends State<HomeScreen>
           await celebrityProvider.selectCelebrityById(celebrityId);
         }
 
+        // ✅ CRITICAL FIX: Check context IMMEDIATELY after async operation
+        if (!context.mounted) {
+          debugPrint(
+              'HomeScreen: Context unmounted after celebrity loading, aborting navigation');
+          return;
+        }
+
         // Verify celebrity was loaded successfully
         if (celebrityProvider.selectedCelebrity == null) {
           throw Exception('Celebrity not found');
@@ -243,14 +257,39 @@ class _HomeScreenState extends State<HomeScreen>
         debugPrint(
             'HomeScreen: Celebrity loaded successfully - ${celebrityProvider.selectedCelebrity!.name}');
 
-        // Navigate to celebrity screen
-        if (context.mounted) {
-          debugPrint('HomeScreen: Navigating to celebrity screen...');
+        // ✅ CRITICAL FIX: Navigate IMMEDIATELY while context is still mounted
+        debugPrint('HomeScreen: Navigating to celebrity screen...');
+        debugPrint(
+            'HomeScreen: Current route before navigation: ${GoRouterState.of(context).uri}');
 
+        try {
           // ✅ USE GOROUTER FOR CONSISTENT NAVIGATION
           context.pushNamed('celebrity');
+          debugPrint('HomeScreen: context.pushNamed called successfully');
+
+          // Add a small delay to check if navigation actually happened
+          Future.delayed(Duration(milliseconds: 100), () {
+            if (context.mounted) {
+              debugPrint(
+                  'HomeScreen: Post-navigation route check: ${GoRouterState.of(context).uri}');
+            }
+          });
 
           debugPrint('HomeScreen: Celebrity navigation completed');
+        } catch (navError) {
+          debugPrint('HomeScreen: Navigation error: $navError');
+
+          // Try alternative navigation if GoRouter fails
+          debugPrint('HomeScreen: Attempting fallback navigation...');
+          if (context.mounted) {
+            try {
+              context.push('/celebrity');
+              debugPrint('HomeScreen: Fallback navigation successful');
+            } catch (fallbackError) {
+              debugPrint(
+                  'HomeScreen: Fallback navigation also failed: $fallbackError');
+            }
+          }
         }
       } catch (e) {
         debugPrint('HomeScreen: Celebrity loading error: $e');

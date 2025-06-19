@@ -213,10 +213,11 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/hour',
+        'anon': '1000/hour',  # Increased from 100 to 1000 for celebrities API
         'user': '1000/hour',
         'product': '1000/day',
         'order': '200/day',
+        'celebrity': '500/hour',  # Specific rate for celebrity endpoints
     },
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
     'DEFAULT_VERSION': 'v1',

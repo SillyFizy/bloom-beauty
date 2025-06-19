@@ -152,9 +152,32 @@ class _CelebrityScreenState extends State<CelebrityScreen>
   }
 
   Future<void> _loadCelebrityData() async {
-    // Celebrity data should already be loaded by the provider
-    // when navigating to this screen. This method is kept for
-    // consistency but doesn't need to do anything.
+    // ✅ ENHANCED: Try to reload celebrity data if missing
+    debugPrint('CelebrityScreen: _loadCelebrityData called');
+    final celebrityProvider = context.read<CelebrityProvider>();
+
+    // If no celebrity is selected, try to reload the last selected one
+    if (celebrityProvider.selectedCelebrity == null) {
+      debugPrint(
+          'CelebrityScreen: No celebrity selected, attempting to reload...');
+
+      // Check if there are any celebrities loaded
+      if (celebrityProvider.celebrities.isNotEmpty) {
+        debugPrint(
+            'CelebrityScreen: Found ${celebrityProvider.celebrities.length} celebrities, selecting first available');
+        // Select the first celebrity as a fallback
+        final firstCelebrity = celebrityProvider.celebrities.first;
+        await celebrityProvider.selectCelebrityById(firstCelebrity.id);
+      } else {
+        debugPrint(
+            'CelebrityScreen: No celebrities available, initializing provider...');
+        // Try to initialize the provider
+        await celebrityProvider.initialize();
+      }
+    } else {
+      debugPrint(
+          'CelebrityScreen: Celebrity already selected: ${celebrityProvider.selectedCelebrity!.name}');
+    }
   }
 
   @override
@@ -170,13 +193,39 @@ class _CelebrityScreenState extends State<CelebrityScreen>
           backgroundColor: AppConstants.backgroundColor,
           body: Consumer<CelebrityProvider>(
             builder: (context, celebrityProvider, child) {
+              // ✅ CRITICAL DEBUG: Check celebrity provider state
+              debugPrint('=== CELEBRITY SCREEN STATE DEBUG ===');
+              debugPrint('Provider isLoading: ${celebrityProvider.isLoading}');
+              debugPrint('Provider hasError: ${celebrityProvider.hasError}');
+              debugPrint('Provider error: ${celebrityProvider.error}');
+              debugPrint(
+                  'Provider selectedCelebrity: ${celebrityProvider.selectedCelebrity?.name ?? "NULL"}');
+              debugPrint(
+                  'Provider celebrities count: ${celebrityProvider.celebrities.length}');
+              if (celebrityProvider.selectedCelebrity != null) {
+                debugPrint(
+                    'Selected celebrity ID: ${celebrityProvider.selectedCelebrity!.id}');
+                debugPrint(
+                    'Selected celebrity image: ${celebrityProvider.selectedCelebrity!.image}');
+                debugPrint(
+                    'Morning routine count: ${celebrityProvider.selectedCelebrity!.morningRoutineProducts.length}');
+                debugPrint(
+                    'Evening routine count: ${celebrityProvider.selectedCelebrity!.eveningRoutineProducts.length}');
+                debugPrint(
+                    'Recommended count: ${celebrityProvider.selectedCelebrity!.recommendedProducts.length}');
+              }
+              debugPrint('=== END STATE DEBUG ===');
+
               // Show loading state while celebrity data is being loaded
               if (celebrityProvider.isLoading) {
+                debugPrint('CelebrityScreen: Showing loading state');
                 return _buildLoadingState(isSmallScreen);
               }
 
               // Show error state if there's an error
               if (celebrityProvider.hasError) {
+                debugPrint(
+                    'CelebrityScreen: Showing error state: ${celebrityProvider.error}');
                 return _buildErrorState(
                     celebrityProvider.error!, isSmallScreen);
               }
@@ -184,11 +233,31 @@ class _CelebrityScreenState extends State<CelebrityScreen>
               // Get celebrity data from provider instead of widget
               final celebrity = celebrityProvider.selectedCelebrity;
 
-              // If no celebrity data is available, show error
-              if (celebrity == null) {
-                return _buildErrorState(
-                    'Celebrity data not found', isSmallScreen);
+              // ✅ ENHANCED: If no celebrity data is available, try to reload it
+              if (celebrity == null && !celebrityProvider.isLoading) {
+                debugPrint(
+                    'CelebrityScreen: No celebrity selected, triggering reload...');
+                // Trigger a reload asynchronously
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _loadCelebrityData();
+                });
+                // Show loading state while we reload
+                debugPrint(
+                    'CelebrityScreen: Showing loading state while reloading celebrity data');
+                return _buildLoadingState(isSmallScreen);
               }
+
+              // If still no celebrity data is available after reload attempt, show error
+              if (celebrity == null) {
+                debugPrint(
+                    'CelebrityScreen: No celebrity selected, showing error state');
+                return _buildErrorState(
+                    'Celebrity data not found. Please go back and try again.',
+                    isSmallScreen);
+              }
+
+              debugPrint(
+                  'CelebrityScreen: Rendering celebrity profile for ${celebrity.name}');
 
               // DEBUG: Log celebrity data state for UI debugging
               debugPrint('=== CELEBRITY SCREEN UI DEBUG ===');

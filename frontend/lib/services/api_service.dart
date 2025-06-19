@@ -25,6 +25,38 @@ class ApiService {
   static const Duration requestTimeout = Duration(seconds: 30);
   static const int maxRetries = 3;
 
+  // ✅ CRITICAL FIX: Add rate limiting to prevent 429 errors
+  static DateTime? _lastRequestTime;
+  static const Duration _minRequestInterval =
+      Duration(milliseconds: 100); // Reduced to 100ms between requests
+
+  /// Rate limiting: Wait before making request if needed
+  static Future<void> _waitForRateLimit([String? endpoint]) async {
+    if (_lastRequestTime != null) {
+      // Special handling for celebrity endpoints - no rate limiting during init
+      if (endpoint != null && endpoint.contains('celebrities')) {
+        // Only apply minimal rate limiting for celebrity endpoints
+        final timeSinceLastRequest =
+            DateTime.now().difference(_lastRequestTime!);
+        const minCelebrityInterval = Duration(milliseconds: 50);
+        if (timeSinceLastRequest < minCelebrityInterval) {
+          final waitTime = minCelebrityInterval - timeSinceLastRequest;
+          await Future.delayed(waitTime);
+        }
+      } else {
+        final timeSinceLastRequest =
+            DateTime.now().difference(_lastRequestTime!);
+        if (timeSinceLastRequest < _minRequestInterval) {
+          final waitTime = _minRequestInterval - timeSinceLastRequest;
+          debugPrint(
+              'ApiService: Rate limiting - waiting ${waitTime.inMilliseconds}ms');
+          await Future.delayed(waitTime);
+        }
+      }
+    }
+    _lastRequestTime = DateTime.now();
+  }
+
   /// Exception classes for better error handling
   static const Map<String, String> _headers = {
     'Content-Type': 'application/json',
@@ -57,6 +89,9 @@ class ApiService {
   static Future<Map<String, dynamic>> get(String endpoint,
       {int retryCount = 0, bool requireAuth = true}) async {
     try {
+      // ✅ CRITICAL FIX: Apply rate limiting before making request
+      await _waitForRateLimit(endpoint);
+
       print('DEBUG: Making GET request to: $baseUrl$endpoint');
       final headers = requireAuth ? _headersWithAuth : _headers;
       final response = await http
@@ -67,6 +102,24 @@ class ApiService {
           .timeout(requestTimeout);
 
       print('DEBUG: Response status: ${response.statusCode}');
+
+      // ✅ Handle 429 Too Many Requests specifically
+      if (response.statusCode == 429) {
+        debugPrint(
+            'ApiService: Hit rate limit (429), waiting longer before retry...');
+        if (retryCount < maxRetries) {
+          // Shorter wait for celebrity endpoints
+          final waitTime = endpoint.contains('celebrities')
+              ? Duration(milliseconds: 500 * (retryCount + 1))
+              : Duration(seconds: (retryCount + 1) * 2);
+          await Future.delayed(waitTime);
+          return get(endpoint,
+              retryCount: retryCount + 1, requireAuth: requireAuth);
+        } else {
+          throw ApiException('Rate limit exceeded. Please try again later.');
+        }
+      }
+
       return _handleResponse(response);
     } on Exception catch (e) {
       // Handle network-related exceptions
@@ -104,6 +157,9 @@ class ApiService {
       String endpoint, Map<String, dynamic> data,
       {int retryCount = 0}) async {
     try {
+      // ✅ CRITICAL FIX: Apply rate limiting before making request
+      await _waitForRateLimit(endpoint);
+
       final response = await http
           .post(
             Uri.parse('$baseUrl$endpoint'),
@@ -111,6 +167,19 @@ class ApiService {
             body: json.encode(data),
           )
           .timeout(requestTimeout);
+
+      // ✅ Handle 429 Too Many Requests specifically
+      if (response.statusCode == 429) {
+        debugPrint(
+            'ApiService: Hit rate limit (429) on POST, waiting longer before retry...');
+        if (retryCount < maxRetries) {
+          // Wait longer for rate limit errors
+          await Future.delayed(Duration(seconds: (retryCount + 1) * 2));
+          return post(endpoint, data, retryCount: retryCount + 1);
+        } else {
+          throw ApiException('Rate limit exceeded. Please try again later.');
+        }
+      }
 
       return _handleResponse(response);
     } on Exception catch (e) {

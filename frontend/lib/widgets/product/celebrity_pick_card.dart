@@ -626,6 +626,13 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
 
   Future<void> _navigateToCelebrity(BuildContext context) async {
     try {
+      // ✅ CRITICAL FIX: Check context BEFORE starting async operations
+      if (!context.mounted) {
+        debugPrint(
+            'CelebrityPickCard: Context not mounted at start, aborting navigation');
+        return;
+      }
+
       final celebrityProvider = context.read<CelebrityProvider>();
 
       // Use celebrity ID if available, otherwise fall back to name
@@ -639,10 +646,17 @@ class _CelebrityPickCardState extends State<CelebrityPickCard>
         await celebrityProvider.selectCelebrity(widget.celebrityName);
       }
 
-      // Navigate only after successful selection
-      if (context.mounted) {
-        context.pushNamed('celebrity');
+      // ✅ CRITICAL FIX: Check context IMMEDIATELY after async operation and navigate
+      if (!context.mounted) {
+        debugPrint(
+            'CelebrityPickCard: Context unmounted after celebrity loading, aborting navigation');
+        return;
       }
+
+      // Navigate immediately while context is still mounted
+      debugPrint('CelebrityPickCard: Navigating to celebrity screen...');
+      context.pushNamed('celebrity');
+      debugPrint('CelebrityPickCard: Celebrity navigation completed');
     } catch (e) {
       debugPrint('CelebrityPickCard: Error navigating to celebrity: $e');
       // Show error message

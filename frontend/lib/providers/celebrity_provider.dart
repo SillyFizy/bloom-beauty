@@ -253,12 +253,16 @@ class CelebrityProvider with ChangeNotifier {
           await _celebrityService.getCelebrityByName(celebrityName);
 
       if (_selectedCelebrity != null) {
-        // Load additional celebrity data
-        await _loadCelebrityDetails(celebrityName);
-      }
+        // ✅ IMMEDIATE NAVIGATION FIX: Notify listeners immediately with basic celebrity data
+        _setLoading(false);
+        notifyListeners();
 
-      _setLoading(false);
-      notifyListeners();
+        // Load additional celebrity data in background (don't await)
+        _loadCelebrityDetailsInBackground(celebrityName);
+      } else {
+        _setLoading(false);
+        notifyListeners();
+      }
     } catch (e) {
       debugPrint('CelebrityProvider: ERROR in selectCelebrity: $e');
       _setError('Failed to select celebrity: $e');
@@ -282,16 +286,20 @@ class CelebrityProvider with ChangeNotifier {
       if (_selectedCelebrity != null) {
         debugPrint(
             'CelebrityProvider: Found celebrity: ${_selectedCelebrity!.name}');
-        // Load additional celebrity data
-        await _loadCelebrityDetailsById(celebrityId);
+
+        // ✅ IMMEDIATE NAVIGATION FIX: Notify listeners immediately with basic celebrity data
+        _setLoading(false);
+        notifyListeners();
+
+        // Load additional celebrity data in background (don't await)
+        _loadCelebrityDetailsInBackground(_selectedCelebrity!.name);
       } else {
         debugPrint(
             'CelebrityProvider: No celebrity found with ID: $celebrityId');
         _setError('Celebrity not found');
+        _setLoading(false);
+        notifyListeners();
       }
-
-      _setLoading(false);
-      notifyListeners();
     } catch (e) {
       debugPrint('CelebrityProvider: ERROR in selectCelebrityById: $e');
       _setError('Failed to select celebrity: $e');
@@ -312,41 +320,24 @@ class CelebrityProvider with ChangeNotifier {
       debugPrint('CelebrityProvider: Loading full details for $celebrityName');
       debugPrint('CelebrityProvider: Celebrity ID: ${_selectedCelebrity!.id}');
 
-      // Load morning routine products
-      debugPrint('CelebrityProvider: Starting morning routine fetch...');
-      final morningRoutineProducts = await _celebrityService
-          .getCelebrityMorningRoutine(_selectedCelebrity!.id);
+      // ✅ PERFORMANCE FIX: Load all data in parallel instead of sequential
+      debugPrint('CelebrityProvider: Starting parallel data fetch...');
+      final results = await Future.wait([
+        _celebrityService.getCelebrityMorningRoutine(_selectedCelebrity!.id),
+        _celebrityService.getCelebrityEveningRoutine(_selectedCelebrity!.id),
+        _celebrityService.getCelebrityPromotions(_selectedCelebrity!.id),
+      ]);
+
+      final morningRoutineProducts = results[0];
+      final eveningRoutineProducts = results[1];
+      final recommendedProducts = results[2];
+
       debugPrint(
           'CelebrityProvider: Loaded ${morningRoutineProducts.length} morning routine products');
-
-      if (morningRoutineProducts.isNotEmpty) {
-        debugPrint(
-            'CelebrityProvider: Morning routine products: ${morningRoutineProducts.map((p) => p.name).join(', ')}');
-      }
-
-      // Load evening routine products
-      debugPrint('CelebrityProvider: Starting evening routine fetch...');
-      final eveningRoutineProducts = await _celebrityService
-          .getCelebrityEveningRoutine(_selectedCelebrity!.id);
       debugPrint(
           'CelebrityProvider: Loaded ${eveningRoutineProducts.length} evening routine products');
-
-      if (eveningRoutineProducts.isNotEmpty) {
-        debugPrint(
-            'CelebrityProvider: Evening routine products: ${eveningRoutineProducts.map((p) => p.name).join(', ')}');
-      }
-
-      // Load celebrity promotions/recommended products
-      debugPrint('CelebrityProvider: Starting promotions fetch...');
-      final recommendedProducts = await _celebrityService
-          .getCelebrityPromotions(_selectedCelebrity!.id);
       debugPrint(
           'CelebrityProvider: Loaded ${recommendedProducts.length} recommended products');
-
-      if (recommendedProducts.isNotEmpty) {
-        debugPrint(
-            'CelebrityProvider: Recommended products: ${recommendedProducts.map((p) => p.name).join(', ')}');
-      }
 
       // Debug current celebrity state before update
       debugPrint('CelebrityProvider: BEFORE UPDATE:');
@@ -389,6 +380,18 @@ class CelebrityProvider with ChangeNotifier {
       debugPrint('CelebrityProvider: ERROR loading celebrity details: $e');
       debugPrint('CelebrityProvider: Stack trace: ${StackTrace.current}');
       _setError('Failed to load celebrity details: $e');
+    }
+  }
+
+  /// Load celebrity details in background without blocking navigation
+  void _loadCelebrityDetailsInBackground(String celebrityName) async {
+    try {
+      debugPrint(
+          'CelebrityProvider: Loading celebrity details in background for $celebrityName');
+      await _loadCelebrityDetails(celebrityName);
+    } catch (e) {
+      debugPrint('CelebrityProvider: Background loading error: $e');
+      // Don't set error state since navigation already succeeded
     }
   }
 
