@@ -4,8 +4,8 @@ import '../models/celebrity_model.dart';
 import '../models/category_model.dart' as category_model;
 
 import '../services/product_service.dart';
-import '../services/celebrity_service.dart';
 import '../services/category_service.dart';
+import '../services/api_service.dart';
 
 enum CelebrityPicksSortOption {
   newest,
@@ -22,11 +22,11 @@ enum BrowseMode {
 
 class CelebrityPicksProvider with ChangeNotifier {
   final ProductService _productService = ProductService();
-  final CelebrityService _celebrityService = CelebrityService();
   final CategoryService _categoryService = CategoryService();
 
   // State variables
   List<Product> _allCelebrityProducts = [];
+  List<Map<String, dynamic>> _rawCelebrityPicks = []; // Raw backend data
   List<Product> _filteredProducts = [];
   List<Celebrity> _celebrities = [];
   List<category_model.Category> _categories = [];
@@ -76,6 +76,36 @@ class CelebrityPicksProvider with ChangeNotifier {
   double get maxPriceFilter => _maxPriceFilter;
   double get minRatingFilter => _minRatingFilter;
 
+  // Get min and max prices from all products
+  double getMinPrice() {
+    if (_allCelebrityProducts.isEmpty) return 0;
+    return _allCelebrityProducts
+        .map((p) => p.price)
+        .reduce((a, b) => a < b ? a : b);
+  }
+
+  double getMaxPrice() {
+    if (_allCelebrityProducts.isEmpty) return 500000;
+    return _allCelebrityProducts
+        .map((p) => p.price)
+        .reduce((a, b) => a > b ? a : b);
+  }
+
+  // Get celebrities that have picks (for filtering)
+  List<String> get celebritiesWithPicks {
+    final celebrityNames = <String>{};
+    for (final pick in _rawCelebrityPicks) {
+      final celebrityData = pick['celebrity'] as Map<String, dynamic>?;
+      if (celebrityData != null) {
+        final name = celebrityData['name'] as String? ?? '';
+        if (name.isNotEmpty) {
+          celebrityNames.add(name);
+        }
+      }
+    }
+    return celebrityNames.toList()..sort();
+  }
+
   // Get selected celebrity
   Celebrity? get selectedCelebrity {
     if (_selectedCelebrityId == null) return null;
@@ -96,46 +126,199 @@ class CelebrityPicksProvider with ChangeNotifier {
     }
   }
 
-  /// Initialize and load initial data
+  /// Initialize and load initial data using production backend endpoints
   Future<void> initialize() async {
     try {
       _setLoading(true);
       _clearError();
 
-      // Load celebrities, categories, and products concurrently
+      debugPrint(
+          'CelebrityPicksProvider: Starting initialization with backend data...');
+
+      // Load celebrities and categories first
       await Future.wait([
-        _loadCelebrities(),
+        _loadCelebritiesFromBackend(),
         _loadCategories(),
-        _loadAllCelebrityProducts(),
       ]);
+
+      // Then load celebrity picks products
+      await _loadCelebrityPicksFromBackend();
 
       // Apply initial filtering and load first page
       await _applyFiltersAndSort();
       _loadDisplayProducts();
 
+      debugPrint(
+          'CelebrityPicksProvider: Successfully initialized with ${_allCelebrityProducts.length} celebrity picks');
       _setLoading(false);
     } catch (e) {
+      debugPrint('CelebrityPicksProvider: Initialization error: $e');
       _setError('Failed to initialize celebrity picks: $e');
       _setLoading(false);
     }
   }
 
-  /// Load all celebrities
-  Future<void> _loadCelebrities() async {
-    _celebrities = await _celebrityService.getAllCelebrities();
+  /// Refresh all data
+  Future<void> refresh() async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // Clear existing data
+      _allCelebrityProducts.clear();
+      _rawCelebrityPicks.clear();
+      _filteredProducts.clear();
+      _displayProducts.clear();
+      _celebrities.clear();
+      _categories.clear();
+
+      // Reset pagination
+      _currentPage = 0;
+      _hasMoreProducts = true;
+
+      // Reload all data
+      await Future.wait([
+        _loadCelebritiesFromBackend(),
+        _loadCategories(),
+      ]);
+
+      await _loadCelebrityPicksFromBackend();
+
+      // Apply filters and load display products
+      await _applyFiltersAndSort();
+      _loadDisplayProducts();
+
+      _setLoading(false);
+    } catch (e) {
+      _setError('Failed to refresh celebrity picks: $e');
+      _setLoading(false);
+    }
+  }
+
+  /// Load celebrities from backend /v1/celebrities/ endpoint
+  Future<void> _loadCelebritiesFromBackend() async {
+    try {
+      debugPrint(
+          'CelebrityPicksProvider: Loading celebrities from /v1/celebrities/...');
+      _celebrities = await ApiService.getCelebrities();
+      debugPrint(
+          'CelebrityPicksProvider: Loaded ${_celebrities.length} celebrities from backend');
+    } catch (e) {
+      debugPrint('CelebrityPicksProvider: Error loading celebrities: $e');
+      _celebrities = [];
+    }
   }
 
   /// Load all categories
   Future<void> _loadCategories() async {
-    _categories = await _categoryService.getAllCategories();
+    try {
+      _categories = await _categoryService.getAllCategories();
+      debugPrint(
+          'CelebrityPicksProvider: Loaded ${_categories.length} categories');
+    } catch (e) {
+      debugPrint('CelebrityPicksProvider: Error loading categories: $e');
+      _categories = [];
+    }
   }
 
-  /// Load all products that have celebrity endorsements
-  Future<void> _loadAllCelebrityProducts() async {
-    final allProducts = await _productService.getAllProducts();
-    _allCelebrityProducts = allProducts
-        .where((product) => product.celebrityEndorsement != null)
-        .toList();
+  /// Load celebrity picks from backend /v1/celebrities/picks/featured/ endpoint
+  Future<void> _loadCelebrityPicksFromBackend() async {
+    try {
+      debugPrint(
+          'CelebrityPicksProvider: Loading celebrity picks from /v1/celebrities/picks/featured/...');
+
+      // Get celebrity picks from backend with a high limit for comprehensive data
+      final response =
+          await ApiService.get('/v1/celebrities/picks/featured/?limit=100');
+      _rawCelebrityPicks = (response['celebrity_picks'] as List?)
+              ?.cast<Map<String, dynamic>>() ??
+          [];
+
+      debugPrint(
+          'CelebrityPicksProvider: Loaded ${_rawCelebrityPicks.length} celebrity picks from backend');
+
+      // Convert celebrity picks to Product models with celebrity endorsement information
+      _allCelebrityProducts = [];
+
+      for (final pick in _rawCelebrityPicks) {
+        try {
+          final productData = pick['product'] as Map<String, dynamic>?;
+          final celebrityData = pick['celebrity'] as Map<String, dynamic>?;
+
+          if (productData != null && celebrityData != null) {
+            debugPrint(
+                'CelebrityPicksProvider: Processing pick with celebrity: ${celebrityData['name']} and product: ${productData['name']}');
+            // Create product from backend data using proper backend API method
+            final product = Product.fromBackendApi(productData);
+
+            // Add celebrity endorsement information to the product (handle null values safely)
+            final celebrityName =
+                celebrityData['name']?.toString() ?? 'Celebrity';
+            final celebrityImageRaw = celebrityData['image'];
+            final celebrityImage = celebrityImageRaw?.toString() ?? '';
+            final testimonial =
+                pick['testimonial']?.toString() ?? 'I love this product!';
+
+            final endorsement = CelebrityEndorsement(
+              celebrityName: celebrityName,
+              celebrityImage: celebrityImage,
+              testimonial: testimonial,
+            );
+
+            debugPrint(
+                'CelebrityPicksProvider: Processing celebrity $celebrityName with testimonial: $testimonial');
+
+            // Create a new product with celebrity endorsement
+            final productWithEndorsement = Product(
+              id: product.id,
+              name: product.name,
+              description: product.description,
+              price: product.price,
+              discountPrice: product.discountPrice,
+              images: product.images,
+              categoryId: product.categoryId,
+              brand: product.brand,
+              rating: product.rating,
+              reviewCount: product.reviewCount,
+              isInStock: product.isInStock,
+              ingredients: product.ingredients,
+              beautyPoints: product.beautyPoints,
+              variants: product.variants,
+              reviews: product.reviews,
+              celebrityEndorsement: endorsement, // Add celebrity endorsement
+            );
+
+            _allCelebrityProducts.add(productWithEndorsement);
+            debugPrint(
+                'CelebrityPicksProvider: Added product ${product.name} with celebrity endorsement from ${endorsement.celebrityName}');
+          }
+        } catch (e) {
+          debugPrint(
+              'CelebrityPicksProvider: Error parsing celebrity pick: $e');
+          continue;
+        }
+      }
+
+      debugPrint(
+          'CelebrityPicksProvider: Successfully processed ${_allCelebrityProducts.length} products with celebrity endorsements');
+    } catch (e) {
+      debugPrint(
+          'CelebrityPicksProvider: Error loading celebrity picks from backend: $e');
+
+      // Fallback: if backend fails, try to get some products with celebrity endorsements
+      try {
+        final allProducts = await _productService.getAllProducts();
+        _allCelebrityProducts = allProducts
+            .where((product) => product.celebrityEndorsement != null)
+            .toList();
+        debugPrint(
+            'CelebrityPicksProvider: Fallback loaded ${_allCelebrityProducts.length} products with existing celebrity endorsements');
+      } catch (fallbackError) {
+        debugPrint(
+            'CelebrityPicksProvider: Fallback also failed: $fallbackError');
+        _allCelebrityProducts = [];
+      }
+    }
   }
 
   /// Search products by name
@@ -268,6 +451,9 @@ class CelebrityPicksProvider with ChangeNotifier {
               product.celebrityEndorsement?.celebrityName ==
               _selectedCelebrityId)
           .toList();
+
+      debugPrint(
+          'CelebrityPicksProvider: Filtered to ${filtered.length} products for celebrity $_selectedCelebrityId');
     }
 
     // Apply category filter (only when in category browse mode)
@@ -355,6 +541,7 @@ class CelebrityPicksProvider with ChangeNotifier {
     }
 
     _hasMoreProducts = endIndex < _filteredProducts.length;
+    notifyListeners();
   }
 
   /// Toggle product wishlist status
@@ -376,45 +563,20 @@ class CelebrityPicksProvider with ChangeNotifier {
     }
   }
 
-  /// Get max price for price filter slider
-  double getMaxPrice() {
-    if (_allCelebrityProducts.isEmpty) return 500000;
-    return _allCelebrityProducts
-        .map((p) => p.discountPrice ?? p.price)
-        .reduce((a, b) => a > b ? a : b);
-  }
-
-  /// Get min price for price filter slider
-  double getMinPrice() {
-    if (_allCelebrityProducts.isEmpty) return 0;
-    return _allCelebrityProducts
-        .map((p) => p.discountPrice ?? p.price)
-        .reduce((a, b) => a < b ? a : b);
-  }
-
   /// Clear all filters
   void clearFilters() {
-    _searchQuery = '';
-    _selectedCelebrityId = null;
-    _selectedCategoryId = null;
-    _sortOption = CelebrityPicksSortOption.newest;
     _minPriceFilter = getMinPrice();
     _maxPriceFilter = getMaxPrice();
     _minRatingFilter = 0;
+    _selectedCelebrityId = null;
+    _selectedCategoryId = null;
+    _searchQuery = '';
     _currentPage = 0;
     _hasMoreProducts = true;
     _displayProducts.clear();
     _applyFiltersAndSort();
     _loadDisplayProducts();
     notifyListeners();
-  }
-
-  /// Refresh all data
-  Future<void> refresh() async {
-    _currentPage = 0;
-    _hasMoreProducts = true;
-    _displayProducts.clear();
-    await initialize();
   }
 
   // Helper methods
@@ -428,12 +590,13 @@ class CelebrityPicksProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void _setError(String error) {
+  void _setError(String? error) {
     _error = error;
     notifyListeners();
   }
 
   void _clearError() {
     _error = null;
+    notifyListeners();
   }
 }
