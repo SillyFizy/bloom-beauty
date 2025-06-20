@@ -311,263 +311,187 @@ class EnhancedProductCard extends StatelessWidget {
 
         return ClipRect(
           child: Padding(
-            padding: EdgeInsets.all(
-                isMobile ? 6 : 8), // Reduced padding for more space
+            padding: EdgeInsets.all(isMobile ? 8 : 12), // Matching home screen
             child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween, // Distribute space evenly
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top section - Title and Brand grouped together
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 1. Product Title
-                    Text(
-                      product.name,
-                      style: TextStyle(
-                        fontSize: isCompactLayout
-                            ? (isMobile ? 11 : 12)
-                            : (isMobile
-                                ? 13
-                                : 15), // Slightly increased font sizes
-                        fontWeight: FontWeight.w600,
-                        color: AppConstants.textPrimary,
-                        height: 1.1, // Tighter line height
-                      ),
-                      maxLines: isCompactLayout ? 1 : 2, // Adaptive max lines
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    // Small gap between title and brand
-                    SizedBox(height: isCompactLayout ? 2 : 3),
-
-                    // 2. Product Brand - Directly under title
-                    Text(
-                      product.brand,
-                      style: TextStyle(
-                        fontSize: isCompactLayout
-                            ? (isMobile ? 9 : 10)
-                            : (isMobile ? 10 : 11),
-                        color: AppConstants.textSecondary,
-                        fontWeight: FontWeight.w500,
-                        height: 1.0, // Tight line height for brand
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-
-                // 3. Celebrity Badge Area - Fixed space when present
-                if (product.celebrityEndorsement != null)
-                  GestureDetector(
-                    onTap: () => _navigateToCelebrityProfile(context),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: isCompactLayout
-                              ? 24
-                              : (isMobile ? 28 : 32), // Increased avatar size
-                          height: isCompactLayout
-                              ? 24
-                              : (isMobile ? 28 : 32), // Increased avatar size
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppConstants.accentColor,
-                              width: 1.5, // Slightly thicker border
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppConstants.accentColor
-                                    .withValues(alpha: 0.2),
-                                blurRadius: 3, // Increased shadow
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: CachedNetworkImage(
-                              imageUrl:
-                                  product.celebrityEndorsement!.celebrityImage,
-                              fit: BoxFit.cover,
-                              memCacheWidth: isCompactLayout
-                                  ? 48
-                                  : (isMobile
-                                      ? 56
-                                      : 64), // Increased cache sizes
-                              memCacheHeight:
-                                  isCompactLayout ? 48 : (isMobile ? 56 : 64),
-                              placeholder: (context, url) => Shimmer.fromColors(
-                                baseColor: AppConstants.borderColor
-                                    .withValues(alpha: 0.3),
-                                highlightColor: AppConstants.surfaceColor,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: AppConstants.borderColor
-                                        .withValues(alpha: 0.3),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, error, stackTrace) {
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        AppConstants.accentColor
-                                            .withValues(alpha: 0.6),
-                                        AppConstants.accentColor
-                                            .withValues(alpha: 0.3),
-                                      ],
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      product.celebrityEndorsement!
-                                              .celebrityName.isNotEmpty
-                                          ? product.celebrityEndorsement!
-                                              .celebrityName[0]
-                                              .toUpperCase()
-                                          : 'C',
-                                      style: TextStyle(
-                                        fontSize: isCompactLayout
-                                            ? 10
-                                            : (isMobile
-                                                ? 12
-                                                : 14), // Increased font size
-                                        fontWeight: FontWeight.bold,
-                                        color: AppConstants.surfaceColor,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+                // Product name and brand section (matching home screen style)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Product Title
+                      Text(
+                        product.name,
+                        style: TextStyle(
+                          fontSize:
+                              isMobile ? 14 : 16, // Slightly bigger than home
+                          fontWeight: FontWeight.w600,
+                          color: AppConstants.textPrimary,
+                          height: 1.1,
                         ),
-                        SizedBox(
-                            width:
-                                isCompactLayout ? 6 : 8), // Increased spacing
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      // Brand name directly under product name
+                      if (product.brand.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          product.brand,
+                          style: TextStyle(
+                            fontSize:
+                                isMobile ? 12 : 13, // Slightly bigger than home
+                            fontWeight: FontWeight.w500,
+                            color: AppConstants.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+
+                      // Celebrity Badge Area (if present)
+                      if (product.celebrityEndorsement != null) ...[
+                        const SizedBox(height: 6),
+                        GestureDetector(
+                          onTap: () => _navigateToCelebrityProfile(context),
+                          child: Row(
                             children: [
-                              Text(
-                                'Picked by',
-                                style: TextStyle(
-                                  fontSize: isCompactLayout
-                                      ? 8
-                                      : (isMobile
-                                          ? 9
-                                          : 10), // Slightly increased text
-                                  color: AppConstants.textSecondary,
-                                  fontWeight: FontWeight.w500,
+                              Container(
+                                width: isMobile ? 20 : 24,
+                                height: isMobile ? 20 : 24,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppConstants.accentColor,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: ClipOval(
+                                  child: CachedNetworkImage(
+                                    imageUrl: product
+                                        .celebrityEndorsement!.celebrityImage,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (context, error, stackTrace) {
+                                      return Container(
+                                        color: AppConstants.accentColor
+                                            .withValues(alpha: 0.1),
+                                        child: Center(
+                                          child: Text(
+                                            product.celebrityEndorsement!
+                                                    .celebrityName.isNotEmpty
+                                                ? product.celebrityEndorsement!
+                                                    .celebrityName[0]
+                                                    .toUpperCase()
+                                                : 'C',
+                                            style: TextStyle(
+                                              fontSize: isMobile ? 8 : 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppConstants.accentColor,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
-                              Text(
-                                product.celebrityEndorsement!.celebrityName,
-                                style: TextStyle(
-                                  fontSize: isCompactLayout
-                                      ? 10
-                                      : (isMobile
-                                          ? 11
-                                          : 12), // Slightly increased text
-                                  color: AppConstants.accentColor,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.0,
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  product.celebrityEndorsement!.celebrityName,
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 10 : 11,
+                                    color: AppConstants.accentColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
+                ),
 
-                // 4. Bottom Row - Price at far left and Rating/Count at far right
+                const SizedBox(height: 8), // Fixed spacing like home screen
+
+                // Price and rating row (matching home screen layout)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    // Left side - Price section at far left bottom
+                    // Price on the left
                     Expanded(
-                      flex: 2,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Current price - nicely sized and prominent
-                          Text(
-                            Formatters.formatPrice(currentPrice),
-                            style: TextStyle(
-                              fontSize: isCompactLayout
-                                  ? (isMobile ? 13 : 15)
-                                  : (isMobile ? 15 : 17),
-                              fontWeight: FontWeight.w700,
-                              color: AppConstants.textPrimary,
-                              letterSpacing: 0.1,
-                              height: 1.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-
-                          // Original price if discounted (below current price)
                           if (hasDiscount) ...[
-                            const SizedBox(height: 2),
                             Text(
                               Formatters.formatPrice(product.price),
                               style: TextStyle(
-                                fontSize: isCompactLayout
-                                    ? (isMobile ? 10 : 11)
-                                    : (isMobile ? 11 : 12),
+                                fontSize: isMobile
+                                    ? 12
+                                    : 13, // Slightly bigger than home
+                                fontWeight: FontWeight.w500,
                                 color: AppConstants.textSecondary,
                                 decoration: TextDecoration.lineThrough,
-                                decorationColor: AppConstants.textSecondary,
-                                fontWeight: FontWeight.w500,
-                                height: 1.2,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              Formatters.formatPrice(currentPrice),
+                              style: TextStyle(
+                                fontSize: isMobile
+                                    ? 14
+                                    : 16, // Slightly bigger than home
+                                fontWeight: FontWeight.bold,
+                                color: AppConstants.errorColor,
+                              ),
+                            ),
+                          ] else ...[
+                            Text(
+                              Formatters.formatPrice(currentPrice),
+                              style: TextStyle(
+                                fontSize: isMobile
+                                    ? 14
+                                    : 16, // Slightly bigger than home
+                                fontWeight: FontWeight.bold,
+                                color: AppConstants.textPrimary,
+                              ),
                             ),
                           ],
                         ],
                       ),
                     ),
 
-                    // Right side - Rating only (removed count)
+                    // Rating on the right (matching home screen style)
                     Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isCompactLayout ? 5 : (isMobile ? 6 : 8),
-                        vertical: isCompactLayout ? 3 : (isMobile ? 4 : 5),
-                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppConstants.accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(
-                            isCompactLayout ? 5 : (isMobile ? 6 : 8)),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.star_rounded,
-                            size: isCompactLayout ? 12 : (isMobile ? 14 : 16),
+                            Icons.star,
+                            size:
+                                isMobile ? 15 : 17, // Slightly bigger than home
                             color: AppConstants.accentColor,
                           ),
                           const SizedBox(width: 2),
                           Text(
-                            product.rating.toStringAsFixed(1),
+                            product.rating.toString(),
                             style: TextStyle(
-                              fontSize:
-                                  isCompactLayout ? 10 : (isMobile ? 11 : 13),
+                              fontSize: isMobile
+                                  ? 13
+                                  : 15, // Slightly bigger than home
                               color: AppConstants.accentColor,
                               fontWeight: FontWeight.w600,
-                              letterSpacing: 0.1,
                             ),
                           ),
                         ],
