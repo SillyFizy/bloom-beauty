@@ -490,6 +490,7 @@ class ApiService {
       print('  Using slug as ID: $productSlug');
       print('  Backend Rating: ${productData['rating']}');
       print('  Backend Review Count: ${productData['review_count']}');
+      print('  Backend is_featured: ${productData['is_featured']}');
 
       // Format the data to match what fromBackendApi expects
       final formattedData = {
@@ -508,6 +509,8 @@ class ApiService {
         // ✅ CRITICAL FIX: Include rating and review_count from backend
         'rating': productData['rating'],
         'review_count': productData['review_count'],
+        // ✅ CRITICAL FIX: Include is_featured from backend
+        'is_featured': productData['is_featured'],
       };
 
       print('DEBUG: Using fromBackendApi for consistency');
@@ -519,7 +522,7 @@ class ApiService {
       final product = Product.fromBackendApi(formattedData);
 
       print(
-          'DEBUG: Product created with rating: ${product.rating}, reviewCount: ${product.reviewCount}');
+          'DEBUG: Product created with rating: ${product.rating}, reviewCount: ${product.reviewCount}, isFeatured: ${product.isFeatured}');
 
       // Override with detailed data from product detail API
       return Product(
@@ -539,6 +542,8 @@ class ApiService {
         variants: [], // Keep empty for now
         reviews: [], // Keep empty for now
         celebrityEndorsement: null,
+        isFeatured: product
+            .isFeatured, // ✅ CRITICAL FIX: Include is_featured from backend
       );
     } catch (e) {
       throw ApiException('Failed to load product detail: $e');

@@ -142,6 +142,7 @@ class Product {
   final List<ProductVariant> variants;
   final List<ProductReview> reviews;
   final CelebrityEndorsement? celebrityEndorsement;
+  final bool isFeatured; // Indicates if product is endorsed by celebrity
 
   // Verified large images (100KB+ range) that work on both web and mobile
   static const List<String> _availableImages = [
@@ -188,6 +189,7 @@ class Product {
     this.variants = const [],
     this.reviews = const [],
     this.celebrityEndorsement,
+    this.isFeatured = false,
   });
 
   // Get current price based on selected variant
@@ -228,10 +230,7 @@ class Product {
     // This prevents floating point precision issues between different endpoints
     final finalRating = double.parse(rawRating.toStringAsFixed(1));
 
-    // Debug logging for rating consistency (can be removed in production)
-    if (rawRating != finalRating) {
-      print('Rating normalized: $rawRating -> $finalRating');
-    }
+    // Rating normalization applied for consistency
 
     return finalRating;
   }
@@ -249,6 +248,18 @@ class Product {
     }
 
     return 0;
+  }
+
+  /// Helper method to parse boolean fields (handles both 1/0 and true/false)
+  static bool _parseBooleanField(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) {
+      final lowercaseValue = value.toLowerCase();
+      return lowercaseValue == 'true' || lowercaseValue == '1';
+    }
+    return false;
   }
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -297,6 +308,7 @@ class Product {
       celebrityEndorsement: json['celebrity_endorsement'] != null
           ? CelebrityEndorsement.fromJson(json['celebrity_endorsement'])
           : null,
+      isFeatured: _parseBooleanField(json['is_featured']),
     );
   }
 
@@ -318,6 +330,7 @@ class Product {
       'variants': variants.map((v) => v.toJson()).toList(),
       'reviews': reviews.map((r) => r.toJson()).toList(),
       'celebrity_endorsement': celebrityEndorsement?.toJson(),
+      'is_featured': isFeatured,
     };
   }
 
@@ -403,6 +416,8 @@ class Product {
       variants: [],
       reviews: [],
       celebrityEndorsement: null,
+      isFeatured:
+          _parseBooleanField(json['is_featured']), // Backend is_featured field
     );
   }
 
@@ -488,6 +503,8 @@ class Product {
       variants: [],
       reviews: [],
       celebrityEndorsement: null,
+      isFeatured:
+          _parseBooleanField(json['is_featured']), // Backend is_featured field
     );
   }
 
@@ -561,6 +578,8 @@ class Product {
       variants: [],
       reviews: [],
       celebrityEndorsement: null,
+      isFeatured:
+          _parseBooleanField(json['is_featured']), // Backend is_featured field
     );
   }
 
@@ -591,8 +610,7 @@ class Product {
         json['featured_image'].toString().isNotEmpty) {
       // Use platform-aware URL for images
       final baseImageUrl = _getImageBaseUrl();
-      final imageUrl =
-          '${baseImageUrl}/media/products/${json['featured_image']}';
+      final imageUrl = '$baseImageUrl/media/products/${json['featured_image']}';
       images.add(imageUrl);
     } else {
       // RANDOM IMAGE FROM BACKEND/MEDIA when DB response is null
@@ -602,7 +620,7 @@ class Product {
           ? productId
           : (int.tryParse(productId.toString()) ?? 0);
       final randomImage = _getRandomBackendImage(numericProductId);
-      final imageUrl = '${baseImageUrl}/media/products/$randomImage';
+      final imageUrl = '$baseImageUrl/media/products/$randomImage';
       images.add(imageUrl);
 
       // Debug logging
@@ -650,6 +668,8 @@ class Product {
       variants: [],
       reviews: [],
       celebrityEndorsement: null, // No celebrity picks for now as requested
+      isFeatured:
+          _parseBooleanField(json['is_featured']), // Backend is_featured field
     );
   }
 

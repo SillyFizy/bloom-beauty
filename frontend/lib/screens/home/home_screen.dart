@@ -596,14 +596,14 @@ class _HomeScreenState extends State<HomeScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppConstants.textSecondary.withValues(alpha: 0.1),
-                            AppConstants.textSecondary.withValues(alpha: 0.05),
+                            AppConstants.accentColor.withValues(alpha: 0.1),
+                            AppConstants.accentColor.withValues(alpha: 0.05),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color:
-                              AppConstants.textSecondary.withValues(alpha: 0.3),
+                              AppConstants.accentColor.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -615,14 +615,14 @@ class _HomeScreenState extends State<HomeScreen>
                             style: TextStyle(
                               fontSize: isSmallScreen ? 12 : 14,
                               fontWeight: FontWeight.w600,
-                              color: AppConstants.textSecondary,
+                              color: AppConstants.accentColor,
                             ),
                           ),
                           SizedBox(width: isSmallScreen ? 4 : 6),
                           Icon(
                             Icons.arrow_forward_ios,
                             size: isSmallScreen ? 12 : 14,
-                            color: AppConstants.textSecondary,
+                            color: AppConstants.accentColor,
                           ),
                         ],
                       ),
@@ -833,170 +833,244 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildNewArrivalCard(Product product, bool isSmallScreen) {
-    return GestureDetector(
-      onTap: () async {
-        await _navigateToProductWithProvider(context, product);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppConstants.surfaceColor,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image with favorite button and beauty points
-            Expanded(
-              flex: 3,
-              child: Stack(
-                children: [
-                  // Product image
-                  Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(12),
-                      ),
-                      color: AppConstants.backgroundColor,
-                    ),
-                    child: product.images.isNotEmpty
-                        ? ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12),
-                            ),
-                            child: OptimizedImage(
-                              imageUrl: product.images.first,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : Center(
-                            child: Icon(
-                              Icons.spa_outlined,
-                              size: isSmallScreen ? 32 : 40,
-                              color: AppConstants.accentColor
-                                  .withValues(alpha: 0.5),
-                            ),
-                          ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: WishlistButton(
-                      product: product,
-                      size: isSmallScreen ? 20 : 24,
-                    ),
-                  ),
-                  // Beauty points badge
-                  if (product.beautyPoints > 0)
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isSmallScreen ? 6 : 8,
-                          vertical: isSmallScreen ? 2 : 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppConstants.accentColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${product.beautyPoints} pts',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: isSmallScreen ? 10 : 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+    // Validate product data
+    if (product.name.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minWidth: 120,
+        maxWidth: 350,
+        minHeight: 180,
+        maxHeight: 450,
+      ),
+      child: GestureDetector(
+        onTap: () async {
+          await _navigateToProductWithProvider(context, product);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppConstants.surfaceColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-            ),
-            // Product details
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image with favorite button and beauty points
+              Expanded(
+                flex: 3,
+                child: Stack(
                   children: [
-                    // Product name
-                    Text(
-                      product.name,
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 12 : 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppConstants.textPrimary,
+                    Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(12),
+                        ),
+                        color: AppConstants.backgroundColor,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    // Price and rating
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Price
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (product.discountPrice != null &&
-                                product.discountPrice! < product.price)
-                              Text(
-                                _formatPrice(product.price),
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 10 : 12,
-                                  color: AppConstants.textSecondary,
-                                  decoration: TextDecoration.lineThrough,
-                                ),
+                      child: product.images.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(12),
                               ),
+                              child: OptimizedImage(
+                                imageUrl: product.images.first,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Center(
+                              child: Icon(
+                                Icons.spa_outlined,
+                                size: isSmallScreen ? 32 : 40,
+                                color: AppConstants.accentColor
+                                    .withValues(alpha: 0.5),
+                              ),
+                            ),
+                    ),
+                    Positioned(
+                      top: isSmallScreen ? 6 : 8,
+                      left: isSmallScreen ? 6 : 8,
+                      child: WishlistButton(
+                        product: product,
+                        size: isSmallScreen ? 16 : 20,
+                        heroTag: 'new_arrivals_wishlist_${product.id}',
+                      ),
+                    ),
+                    // Beauty Points positioned at bottom-right of image (matching other sections)
+                    Positioned(
+                      bottom: isSmallScreen ? 6 : 8,
+                      right: isSmallScreen ? 6 : 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color:
+                              AppConstants.favoriteColor.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.stars_rounded,
+                              size: isSmallScreen ? 12 : 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 2),
                             Text(
-                              _formatPrice(
-                                  product.discountPrice ?? product.price),
+                              '+${product.beautyPoints}',
                               style: TextStyle(
-                                fontSize: isSmallScreen ? 12 : 14,
-                                fontWeight: FontWeight.bold,
-                                color: AppConstants.accentColor,
+                                fontSize: isSmallScreen ? 10 : 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
-                        // Rating
-                        if (product.rating > 0)
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.star,
-                                size: isSmallScreen ? 12 : 14,
-                                color: Colors.amber,
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                product.rating.toStringAsFixed(1),
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 10 : 12,
-                                  color: AppConstants.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              // Product details (matching trending/bestselling style)
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Product name and brand
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Product name
+                            Text(
+                              product.name,
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 13 : 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppConstants.textPrimary,
+                                height: 1.1,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            // Brand name directly under product name
+                            if (product.brand.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                product.brand,
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 11 : 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppConstants.textSecondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          // Price on the left
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (product.discountPrice != null) ...[
+                                  Text(
+                                    _formatPrice(product.price),
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 11 : 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppConstants.textSecondary,
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
+                                  ),
+                                  Text(
+                                    _formatPrice(product.discountPrice!),
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 13 : 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppConstants.errorColor,
+                                    ),
+                                  ),
+                                ] else ...[
+                                  Text(
+                                    _formatPrice(product.price),
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 13 : 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppConstants.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+
+                          // Rating on the right (matching other sections)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppConstants.accentColor
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  size: isSmallScreen ? 14 : 16,
+                                  color: AppConstants.accentColor,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  product.rating.toString(),
+                                  style: TextStyle(
+                                    fontSize: isSmallScreen ? 12 : 14,
+                                    color: AppConstants.accentColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -10,6 +10,7 @@ import '../../providers/product_provider.dart';
 import '../../widgets/common/wishlist_button.dart';
 import '../../widgets/common/optimized_image.dart';
 import '../celebrity/celebrity_screen.dart';
+import '../celebrity_picks/celebrity_picks_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId; // Always use product ID to fetch from backend
@@ -39,6 +40,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   Product? _product;
   bool _isLoading = false;
   String? _error;
+
+  // Celebrity data for featured products
+  Map<String, dynamic>? _celebrityData;
+  bool _isLoadingCelebrity = false;
 
   // Track quantities for each variant (starting from 0)
   final Map<String, int> _variantQuantities = {};
@@ -94,6 +99,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
         if (product != null) {
           _initializeProduct();
+          // If product is featured, fetch celebrity data
+          if (product.isFeatured) {
+            _fetchCelebrityData();
+          }
         } else {
           setState(() {
             _error = 'Product not found';
@@ -123,6 +132,170 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     } else {
       // For products without variants, use default key
       _variantQuantities['default'] = 0;
+    }
+  }
+
+  void _fetchCelebrityData() async {
+    if (currentProduct == null || !currentProduct!.isFeatured) return;
+
+    setState(() {
+      _isLoadingCelebrity = true;
+    });
+
+    try {
+      final celebrityProvider =
+          Provider.of<CelebrityProvider>(context, listen: false);
+
+      // Get featured celebrity picks to find which celebrity features this product
+      final celebrityPicks =
+          await celebrityProvider.getFeaturedCelebrityPicks();
+
+      print(
+          'DEBUG: Fetching celebrity data for product: ${currentProduct!.id}');
+      print('DEBUG: Found ${celebrityPicks.length} celebrity picks');
+
+      // If no celebrity picks found, try alternative approach
+      if (celebrityPicks.isEmpty) {
+        print('DEBUG: No celebrity picks found, product might not be featured');
+        setState(() {
+          _celebrityData = null;
+          _isLoadingCelebrity = false;
+        });
+        return;
+      }
+
+      // Find the celebrity who features this product
+      for (var pick in celebrityPicks) {
+        final product = pick['product'] as Map<String, dynamic>?;
+        final celebrity = pick['celebrity'] as Map<String, dynamic>?;
+
+        // Try multiple matching strategies for product identification
+        bool isMatchingProduct = false;
+
+        if (product != null) {
+          // Strategy 1: Match by slug
+          if (product['slug'] == currentProduct!.id) {
+            isMatchingProduct = true;
+            print('DEBUG: Product matched by slug: ${product['slug']}');
+          }
+          // Strategy 2: Match by ID (as string)
+          else if (product['id'].toString() == currentProduct!.id) {
+            isMatchingProduct = true;
+            print('DEBUG: Product matched by ID: ${product['id']}');
+          }
+          // Strategy 3: Match by name (case insensitive)
+          else if (product['name'] != null &&
+              currentProduct!.name.isNotEmpty &&
+              product['name'].toString().toLowerCase().trim() ==
+                  currentProduct!.name.toLowerCase().trim()) {
+            isMatchingProduct = true;
+            print('DEBUG: Product matched by name: ${product['name']}');
+          }
+        }
+
+        if (isMatchingProduct) {
+          // Found the celebrity data for this product
+          print('DEBUG: Found celebrity for product ${currentProduct!.id}:');
+          print('DEBUG: Pick data structure: ${pick.keys.toList()}');
+          print('DEBUG: Product data: $product');
+          print('DEBUG: Celebrity data: $celebrity');
+
+          // Extract celebrity name - try multiple sources with priority
+          String celebrityName = 'Celebrity';
+          String? celebrityImage;
+          int? celebrityId;
+
+          // Priority 1: Direct celebrity object with combined name
+          if (celebrity != null) {
+            if (celebrity['first_name'] != null &&
+                celebrity['last_name'] != null) {
+              final firstName = celebrity['first_name'].toString().trim();
+              final lastName = celebrity['last_name'].toString().trim();
+              if (firstName.isNotEmpty && lastName.isNotEmpty) {
+                celebrityName = '$firstName $lastName';
+                print('DEBUG: Using celebrity first/last name: $celebrityName');
+              }
+            }
+            // Priority 2: Celebrity name field
+            else if (celebrity['name'] != null &&
+                celebrity['name'].toString().trim().isNotEmpty) {
+              celebrityName = celebrity['name'].toString().trim();
+              print('DEBUG: Using celebrity name field: $celebrityName');
+            }
+            // Priority 3: Celebrity full_name field
+            else if (celebrity['full_name'] != null &&
+                celebrity['full_name'].toString().trim().isNotEmpty) {
+              celebrityName = celebrity['full_name'].toString().trim();
+              print('DEBUG: Using celebrity full_name: $celebrityName');
+            }
+          }
+
+          // Priority 4: Pick name (fallback)
+          if (celebrityName == 'Celebrity' &&
+              pick['name'] != null &&
+              pick['name'].toString().trim().isNotEmpty) {
+            celebrityName = pick['name'].toString().trim();
+            print('DEBUG: Using pick name as fallback: $celebrityName');
+          }
+
+          // Extract celebrity image with priority
+          // Priority 1: Celebrity object image
+          if (celebrity != null &&
+              celebrity['image'] != null &&
+              celebrity['image'].toString().trim().isNotEmpty) {
+            celebrityImage = celebrity['image'].toString().trim();
+            print('DEBUG: Using celebrity image: $celebrityImage');
+          }
+          // Priority 2: Pick image (fallback)
+          else if (pick['image'] != null &&
+              pick['image'].toString().trim().isNotEmpty) {
+            celebrityImage = pick['image'].toString().trim();
+            print('DEBUG: Using pick image as fallback: $celebrityImage');
+          }
+
+          // Extract celebrity ID
+          if (celebrity != null && celebrity['id'] != null) {
+            try {
+              celebrityId = int.parse(celebrity['id'].toString());
+              print('DEBUG: Using celebrity ID: $celebrityId');
+            } catch (e) {
+              print('DEBUG: Error parsing celebrity ID: $e');
+            }
+          }
+
+          print('DEBUG: Final celebrity data:');
+          print('  Name: $celebrityName');
+          print('  Image: $celebrityImage');
+          print('  ID: $celebrityId');
+
+          setState(() {
+            _celebrityData = {
+              'celebrity_name': celebrityName,
+              'celebrity_image': celebrityImage,
+              'celebrity_id': celebrityId,
+            };
+            _isLoadingCelebrity = false;
+          });
+          return;
+        }
+      }
+
+      // If no specific celebrity found, use generic data
+      setState(() {
+        _celebrityData = {
+          'celebrity_name': 'Celebrity',
+          'celebrity_image': null,
+          'celebrity_id': null,
+        };
+        _isLoadingCelebrity = false;
+      });
+    } catch (e) {
+      print('DEBUG: Error fetching celebrity data: $e');
+      setState(() {
+        _isLoadingCelebrity = false;
+        _celebrityData =
+            null; // Set to null instead of generic data to hide badge
+      });
     }
   }
 
@@ -388,8 +561,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           _buildProductInfo(isSmallScreen),
                           SizedBox(height: isSmallScreen ? 12 : 16),
                           _buildVariantSelector(isSmallScreen),
-                          if (currentProduct!.celebrityEndorsement != null)
-                            _buildCelebrityEndorsement(isSmallScreen),
+                          if (currentProduct!.isFeatured)
+                            _buildCelebrityFeaturedBadge(isSmallScreen),
                           SizedBox(height: isSmallScreen ? 20 : 24),
                           _buildTabSection(isSmallScreen),
                           SizedBox(
@@ -960,38 +1133,101 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     );
   }
 
-  Widget _buildCelebrityEndorsement(bool isSmallScreen) {
-    final endorsement = currentProduct!.celebrityEndorsement!;
+  Widget _buildCelebrityFeaturedBadge(bool isSmallScreen) {
+    // Show loading state while fetching celebrity data
+    if (_isLoadingCelebrity) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppConstants.favoriteColor.withValues(alpha: 0.08),
+              AppConstants.accentColor.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppConstants.favoriteColor.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppConstants.surfaceColor,
+                border: Border.all(
+                  color: AppConstants.favoriteColor,
+                  width: 2,
+                ),
+              ),
+              child: const CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppConstants.favoriteColor),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                'Loading celebrity info...',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 14 : 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppConstants.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final celebrityName = _celebrityData?['celebrity_name'] ?? 'Celebrity';
+    final celebrityImage = _celebrityData?['celebrity_image'];
+    final celebrityId = _celebrityData?['celebrity_id'];
 
     return GestureDetector(
       onTap: () async {
-        // Use the provider to select celebrity and navigate
-        final celebrityProvider = context.read<CelebrityProvider>();
+        // Navigate to celebrity profile if we have celebrity ID
+        if (celebrityId != null) {
+          try {
+            final celebrityProvider =
+                Provider.of<CelebrityProvider>(context, listen: false);
+            await celebrityProvider.selectCelebrityById(celebrityId);
 
-        try {
-          // Use provider's loading state instead of dialog to prevent Navigator conflicts
-          await celebrityProvider.selectCelebrity(endorsement.celebrityName);
-
-          // Navigate only after successful selection
-          if (mounted) {
+            if (mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CelebrityScreen(),
+                ),
+              );
+            }
+          } catch (e) {
+            print('DEBUG: Error navigating to celebrity profile: $e');
+            // Fallback to celebrity picks screen
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const CelebrityScreen(),
+                builder: (context) => const CelebrityPicksScreen(),
               ),
             );
           }
-        } catch (e) {
-          // Show error message
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Failed to load celebrity: $e'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
+        } else {
+          // No celebrity ID, navigate to celebrity picks screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CelebrityPicksScreen(),
+            ),
+          );
         }
       },
       child: Container(
@@ -1021,6 +1257,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         ),
         child: Row(
           children: [
+            // Celebrity Image or Star Icon
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -1039,9 +1276,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               child: CircleAvatar(
                 radius: 24,
                 backgroundColor: AppConstants.surfaceColor,
-                backgroundImage: NetworkImage(endorsement.celebrityImage),
-                onBackgroundImageError: (exception, stackTrace) {},
-                child: endorsement.celebrityImage.isEmpty
+                backgroundImage:
+                    celebrityImage != null && celebrityImage.isNotEmpty
+                        ? NetworkImage('${AppConstants.baseUrl}$celebrityImage')
+                        : null,
+                child: celebrityImage == null || celebrityImage.isEmpty
                     ? const Icon(
                         Icons.star_rounded,
                         color: AppConstants.favoriteColor,
@@ -1057,7 +1296,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Picked by',
+                    'Featured by',
                     style: TextStyle(
                       fontSize: isSmallScreen ? 10 : 13,
                       color: AppConstants.textSecondary,
@@ -1066,20 +1305,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    endorsement.celebrityName,
+                    celebrityName,
                     style: TextStyle(
                       fontSize: isSmallScreen ? 14 : 16,
                       fontWeight: FontWeight.bold,
                       color: AppConstants.favoriteColor,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
-            ),
-            Icon(
-              Icons.star_rounded,
-              color: AppConstants.favoriteColor,
-              size: isSmallScreen ? 16 : 20,
             ),
           ],
         ),
