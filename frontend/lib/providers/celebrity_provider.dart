@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/celebrity_model.dart';
 import '../models/product_model.dart';
-import '../services/celebrity_service.dart' hide CelebrityStatistics;
+import '../services/celebrity_service.dart';
 
 /// Provider for managing celebrity state throughout the application
 /// Uses the service layer for data operations and notifies listeners of state changes

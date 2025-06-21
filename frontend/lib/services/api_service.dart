@@ -4,22 +4,13 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
 import '../models/celebrity_model.dart';
+import '../constants/app_constants.dart';
 
 /// Enhanced API service with proper error handling and backend integration
 class ApiService {
-  // Use 10.0.2.2 for Android emulator to reach host machine
+  // Use centralized API base URL configuration
   static String get baseUrl {
-    // For web, always use localhost
-    if (kIsWeb) {
-      return 'http://127.0.0.1:8000/api';
-    }
-
-    // For mobile platforms, use conditional logic without importing Platform on web
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000/api'; // Android emulator special IP
-    } else {
-      return 'http://127.0.0.1:8000/api'; // iOS simulator and other platforms
-    }
+    return AppConstants.apiBaseUrl;
   }
 
   static const Duration requestTimeout = Duration(seconds: 30);
@@ -960,17 +951,7 @@ class ApiService {
 
   /// Get platform-aware base URL for images
   static String _getImageBaseUrl() {
-    // For web, always use localhost
-    if (kIsWeb) {
-      return 'http://127.0.0.1:8000';
-    }
-
-    // For mobile platforms, use conditional logic without importing Platform on web
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000'; // Android emulator special IP
-    } else {
-      return 'http://127.0.0.1:8000'; // iOS simulator and other platforms
-    }
+    return AppConstants.baseUrl;
   }
 }
 

@@ -7,19 +7,19 @@ class AppConstants {
   static const String appName = 'Bloom Beauty';
   static const String version = '1.0.0';
 
-  // Platform-aware API URLs - fixes mobile image loading issues
+  // ✅ CENTRALIZED IP CONFIGURATION - Change this IP to affect all API requests
+  static const String _serverIP = '192.168.0.189'; // Change this IP address as needed
+  static const String _serverPort = '8000';
+  
+  // Platform-aware API URLs - uses centralized IP configuration
   static String get baseUrl {
-    // For web, always use localhost
+    // For web, always use localhost (development) or centralized IP
     if (kIsWeb) {
-      return 'http://127.0.0.1:8000';
+      return 'http://$_serverIP:$_serverPort';
     }
 
-    // For mobile platforms, use conditional logic
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000'; // Android emulator special IP
-    } else {
-      return 'http://127.0.0.1:8000'; // iOS simulator and other platforms
-    }
+    // For mobile platforms, always use the centralized server IP
+    return 'http://$_serverIP:$_serverPort';
   }
 
   static const String apiVersion = '/v1';
@@ -66,6 +66,20 @@ class AppConstants {
   static const Duration imageCacheTimeout = Duration(hours: 24);
   static const int imageMemoryCacheSize = 200;
   static const int imageMaxCacheObjects = 200;
+  
+  // ✅ HELPER METHODS for developers
+  
+  /// Get the current server IP (for debugging/info purposes)
+  static String get serverIP => _serverIP;
+  
+  /// Get the current server port (for debugging/info purposes)  
+  static String get serverPort => _serverPort;
+  
+  /// Get the full API base URL with /api suffix
+  static String get apiBaseUrl => '$baseUrl/api';
+  
+  /// Get the full media base URL for images
+  static String get mediaBaseUrl => '$baseUrl/media';
 }
 
 class ImageConstants {

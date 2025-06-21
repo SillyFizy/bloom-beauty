@@ -66,7 +66,7 @@ class MyApp extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
-          cardTheme: const CardTheme(
+          cardTheme: const CardThemeData(
             color: AppConstants.surfaceColor,
             elevation: AppConstants.cardElevation,
             shape: RoundedRectangleBorder(

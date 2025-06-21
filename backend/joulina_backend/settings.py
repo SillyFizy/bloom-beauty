@@ -24,6 +24,8 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '10.0.2.2',  # Android emulator gateway
     '10.0.2.16', # Your device IP
+    '192.168.0.189',  # Current Wi-Fi IP for remote device access
+    '192.168.0.189',  # Current Wi-Fi IP for remote device access
 ]
 
 # Application definition

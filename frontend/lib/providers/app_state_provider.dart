@@ -12,7 +12,7 @@ class AppStateProvider with ChangeNotifier {
   String? _globalError;
 
   // Connectivity monitoring
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   // Theme and UI state
   bool _isDarkMode = false;
@@ -49,14 +49,14 @@ class AppStateProvider with ChangeNotifier {
       _clearGlobalError();
 
       // Check initial connectivity status
-      final connectivityResult = await Connectivity().checkConnectivity();
-      _isOnline = connectivityResult != ConnectivityResult.none;
+      final connectivityResults = await Connectivity().checkConnectivity();
+      _isOnline = !connectivityResults.contains(ConnectivityResult.none);
 
       // Listen to connectivity changes
       _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
-        (ConnectivityResult result) {
+        (List<ConnectivityResult> results) {
           final wasOnline = _isOnline;
-          _isOnline = result != ConnectivityResult.none;
+          _isOnline = !results.contains(ConnectivityResult.none);
 
           // Notify listeners if connectivity status changed
           if (wasOnline != _isOnline) {
@@ -91,9 +91,9 @@ class AppStateProvider with ChangeNotifier {
   /// Force refresh connectivity status
   Future<void> refreshConnectivity() async {
     try {
-      final connectivityResult = await Connectivity().checkConnectivity();
+      final connectivityResults = await Connectivity().checkConnectivity();
       final wasOnline = _isOnline;
-      _isOnline = connectivityResult != ConnectivityResult.none;
+      _isOnline = !connectivityResults.contains(ConnectivityResult.none);
 
       if (wasOnline != _isOnline) {
         notifyListeners();
