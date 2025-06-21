@@ -9,7 +9,10 @@ import 'cart_provider.dart';
 import 'app_state_provider.dart';
 import 'category_provider.dart';
 import 'wishlist_provider.dart';
+import 'auth_provider.dart';
+import 'recently_viewed_provider.dart';
 import '../models/product_model.dart';
+import '../services/essential_data_service.dart';
 
 /// Centralized provider setup for the entire application
 /// This file manages all providers using MultiProvider pattern
@@ -82,6 +85,27 @@ class AppProviders {
           },
           lazy: false, // Initialize immediately for wishlist functionality
         ),
+
+        /// Auth Provider - Manages authentication state
+        ChangeNotifierProvider<AuthProvider>(
+          create: (_) {
+            final authProvider = AuthProvider();
+            // Don't initialize auth state automatically to prevent setState during build
+            return authProvider;
+          },
+          lazy: false, // Initialize immediately for auth functionality
+        ),
+
+        /// Recently Viewed Provider - Manages recently viewed products
+        ChangeNotifierProvider<RecentlyViewedProvider>(
+          create: (_) {
+            final recentlyViewedProvider = RecentlyViewedProvider();
+            // Load recently viewed from storage when app starts
+            recentlyViewedProvider.initialize();
+            return recentlyViewedProvider;
+          },
+          lazy: false, // Initialize immediately for recently viewed functionality
+        ),
       ],
       child: child,
     );
@@ -99,10 +123,97 @@ class AppProviders {
         _initializeSearchProvider(context),
         _initializeCartProvider(context),
         _initializeWishlistProvider(context),
+        _initializeRecentlyViewedProvider(context),
+        _initializeAuthProvider(context),
         // Note: ReviewProvider is lazy-loaded when needed
       ]);
     } catch (e) {
       debugPrint('Error initializing providers: $e');
+    }
+  }
+
+  /// Initialize only essential providers for fast app startup
+  /// This is called for immediate app functionality
+  static Future<void> initializeEssentialProviders(BuildContext context) async {
+    try {
+      debugPrint('AppProviders: Initializing essential providers only');
+      
+      // Initialize only essential providers that don't require network calls
+      await Future.wait([
+        _initializeCartProvider(context),
+        _initializeWishlistProvider(context),
+        _initializeRecentlyViewedProvider(context),
+        _initializeAuthProvider(context), // Initialize auth provider to check login state
+      ]);
+      
+      // Load essential data in background without blocking
+      _loadEssentialDataInBackground(context);
+      
+      debugPrint('AppProviders: Essential providers initialized successfully');
+    } catch (e) {
+      debugPrint('Error initializing essential providers: $e');
+    }
+  }
+
+  /// Load essential data in background without blocking the UI
+  static void _loadEssentialDataInBackground(BuildContext context) {
+    // Use a timer to avoid context issues
+    Future.delayed(Duration.zero, () async {
+      try {
+        final data = await EssentialDataService.loadAllEssentialData();
+        if (EssentialDataService.isEssentialDataValid(data)) {
+          debugPrint('AppProviders: Essential data loaded successfully in background');
+          // Optionally notify providers of the loaded data
+          _notifyProvidersOfEssentialData(data);
+        } else {
+          debugPrint('AppProviders: Essential data loading failed or incomplete');
+        }
+      } catch (error) {
+        debugPrint('AppProviders: Error loading essential data in background: $error');
+      }
+    });
+  }
+
+  /// Notify providers of loaded essential data
+  static void _notifyProvidersOfEssentialData(Map<String, dynamic> data) {
+    try {
+      // This is optional - providers can use this data if available
+      // but they should not depend on it for basic functionality
+      debugPrint('AppProviders: Notifying providers of essential data');
+    } catch (e) {
+      debugPrint('AppProviders: Error notifying providers of essential data: $e');
+    }
+  }
+
+  /// Initialize data providers lazily when needed
+  /// This is called when the user navigates to screens that need the data
+  static Future<void> initializeDataProviders(BuildContext context) async {
+    try {
+      debugPrint('AppProviders: Initializing data providers');
+      
+      // Initialize data providers that require network calls
+      await Future.wait([
+        _initializeProductProvider(context),
+        _initializeCategoryProvider(context),
+        _initializeCelebrityProvider(context),
+        _initializeSearchProvider(context),
+      ]);
+      
+      debugPrint('AppProviders: Data providers initialized successfully');
+    } catch (e) {
+      debugPrint('Error initializing data providers: $e');
+    }
+  }
+
+  /// Initialize a specific provider when needed
+  static Future<void> initializeProviderIfNeeded<T extends ChangeNotifier>(
+    BuildContext context,
+    Future<void> Function(BuildContext) initFunction,
+  ) async {
+    try {
+      await initFunction(context);
+    } catch (e) {
+      debugPrint('Error initializing provider: $e');
     }
   }
 
@@ -140,6 +251,18 @@ class AppProviders {
   static Future<void> _initializeWishlistProvider(BuildContext context) async {
     final wishlistProvider = Provider.of<WishlistProvider>(context, listen: false);
     await wishlistProvider.loadWishlistFromStorage();
+  }
+
+  /// Initialize Auth Provider
+  static Future<void> _initializeAuthProvider(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await authProvider.initialize();
+  }
+
+  /// Initialize Recently Viewed Provider
+  static Future<void> _initializeRecentlyViewedProvider(BuildContext context) async {
+    final recentlyViewedProvider = Provider.of<RecentlyViewedProvider>(context, listen: false);
+    await recentlyViewedProvider.initialize();
   }
 
   /// Initialize Review Provider (called when needed)
@@ -251,6 +374,10 @@ extension ProviderExtension on BuildContext {
   WishlistProvider get wishlistProvider => read<WishlistProvider>();
   WishlistProvider get watchWishlistProvider => watch<WishlistProvider>();
 
+  /// Auth Provider getter
+  AuthProvider get authProvider => read<AuthProvider>();
+  AuthProvider get watchAuthProvider => watch<AuthProvider>();
+
   /// Select specific values for optimized rebuilds
   T selectProduct<T>(T Function(ProductProvider provider) selector) =>
       select<ProductProvider, T>(selector);
@@ -295,6 +422,12 @@ extension ProviderExtension on BuildContext {
   /// Get cart quantity for a specific product (optimized)
   int getCartQuantity(String productId) =>
       selectCart((cart) => cart.getProductQuantity(productId));
+      
+  /// Auth status selectors (optimized)
+  bool get isAuthenticated => select<AuthProvider, bool>((auth) => auth.isAuthenticated);
+  bool get isAuthLoading => select<AuthProvider, bool>((auth) => auth.isLoading);
+  String? get currentUserName => select<AuthProvider, String?>((auth) => auth.firstName);
+  String? get currentUserPhone => select<AuthProvider, String?>((auth) => auth.phoneNumber);
 }
 
 /// Consumer widgets for common provider access patterns

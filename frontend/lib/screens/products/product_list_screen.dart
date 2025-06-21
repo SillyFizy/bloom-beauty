@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/product_model.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/product_provider.dart';
+import '../../providers/recently_viewed_provider.dart';
 import '../../constants/app_constants.dart';
 import '../../widgets/category/category_selector.dart';
 import '../../widgets/product/enhanced_product_card.dart';
@@ -36,10 +37,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
   Future<void> _navigateToProductDetail(
       BuildContext context, Product product) async {
     try {
-      final productProvider = context.read<ProductProvider>();
+      final recentlyViewedProvider = context.read<RecentlyViewedProvider>();
 
       // Add to recently viewed (same as home screen)
-      await productProvider.addToRecentlyViewed(product);
+      await recentlyViewedProvider.addProduct(product);
 
       // Navigate using GoRouter with product ID parameter (same as home screen)
       if (context.mounted) {

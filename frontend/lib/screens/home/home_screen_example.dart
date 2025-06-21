@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../providers/app_providers.dart';
+import '../../providers/recently_viewed_provider.dart';
 import '../../constants/app_constants.dart';
 import '../../widgets/product/celebrity_pick_card.dart';
 import 'package:intl/intl.dart';
@@ -268,7 +270,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
                                       onTap: () {
                                         context.pushNamed('product-detail',
                                             pathParameters: {
-                                              'slug': pick['product'].id,
+                                              'id': pick['product'].id,
                                             });
                                       },
                                     ),
@@ -512,7 +514,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
     return GestureDetector(
       onTap: () {
         // Add to recently viewed when tapping product
-        context.productProvider.addToRecentlyViewed(product);
+        context.read<RecentlyViewedProvider>().addProduct(product);
 
         context.pushNamed('product-detail', pathParameters: {
           'productId': product.id,
@@ -618,7 +620,7 @@ class _HomeScreenExampleState extends State<HomeScreenExample> {
     return GestureDetector(
       onTap: () {
         // Add to recently viewed when tapping product
-        context.productProvider.addToRecentlyViewed(product);
+        context.read<RecentlyViewedProvider>().addProduct(product);
 
         context.pushNamed('product-detail', pathParameters: {
           'productId': product.id,

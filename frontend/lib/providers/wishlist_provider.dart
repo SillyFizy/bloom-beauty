@@ -181,7 +181,7 @@ class WishlistProvider extends ChangeNotifier {
       debugPrint('   📦 Name: ${product.name}');
       debugPrint('   🆔 ID: ${product.id}');
       debugPrint(
-          '   🔍 ID Analysis: ${product.id.contains('-') ? 'SLUG-BASED ID' : 'NUMERIC ID'}');
+          '   🔍 ID Analysis: ${product.id.contains('-') ? 'FORMATTED ID' : 'NUMERIC ID'}');
       debugPrint('   🔍 ID Format: ${product.id.runtimeType}');
       debugPrint('   🏷️ Brand: ${product.brand}');
       debugPrint('   💰 Price: ${product.price}');

@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 class Formatters {
   static String formatPrice(double price) {
@@ -53,5 +54,51 @@ class Formatters {
   static String truncateText(String text, int maxLength) {
     if (text.length <= maxLength) return text;
     return '${text.substring(0, maxLength)}...';
+  }
+}
+
+class IraqiPhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String newText = newValue.text;
+    
+    // If the user is clearing the field, allow it
+    if (newText.isEmpty) {
+      return newValue;
+    }
+    
+    // If user is just starting to type and enters '0' or any digit, allow natural input
+    // The formatting will happen on submit, not during typing
+    return newValue;
+  }
+}
+
+class IraqiPhoneNumberInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String newText = newValue.text;
+    
+    // Allow empty field
+    if (newText.isEmpty) {
+      return newValue;
+    }
+    
+    // Only allow digits, +, and spaces for Iraqi phone numbers
+    if (!RegExp(r'^[\d+\s]*$').hasMatch(newText)) {
+      return oldValue;
+    }
+    
+    // Limit the total length to accommodate +964XXXXXXXXX format
+    if (newText.length > 17) {
+      return oldValue;
+    }
+    
+    return newValue;
   }
 }

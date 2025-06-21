@@ -23,7 +23,7 @@ from .models import User, PointTransaction
 from .serializers import (
     UserSerializer, UserRegistrationSerializer,
     CustomTokenObtainPairSerializer, PasswordChangeSerializer,
-    EmailVerificationSerializer, AddressSerializer,
+    AddressSerializer,
     PointTransactionSerializer, NotificationPreferencesSerializer,
     ProfilePictureSerializer, UserPreferencesSerializer,
     OrderSummarySerializer
@@ -43,20 +43,14 @@ class UserRegistrationView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         
-        # Generate verification token
-        token = RefreshToken.for_user(user).access_token
-        current_site = get_current_site(request).domain
-        relative_link = reverse('email-verify')
-        verification_url = f"http://{current_site}{relative_link}?token={token}"
-        
-        # Send verification email
-        email_subject = "Verify your email address"
-        email_body = f"Hi {user.username},\n\nPlease use the link below to verify your email:\n{verification_url}\n\nThanks,\nJoulina Team"
-        send_mail(email_subject, email_body, settings.DEFAULT_FROM_EMAIL, [user.email])
+        # Since we're using phone number auth, set user as verified by default
+        # In production, you might want to implement SMS verification
+        user.is_verified = True
+        user.save()
 
         return Response({
             "user": UserSerializer(user, context=self.get_serializer_context()).data,
-            "message": "User registered successfully. Please check your email to verify your account."
+            "message": "User registered successfully."
         }, status=status.HTTP_201_CREATED)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -80,26 +74,6 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         self.perform_update(serializer)
         
         return Response(serializer.data)
-
-class EmailVerificationView(APIView):
-    permission_classes = [permissions.AllowAny]
-    serializer_class = EmailVerificationSerializer
-
-    def get(self, request):
-        token = request.query_params.get('token')
-        try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            user = User.objects.get(id=payload['user_id'])
-            if not user.is_verified:
-                user.is_verified = True
-                user.save()
-            return Response({'email': 'Successfully verified'}, status=status.HTTP_200_OK)
-        except jwt.ExpiredSignatureError:
-            return Response({'error': 'Verification link expired'}, status=status.HTTP_400_BAD_REQUEST)
-        except jwt.exceptions.DecodeError:
-            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
-        except User.DoesNotExist:
-            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
 class PasswordChangeView(generics.UpdateAPIView):
     serializer_class = PasswordChangeSerializer

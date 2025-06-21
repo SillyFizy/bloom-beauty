@@ -229,7 +229,7 @@ class CelebrityPicksProvider with ChangeNotifier {
 
       // Get celebrity picks from backend with a high limit for comprehensive data
       final response =
-          await ApiService.get('/v1/celebrities/picks/featured/?limit=100');
+          await ApiService.get('/celebrities/picks/featured/?limit=100');
       _rawCelebrityPicks = (response['celebrity_picks'] as List?)
               ?.cast<Map<String, dynamic>>() ??
           [];

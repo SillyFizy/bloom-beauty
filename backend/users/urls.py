@@ -6,7 +6,6 @@ from .views import (
     UserRegistrationView, 
     CustomTokenObtainPairView, 
     UserProfileView,
-    EmailVerificationView,
     PasswordChangeView,
     UserAddressView,
     ProfilePictureUpdateView,
@@ -28,7 +27,6 @@ urlpatterns = [
     path('register/', UserRegistrationView.as_view(), name='register'),
     path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('verify-email/', EmailVerificationView.as_view(), name='email-verify'),
     
     # User profile management
     path('profile/', UserProfileView.as_view(), name='profile'),

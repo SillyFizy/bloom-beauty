@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone_number', 
+        fields = ['id', 'phone_number', 'email', 'first_name', 'last_name', 'username',
                   'address_line1', 'address_line2', 'city', 'state', 'country', 'postal_code',
                   'full_name', 'full_address', 'is_verified', 'tier', 'points', 'pointz_expiry_date',
                   'profile_picture', 'birth_date', 'email_notifications', 'sms_notifications',
@@ -48,22 +48,22 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password2', 'first_name', 'last_name', 
-                  'phone_number', 'address_line1', 'address_line2', 'city', 'state', 
+        fields = ['phone_number', 'password', 'password2', 'first_name', 'last_name', 
+                  'email', 'address_line1', 'address_line2', 'city', 'state', 
                   'country', 'postal_code', 'birth_date', 'profile_picture']
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True},
-            'email': {'required': True}
+            'phone_number': {'required': True}
         }
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({"password": _("Password fields didn't match.")})
         
-        # Check if email already exists
-        if User.objects.filter(email=attrs['email']).exists():
-            raise serializers.ValidationError({"email": _("User with this email already exists.")})
+        # Check if phone number already exists
+        if User.objects.filter(phone_number=attrs['phone_number']).exists():
+            raise serializers.ValidationError({"phone_number": _("User with this phone number already exists.")})
         
         return attrs
 
@@ -72,21 +72,43 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+class CustomTokenObtainPairSerializer(serializers.Serializer):
+    """Custom serializer to use phone_number instead of username for authentication"""
+    phone_number = serializers.CharField()
+    password = serializers.CharField()
+    
     def validate(self, attrs):
-        data = super().validate(attrs)
-        user = self.user
-        data.update({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'tier': user.tier,
-            'points': user.points,
-            'is_verified': user.is_verified
-        })
-        return data
+        phone_number = attrs.get('phone_number')
+        password = attrs.get('password')
+        
+        if phone_number and password:
+            # Try to get user by phone number
+            try:
+                user = User.objects.get(phone_number=phone_number)
+                if user.check_password(password):
+                    # Create JWT tokens manually
+                    from rest_framework_simplejwt.tokens import RefreshToken
+                    refresh = RefreshToken.for_user(user)
+                    
+                    return {
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                        'id': user.id,
+                        'phone_number': user.phone_number,
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'full_name': user.full_name,
+                        'tier': user.tier,
+                        'points': user.points,
+                        'is_verified': user.is_verified
+                    }
+                else:
+                    raise serializers.ValidationError('Invalid credentials')
+            except User.DoesNotExist:
+                raise serializers.ValidationError('Invalid credentials')
+        
+        raise serializers.ValidationError('Must include phone_number and password')
 
 class PasswordChangeSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
@@ -110,11 +132,11 @@ class AddressSerializer(serializers.Serializer):
     postal_code = serializers.CharField(required=True)
 
 class PointTransactionSerializer(serializers.ModelSerializer):
-    username = serializers.ReadOnlyField(source='user.username')
+    phone_number = serializers.ReadOnlyField(source='user.phone_number')
     
     class Meta:
         model = PointTransaction
-        fields = ['id', 'user', 'username', 'points', 'transaction_type', 
+        fields = ['id', 'user', 'phone_number', 'points', 'transaction_type', 
                   'description', 'reference', 'created_at']
         read_only_fields = ['created_at']
 

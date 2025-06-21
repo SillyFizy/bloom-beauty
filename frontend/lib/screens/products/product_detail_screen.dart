@@ -7,6 +7,7 @@ import '../../constants/app_constants.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/celebrity_provider.dart';
 import '../../providers/product_provider.dart';
+import '../../providers/recently_viewed_provider.dart';
 import '../../widgets/common/wishlist_button.dart';
 import '../../widgets/common/optimized_image.dart';
 import '../celebrity/celebrity_screen.dart';
@@ -76,7 +77,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     // Add scroll listener for sticky header
     _scrollController.addListener(_onScroll);
 
-    // Always fetch product from backend using slug
+          // Always fetch product from backend using ID
     _fetchProductDetail();
   }
 
@@ -99,6 +100,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
         if (product != null) {
           _initializeProduct();
+          
+          // Add to recently viewed
+          final recentlyViewedProvider = Provider.of<RecentlyViewedProvider>(context, listen: false);
+          recentlyViewedProvider.addProduct(product);
+          
           // If product is featured, fetch celebrity data
           if (product.isFeatured) {
             _fetchCelebrityData();
@@ -173,10 +179,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         bool isMatchingProduct = false;
 
         if (product != null) {
-          // Strategy 1: Match by slug
-          if (product['slug'] == currentProduct!.id) {
+          // Strategy 1: Match by ID
+          if (product['id'].toString() == currentProduct!.id) {
             isMatchingProduct = true;
-            print('DEBUG: Product matched by slug: ${product['slug']}');
+            print('DEBUG: Product matched by ID: ${product['id']}');
           }
           // Strategy 2: Match by ID (as string)
           else if (product['id'].toString() == currentProduct!.id) {

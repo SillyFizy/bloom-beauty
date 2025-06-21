@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../providers/product_provider.dart';
+import '../../providers/recently_viewed_provider.dart';
 import '../../models/product_model.dart';
 import '../../widgets/common/wishlist_button.dart';
 import '../../widgets/common/optimized_image.dart';
@@ -32,7 +33,7 @@ class _WishlistScreenState extends State<WishlistScreen>
       final productProvider = context.read<ProductProvider>();
 
       // Add to recently viewed
-      await productProvider.addToRecentlyViewed(product);
+      context.read<RecentlyViewedProvider>().addProduct(product);
 
       // Navigate with only ID - product detail will fetch fresh data
       if (mounted) {

@@ -257,7 +257,7 @@ class ApiService {
   /// Get list of products - basic API wrapper
   static Future<List<Product>> getProducts() async {
     try {
-      final response = await get('/v1/products/', requireAuth: false);
+      final response = await get('/products/', requireAuth: false);
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
       // ✅ CRITICAL FIX: Use fromBackendApi to ensure slug-based IDs
@@ -271,12 +271,12 @@ class ApiService {
   static Future<List<Product>> getAllProductsFromBackend({int? limit}) async {
     try {
       List<Product> allProducts = [];
-      String? nextUrl = '/v1/products/';
+      String? nextUrl = '/products/';
 
       while (nextUrl != null) {
         print('DEBUG: Fetching products from: $nextUrl');
         final response = await get(
-            nextUrl.startsWith('/') ? nextUrl : '/v1/products/$nextUrl',
+            nextUrl.startsWith('/') ? nextUrl : '/products/$nextUrl',
             requireAuth: false);
 
         final List<dynamic> results = response['results'] ?? [];
@@ -321,7 +321,7 @@ class ApiService {
 
   static Future<Product> getProduct(String id) async {
     try {
-      final response = await get('/v1/products/$id/', requireAuth: false);
+      final response = await get('/products/$id/', requireAuth: false);
       return Product.fromJson(response);
     } catch (e) {
       throw ApiException('Failed to load product: $e');
@@ -331,11 +331,11 @@ class ApiService {
   /// Get product detail by ID - includes images, variants, and full details
   static Future<Product> getProductDetail(String productId) async {
     try {
-      print('DEBUG: Fetching product detail for slug: $productId');
+      print('DEBUG: Fetching product detail for ID: $productId');
 
-      // ✅ SIMPLE SLUG-BASED API CALL - Backend expects slug format
+      // API call using product ID
       final response =
-          await get('/v1/products/$productId/', requireAuth: false);
+          await get('/products/$productId/', requireAuth: false);
 
       // Convert backend data format to match frontend model expectations
       final productData = Map<String, dynamic>.from(response);
@@ -470,23 +470,18 @@ class ApiService {
       productData['brand'] = productData['brand_name'] ?? '';
       productData['discount_price'] = productData['sale_price'];
 
-      // CRITICAL FIX: Use slug as ID for consistency with other screens
-      // All other screens (home, categories, search) use slug as product ID
-      // Product detail should also use slug for wishlist consistency
-      final productSlug = productData['slug'] ?? productData['id'].toString();
+      // Use product ID for navigation
+      final productIdStr = productData['id'].toString();
 
       print('DEBUG: Product Detail API Response Analysis:');
-      print('  Numeric ID: ${productData['id']}');
-      print('  Slug: ${productData['slug']}');
-      print('  Using slug as ID: $productSlug');
+      print('  Product ID: ${productData['id']}');
       print('  Backend Rating: ${productData['rating']}');
       print('  Backend Review Count: ${productData['review_count']}');
       print('  Backend is_featured: ${productData['is_featured']}');
 
       // Format the data to match what fromBackendApi expects
       final formattedData = {
-        'id': productSlug, // Use slug as ID for wishlist consistency
-        'slug': productSlug, // Ensure slug is preserved
+        'id': productIdStr, // Use ID for navigation
         'name': productData['name'],
         'price': productData['price'],
         'sale_price': productData['sale_price'],
@@ -505,9 +500,8 @@ class ApiService {
       };
 
       print('DEBUG: Using fromBackendApi for consistency');
-      print('DEBUG: Formatted data ID (slug): ${formattedData['id']}');
+      print('DEBUG: Formatted data ID: ${formattedData['id']}');
       print('DEBUG: Formatted data name: ${formattedData['name']}');
-      print('DEBUG: Product will use slug for wishlist operations');
 
       // Use fromBackendApi for consistency with other screens
       final product = Product.fromBackendApi(formattedData);
@@ -543,7 +537,7 @@ class ApiService {
 
   static Future<List<Product>> getProductsByCategory(String categoryId) async {
     try {
-      final response = await get('/v1/products/?category=$categoryId');
+      final response = await get('/products/?category=$categoryId');
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
       // ✅ CRITICAL FIX: Use fromBackendApi to ensure slug-based IDs
@@ -583,7 +577,7 @@ class ApiService {
 
       // Build URL with query parameters
       final uri =
-          Uri.parse('/v1/products/').replace(queryParameters: queryParams);
+          Uri.parse('/products/').replace(queryParameters: queryParams);
       final response = await get(uri.toString());
 
       final List<dynamic> results = response['results'] ?? [];
@@ -610,7 +604,7 @@ class ApiService {
       {int days = 30, int limit = 4}) async {
     try {
       final response =
-          await get('/v1/products/new_arrivals/?days=$days&limit=$limit');
+          await get('/products/new_arrivals/?days=$days&limit=$limit');
 
       // Handle response - the get method returns Map<String, dynamic>
       List<dynamic> results;
@@ -633,7 +627,7 @@ class ApiService {
   static Future<List<Product>> getBestsellingProducts(
       {int limit = 10, int? days}) async {
     try {
-      String endpoint = '/v1/products/bestselling/?limit=$limit';
+      String endpoint = '/products/bestselling/?limit=$limit';
       if (days != null) {
         endpoint += '&days=$days';
       }
@@ -661,7 +655,7 @@ class ApiService {
   static Future<List<Product>> getTrendingProducts(
       {int limit = 10, int? days}) async {
     try {
-      String endpoint = '/v1/products/trending/?limit=$limit';
+      String endpoint = '/products/trending/?limit=$limit';
       if (days != null) {
         endpoint += '&days=$days';
       }
@@ -688,7 +682,7 @@ class ApiService {
   // Celebrity API endpoints (public, no authentication required)
   static Future<List<Celebrity>> getCelebrities() async {
     try {
-      final response = await get('/v1/celebrities/', requireAuth: false);
+      final response = await get('/celebrities/', requireAuth: false);
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
       return results.map((json) => Celebrity.fromJson(json)).toList();
@@ -862,7 +856,7 @@ class ApiService {
       {int limit = 4}) async {
     try {
       final response =
-          await get('/v1/celebrities/picks/products/?limit=$limit');
+          await get('/celebrities/picks/products/?limit=$limit');
 
       // Handle response - the get method returns Map<String, dynamic>
       List<dynamic> results;
@@ -952,6 +946,42 @@ class ApiService {
   /// Get platform-aware base URL for images
   static String _getImageBaseUrl() {
     return AppConstants.baseUrl;
+  }
+
+  /// Get essential app data for fast startup
+  /// Returns minimal data needed for immediate app functionality
+  static Future<Map<String, dynamic>> getEssentialData() async {
+    try {
+      debugPrint('ApiService: Fetching essential data...');
+      return await get('/categories/essential_data/', requireAuth: false);
+    } catch (e) {
+      debugPrint('ApiService: Error loading essential data: $e');
+      // Return fallback data to prevent app blocking
+      return {
+        'categories': [],
+        'stats': {'total_products': 0, 'total_categories': 0},
+        'app_status': 'error',
+        'error': e.toString(),
+      };
+    }
+  }
+
+  /// Get essential product data for fast startup
+  /// Returns minimal product data needed for immediate app functionality
+  static Future<Map<String, dynamic>> getEssentialProductData() async {
+    try {
+      debugPrint('ApiService: Fetching essential product data...');
+      return await get('/products/app_essentials/', requireAuth: false);
+    } catch (e) {
+      debugPrint('ApiService: Error loading essential product data: $e');
+      // Return fallback data to prevent app blocking
+      return {
+        'featured_products': [],
+        'stats': {'total_products': 0, 'featured_count': 0, 'on_sale_count': 0},
+        'status': 'error',
+        'error': e.toString(),
+      };
+    }
   }
 }
 

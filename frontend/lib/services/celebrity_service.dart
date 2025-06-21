@@ -36,7 +36,7 @@ class CelebrityService {
   /// Refresh celebrity cache from API
   Future<void> _refreshCelebrityCache() async {
     try {
-      final response = await ApiService.get('/v1/celebrities/');
+      final response = await ApiService.get('/celebrities/');
       final List<dynamic> results =
           response['results'] ?? response['data'] ?? [];
 
@@ -56,7 +56,7 @@ class CelebrityService {
   /// Get celebrity by ID
   Future<Celebrity?> getCelebrityById(int id) async {
     try {
-      final response = await ApiService.get('/v1/celebrities/$id/');
+      final response = await ApiService.get('/celebrities/$id/');
       return Celebrity.fromJson(response);
     } catch (e) {
       debugPrint('Error fetching celebrity by ID $id: $e');
@@ -145,7 +145,7 @@ class CelebrityService {
     }
 
     try {
-      final endpoint = '/v1/celebrities/$celebrityId/promotions/';
+      final endpoint = '/celebrities/$celebrityId/promotions/';
       debugPrint('CelebrityService: Making API call to $endpoint');
 
       final response = await ApiService.get(endpoint);
@@ -378,7 +378,7 @@ class CelebrityService {
   Future<List<Celebrity>> searchCelebrities(String query) async {
     try {
       final response = await ApiService.get(
-          '/v1/celebrities/search/?q=${Uri.encodeComponent(query)}');
+                      '/celebrities/search/?q=${Uri.encodeComponent(query)}');
       final List<dynamic> results = response['results'] ?? [];
 
       return results
@@ -548,9 +548,8 @@ class CelebrityService {
     }
 
     // ✅ SET REQUIRED DEFAULTS FOR MISSING FIELDS
-    // CRITICAL FIX: Use slug as ID since backend expects slug format
-    sanitized['id'] =
-        sanitized['slug']?.toString() ?? sanitized['id']?.toString() ?? '0';
+    // Use ID for navigation
+    sanitized['id'] = sanitized['id']?.toString() ?? '0';
     sanitized['name'] = sanitized['name']?.toString() ?? 'Product';
     sanitized['description'] = sanitized['description']?.toString() ?? '';
     sanitized['price'] = sanitized['price']?.toString() ?? '0.0';
@@ -565,7 +564,7 @@ class CelebrityService {
     sanitized['reviews'] = <Map<String, dynamic>>[];
 
     debugPrint(
-        'CelebrityService: Sanitized product - ID: ${sanitized['id']}, Name: ${sanitized['name']}, Slug: ${sanitized['slug']}');
+        'CelebrityService: Sanitized product - ID: ${sanitized['id']}, Name: ${sanitized['name']}');
     return sanitized;
   }
 

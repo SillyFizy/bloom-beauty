@@ -6,9 +6,7 @@ class ProductFilter(django_filters.FilterSet):
     min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
     max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
     category = django_filters.ModelChoiceFilter(queryset=Category.objects.all(), field_name='category')
-    category_slug = django_filters.CharFilter(field_name='category__slug')
     brand = django_filters.ModelChoiceFilter(queryset=Brand.objects.all(), field_name='brand')
-    brand_slug = django_filters.CharFilter(field_name='brand__slug')
     is_featured = django_filters.BooleanFilter(field_name='is_featured')
     is_active = django_filters.BooleanFilter(field_name='is_active')
     
@@ -23,7 +21,7 @@ class ProductFilter(django_filters.FilterSet):
     
     class Meta:
         model = Product
-        fields = ['category', 'category_slug', 'brand', 'brand_slug', 
+        fields = ['category', 'brand', 
                   'min_price', 'max_price', 'is_featured', 'is_active',
                   'on_sale', 'attribute', 'low_stock']
     

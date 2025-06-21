@@ -275,9 +275,7 @@ class Product {
     }
 
     return Product(
-      id: json['slug'] ??
-          json['id']
-              .toString(), // ✅ CRITICAL FIX: Use slug as ID for proper navigation
+      id: json['id'].toString(), // Use ID for navigation
       name: json['name'] ?? '',
       description: json['description'] ?? '',
       price: price,
@@ -421,6 +419,78 @@ class Product {
     );
   }
 
+  /// Factory method to create Product from Featured API response
+  factory Product.fromFeaturedApi(Map<String, dynamic> json) {
+    // Parse the price correctly (it comes as string from API)
+    final priceStr = json['price']?.toString() ?? '0';
+    final price = double.tryParse(priceStr) ?? 0.0;
+
+    // Parse sale_price if available
+    double? salePrice;
+    if (json['sale_price'] != null) {
+      final salePriceStr = json['sale_price'].toString();
+      salePrice = double.tryParse(salePriceStr);
+    }
+
+    // Use beauty points from backend (no more mock data)
+    final beautyPoints = (json['beauty_points'] ?? 0).toInt();
+
+    // ✅ USE CONSISTENT RATING PARSING
+    final rating = _parseRating(json['rating']);
+    final reviewCount = _parseReviewCount(json['review_count']);
+
+    // Handle featured_image with platform-aware URL
+    List<String> images = [];
+    if (json['featured_image'] != null) {
+      // Use platform-aware URL for images
+      final baseImageUrl = _getImageBaseUrl();
+      final imageUrl = '$baseImageUrl/media/products/${json['featured_image']}';
+      images.add(imageUrl);
+    } else {
+      // Temporary fallback: Use sample images from backend media until proper image assignment
+      final baseImageUrl = _getImageBaseUrl();
+      const fallbackImages = [
+        'tiana-eyeshadow-palette_1_product_33_20250507_195811.jpg',
+        'volumizing-mascara_1_product_456_20250509_205844.jpg',
+        'yerimua-bad-lip-duo_1_product_350_20250508_220246.jpg',
+        'rosy-mcmichael-vol-2-pink-dream-blushes_5_product_292_20250508_212928.jpg',
+        'sand-snatchural-palette_1_product_445_20250509_204951.jpg',
+        'stay-blushing-cute-lip-and-cheek-balm_1_product_299_20250508_213502.jpg',
+      ];
+
+      // Use product ID to select a consistent fallback image
+      final productId = int.tryParse(json['id'].toString()) ?? 0;
+      final imageIndex = productId % fallbackImages.length;
+      final fallbackImage = fallbackImages[imageIndex];
+
+      final imageUrl = '$baseImageUrl/media/products/$fallbackImage';
+      images.add(imageUrl);
+    }
+
+    return Product(
+      id: json['id'].toString(), // Use ID for navigation
+      name: json['name'] ?? '',
+      description: json['name'] ??
+          '', // Using name as description since API doesn't provide description
+      price: price,
+      discountPrice: salePrice,
+      images: images,
+      categoryId: json['category_name'] ??
+          'Unknown', // Using category_name as categoryId
+      brand: json['brand_name'] ?? '',
+      rating: rating,
+      reviewCount: reviewCount,
+      isInStock: json['stock'] != null ? (json['stock'] as int) > 0 : true,
+      ingredients: [], // API doesn't provide ingredients
+      beautyPoints: beautyPoints,
+      variants: [],
+      reviews: [],
+      celebrityEndorsement: null,
+      isFeatured:
+          _parseBooleanField(json['is_featured']), // Backend is_featured field
+    );
+  }
+
   /// Factory method to create Product from Bestselling API response
   factory Product.fromBestsellingApi(Map<String, dynamic> json) {
     // Parse the price correctly (it comes as string from API)
@@ -484,8 +554,7 @@ class Product {
     }
 
     return Product(
-      id: json['slug'] ??
-          json['id'].toString(), // Use slug as ID for proper navigation
+      id: json['id'].toString(), // Use ID for navigation
       name: json['name'] ?? '',
       description: json['name'] ??
           '', // Using name as description since API doesn't provide description
@@ -547,7 +616,6 @@ class Product {
       if (kDebugMode) {
         debugPrint('Trending Debug - RANDOM IMAGE:');
         debugPrint('  Product ID: ${json['id']}');
-        debugPrint('  Product Slug: ${json['slug']}');
         debugPrint('  Product Name: ${json['name']}');
         debugPrint('  Featured Image: NULL -> Using Random');
         debugPrint('  Beauty Points (from backend): $beautyPoints');
@@ -559,8 +627,7 @@ class Product {
     }
 
     return Product(
-      id: json['slug'] ??
-          json['id'].toString(), // Use slug as ID for proper navigation
+      id: json['id'].toString(), // Use ID for navigation
       name: json['name'] ?? '',
       description: json['name'] ??
           '', // Using name as description since API doesn't provide description
@@ -615,7 +682,7 @@ class Product {
     } else {
       // RANDOM IMAGE FROM BACKEND/MEDIA when DB response is null
       final baseImageUrl = _getImageBaseUrl();
-      // Use numeric productId for random image selection, not the slug
+      // Use numeric productId for random image selection
       final numericProductId = (productId is int)
           ? productId
           : (int.tryParse(productId.toString()) ?? 0);
@@ -627,7 +694,6 @@ class Product {
       if (kDebugMode) {
         debugPrint('Backend Products Debug - RANDOM IMAGE:');
         debugPrint('  Product Numeric ID: ${json['id']}');
-        debugPrint('  Product Slug: ${json['slug']}');
         debugPrint('  Product Name: ${json['name']}');
         debugPrint('  Featured Image: NULL -> Using Random');
         debugPrint('  Beauty Points (from backend): $beautyPoints');
@@ -638,19 +704,17 @@ class Product {
       }
     }
 
-    // Create Product with backend data + mockup rating/beauty points
-    // FIX: Use slug as ID for consistency across all screens (wishlist compatibility)
-    final productIdForWishlist = json['slug'] ?? json['id'].toString();
+    // Create Product with backend data
+    final productIdForWishlist = json['id'].toString();
 
     if (kDebugMode) {
       debugPrint('🔧 fromBackendApi: Creating product with ID format:');
       debugPrint('   Numeric ID from backend: ${json['id']}');
-      debugPrint('   Slug from backend: ${json['slug']}');
       debugPrint('   Final Product ID (for wishlist): $productIdForWishlist');
     }
 
     return Product(
-      id: productIdForWishlist, // Use slug as ID for proper wishlist navigation consistency
+      id: productIdForWishlist, // Use ID for navigation
       name: json['name'] ?? '',
       description: json['name'] ??
           '', // Using name as description since backend doesn't provide detailed description

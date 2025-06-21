@@ -46,6 +46,7 @@ class CelebrityProvider with ChangeNotifier {
   bool get isSearching => _isSearching;
   String? get error => _error;
   bool get hasError => _error != null;
+  bool get isInitialized => _isInitialized;
 
   String get currentSearchQuery => _currentSearchQuery;
   Map<String, List<Product>> get celebrityProducts =>

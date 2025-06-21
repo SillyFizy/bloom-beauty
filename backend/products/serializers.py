@@ -11,7 +11,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'description', 'parent', 'parent_name', 
-                  'image', 'slug', 'is_active', 'created_at', 'updated_at']
+                  'image', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
     
     def to_representation(self, instance):
@@ -25,7 +25,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class BrandSerializer(serializers.ModelSerializer):
     class Meta:
         model = Brand
-        fields = ['id', 'name', 'description', 'logo', 'slug', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'description', 'logo', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
     
     def to_representation(self, instance):
@@ -107,7 +107,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'sale_price', 'category_name', 
-                  'brand_name', 'featured_image', 'stock', 'slug', 
+                  'brand_name', 'featured_image', 'stock', 
                   'is_active', 'is_featured', 'is_on_sale', 'discount_percentage',
                   'beauty_points', 'rating', 'review_count', 'has_reviews']
     
@@ -147,8 +147,8 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'price', 'sale_price', 
                   'category', 'category_name', 'brand', 'brand_name',
                   'attributes', 'attribute_ids', 'featured_image', 
-                  'stock', 'sku', 'slug', 'is_active', 'is_featured',
-                  'weight', 'dimensions', 'meta_keywords', 'meta_description',
+                  'stock', 'sku', 'is_active', 'is_featured',
+                  'meta_keywords', 'meta_description',
                   'low_stock_threshold', 'is_on_sale', 'discount_percentage',
                   'is_low_stock', 'images', 'variants', 'beauty_points', 
                   'rating', 'review_count', 'has_reviews', 'rating_stats',

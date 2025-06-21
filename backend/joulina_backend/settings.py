@@ -25,7 +25,7 @@ ALLOWED_HOSTS = [
     '10.0.2.2',  # Android emulator gateway
     '10.0.2.16', # Your device IP
     '192.168.0.189',  # Current Wi-Fi IP for remote device access
-    '192.168.0.189',  # Current Wi-Fi IP for remote device access
+    '192.168.68.127',  # Current Wi-Fi IP for remote device access
 ]
 
 # Application definition
@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'users',
     'products',
     'celebrities',
+    'categories',
     'cart',
     'orders',
     'payments',
@@ -97,40 +98,30 @@ WSGI_APPLICATION = 'joulina_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# PostgreSQL configuration (default)
-# Make sure to create the database and user first
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.environ.get('DB_NAME', 'bloom_beauty'),
-#         'USER': os.environ.get('DB_USER', 'postgres'),
-#         'PASSWORD': os.environ.get('DB_PASSWORD', '832021'),
-#         'HOST': os.environ.get('DB_HOST', 'localhost'),
-#         'PORT': os.environ.get('DB_PORT', '5432'),
-#         'OPTIONS': {
-#             'sslmode': 'prefer',
-#         },
-#     }
-# }
-
-# SQLite fallback (for development when PostgreSQL is not available)
-# Uncomment the following lines and comment out the PostgreSQL config above to use SQLite
+# PostgreSQL configuration (production ready)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'bloom_beauty'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', '832021'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+        'OPTIONS': {
+            'sslmode': os.environ.get('DB_SSLMODE', 'prefer'),
+            'connect_timeout': int(os.environ.get('DB_CONNECT_TIMEOUT', '10')),
+        },
+        'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '300')),
+        'CONN_HEALTH_CHECKS': True,
     }
 }
 
-# For production, consider PostgreSQL
+# SQLite fallback (for development when PostgreSQL is not available)
+# Uncomment the following lines and comment out the PostgreSQL config above to use SQLite
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'joulina_db',
-#         'USER': 'joulina_user',
-#         'PASSWORD': 'your_password',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
 
@@ -193,6 +184,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom user model
 AUTH_USER_MODEL = 'users.User'
 
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'users.backends.PhoneNumberBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -253,6 +250,7 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
     'JTI_CLAIM': 'jti',
+    'USERNAME_FIELD': 'phone_number',
 }
 
 # CORS settings

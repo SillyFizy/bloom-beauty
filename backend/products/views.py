@@ -41,7 +41,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'created_at']
-    lookup_field = 'slug'
     
     def get_queryset(self):
         queryset = Category.objects.filter(is_active=True)
@@ -52,7 +51,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     
     @method_decorator(cache_page(60*60*2))  # Cache for 2 hours
     @action(detail=True)
-    def products(self, request, slug=None):
+    def products(self, request, pk=None):
         """Get all products in this category"""
         category = self.get_object()
         products = Product.objects.filter(category=category, is_active=True)
@@ -106,7 +105,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
                 {
                     'id': child.id,
                     'name': child.name,
-                    'slug': child.slug,
                     'children': get_children(child)
                 }
                 for child in children
@@ -116,13 +114,47 @@ class CategoryViewSet(viewsets.ModelViewSet):
             {
                 'id': category.id,
                 'name': category.name,
-                'slug': category.slug,
                 'children': get_children(category)
             }
             for category in top_categories
         ]
         
         return Response(result)
+
+    @method_decorator(cache_page(60*60*2))  # Cache for 2 hours
+    @action(detail=False)
+    def essential_data(self, request):
+        """
+        Get essential app data for quick startup
+        Returns minimal data needed for app initialization
+        """
+        try:
+            # Get top 3 categories with minimal data
+            top_categories = Category.objects.filter(
+                parent=None, 
+                is_active=True
+            ).values('id', 'name')[:3]
+            
+            # Get basic app stats
+            total_products = Product.objects.filter(is_active=True).count()
+            total_categories = Category.objects.filter(is_active=True).count()
+            
+            # Return minimal essential data
+            return Response({
+                'categories': list(top_categories),
+                'stats': {
+                    'total_products': total_products,
+                    'total_categories': total_categories,
+                },
+                'app_status': 'ready',
+                'cache_timestamp': datetime.datetime.now().isoformat(),
+            })
+        except Exception as e:
+            return Response({
+                'error': 'Failed to load essential data',
+                'app_status': 'error',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class BrandViewSet(viewsets.ModelViewSet):
     queryset = Brand.objects.all()
@@ -131,7 +163,6 @@ class BrandViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'created_at']
-    lookup_field = 'slug'
     
     def get_queryset(self):
         queryset = Brand.objects.filter(is_active=True)
@@ -142,7 +173,7 @@ class BrandViewSet(viewsets.ModelViewSet):
     
     @method_decorator(cache_page(60*60*2))  # Cache for 2 hours
     @action(detail=True)
-    def products(self, request, slug=None):
+    def products(self, request, pk=None):
         """Get all products for this brand"""
         brand = self.get_object()
         products = Product.objects.filter(brand=brand, is_active=True)
@@ -202,7 +233,6 @@ class ProductViewSet(viewsets.ModelViewSet):
     filterset_class = ProductFilter
     search_fields = ['name', 'description', 'meta_keywords', 'sku']
     ordering_fields = ['price', 'created_at', 'name', 'rating']
-    lookup_field = 'slug'
     throttle_classes = [ProductRateThrottle]
     
     def get_queryset(self):
@@ -367,6 +397,43 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductListSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
     
+    @method_decorator(cache_page(60*60*2))  # Cache for 2 hours
+    @action(detail=False, methods=['get'])
+    def app_essentials(self, request):
+        """
+        Get essential app data for fast startup
+        Returns minimal product data needed for immediate app functionality
+        """
+        try:
+            # Get minimal featured products (top 3)
+            featured_products = Product.objects.filter(
+                is_active=True,
+                is_featured=True
+            ).select_related('category', 'brand').values(
+                'id', 'name', 'price', 'image_url',
+                'category__name', 'brand__name'
+            )[:3]
+            
+            # Get basic product stats
+            product_stats = {
+                'total_products': Product.objects.filter(is_active=True).count(),
+                'featured_count': Product.objects.filter(is_active=True, is_featured=True).count(),
+                'on_sale_count': Product.objects.filter(is_active=True, is_on_sale=True).count(),
+            }
+            
+            return Response({
+                'featured_products': list(featured_products),
+                'stats': product_stats,
+                'status': 'ready',
+                'cache_timestamp': datetime.datetime.now().isoformat(),
+            })
+        except Exception as e:
+            return Response({
+                'error': 'Failed to load app essentials',
+                'status': 'error',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @method_decorator(cache_page(60*60*24))  # Cache for 24 hours
     @action(detail=False, methods=['get'])
     def stats(self, request):
@@ -619,7 +686,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
-    def update_stock(self, request, slug=None):
+    def update_stock(self, request, pk=None):
         """Update product stock"""
         product = self.get_object()
         
@@ -672,7 +739,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
     
     @action(detail=True, methods=['get'])
-    def variants(self, request, slug=None):
+    def variants(self, request, pk=None):
         """Get variants for a product"""
         product = self.get_object()
         variants = product.variants.filter(is_active=True)
@@ -680,7 +747,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
-    def images(self, request, slug=None):
+    def images(self, request, pk=None):
         """Get all images for a product"""
         product = self.get_object()
         images = product.images.all()
@@ -724,7 +791,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @method_decorator(cache_page(60*15))  # Cache for 15 minutes
     @action(detail=True, methods=['get'])
-    def rating(self, request, slug=None):
+    def rating(self, request, pk=None):
         """Get detailed rating information for a specific product"""
         product = self.get_object()
         try:
@@ -733,14 +800,12 @@ class ProductViewSet(viewsets.ModelViewSet):
             return Response({
                 'product_id': product.id,
                 'product_name': product.name,
-                'product_slug': product.slug,
                 'rating_data': serializer.data
             })
         except ProductRating.DoesNotExist:
             return Response({
                 'product_id': product.id,
                 'product_name': product.name,
-                'product_slug': product.slug,
                 'rating_data': {
                     'total_reviews': 0,
                     'average_rating': 0.00,

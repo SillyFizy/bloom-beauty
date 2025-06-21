@@ -7,10 +7,12 @@ import '../../constants/app_constants.dart';
 import '../../widgets/product/celebrity_pick_card.dart';
 import '../../widgets/common/wishlist_button.dart';
 import '../../widgets/common/optimized_image.dart';
+import '../../widgets/common/skeleton_loading.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/celebrity_provider.dart';
 import '../../providers/app_providers.dart';
 import '../celebrity_picks/celebrity_picks_screen.dart';
+import '../../services/navigation_category_service.dart';
 import 'package:intl/intl.dart';
 // not being used currently
 // import 'package:go_router/go_router.dart';
@@ -24,13 +26,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   @override
   bool get wantKeepAlive =>
       true; // Keep the state alive to prevent re-initialization
   final PageController _bannerController = PageController();
   int _currentBannerIndex = 0;
   static bool _hasInitialized = false; // Global flag to track initialization
+
+  // Category navigation
+  late TabController _categoryController;
+  int _selectedCategoryIndex = 0;
+  
+  // Category data (HOME is hardcoded, others come from backend)
+  List<Map<String, dynamic>> _categories = [
+    {'name': 'HOME', 'value': 'home', 'keywords': <String>[]},
+  ];
+  bool _categoriesLoaded = false;
 
   // Sample data for banner
   final List<String> _bannerImages = [
@@ -42,17 +54,145 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    // Load data when screen initializes, with proper routing support
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Only load data if not already initialized
-      if (!_hasInitialized) {
-        debugPrint('HomeScreen: First time initialization');
-        _loadData();
-        _hasInitialized = true;
-      } else {
-        debugPrint('HomeScreen: Already initialized, using cached data');
+    // Initialize category controller with 2 tabs (HOME + loading)
+    _categoryController = TabController(
+      length: 2, // Start with 2 tabs: HOME + loading indicator
+      vsync: this,
+      animationDuration: const Duration(milliseconds: 200), // Faster animation
+    );
+    _categoryController.addListener(() {
+      if (_categoryController.indexIsChanging) {
+        setState(() {
+          _selectedCategoryIndex = _categoryController.index;
+        });
       }
     });
+    
+    // Load navigation categories from backend
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadNavigationCategories();
+      _initializeDataLazily();
+    });
+  }
+
+  Future<void> _loadNavigationCategories() async {
+    try {
+      debugPrint('HomeScreen: Loading navigation categories from backend');
+      
+      final backendCategories = await NavigationCategoryService.getNavigationCategories();
+      
+      if (mounted) {
+        setState(() {
+          // Keep HOME as first category, add backend categories
+          _categories = [
+            {'name': 'HOME', 'value': 'home', 'keywords': <String>[]},
+            ...backendCategories.map((cat) => {
+              'name': cat.name,
+              'value': cat.value,
+              'keywords': cat.keywordsList,
+            }).toList(),
+          ];
+          _categoriesLoaded = true;
+        });
+
+        // Update TabController with new category count
+        _categoryController.dispose();
+        _categoryController = TabController(
+          length: _categories.length,
+          vsync: this,
+          animationDuration: const Duration(milliseconds: 200),
+        );
+        _categoryController.addListener(() {
+          if (_categoryController.indexIsChanging) {
+            setState(() {
+              _selectedCategoryIndex = _categoryController.index;
+            });
+          }
+        });
+
+        debugPrint('HomeScreen: Loaded ${_categories.length} categories (including HOME)');
+        for (var cat in _categories) {
+          debugPrint('  - ${cat['name']} (${cat['value']})');
+        }
+      }
+    } catch (e) {
+      debugPrint('HomeScreen: Failed to load navigation categories: $e');
+      // Keep default HOME category if backend fails
+      if (mounted) {
+        setState(() {
+          _categoriesLoaded = true; // Mark as loaded even if failed
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _categoryController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeDataLazily() async {
+    // Only load data if not already initialized
+    if (!_hasInitialized) {
+      debugPrint('HomeScreen: First time lazy initialization - showing skeleton loading');
+      
+      try {
+        // Start with a small delay to ensure smooth transition from splash
+        await Future.delayed(const Duration(milliseconds: 100));
+        
+        // Initialize data providers in the background
+        // This will show beautiful skeleton loading states while data loads
+        AppProviders.initializeDataProviders(context).then((_) {
+          debugPrint('HomeScreen: Data providers initialized successfully');
+          _hasInitialized = true;
+          
+          // Add a small delay to ensure smooth transition from skeleton to content
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) {
+              setState(() {
+                // Trigger rebuild to show actual content with animation
+              });
+            }
+          });
+        }).catchError((error) {
+          debugPrint('HomeScreen: Data provider initialization error: $error');
+          
+          // Show a subtle, non-intrusive notification
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.white, size: 20),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Loading content...',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+                duration: const Duration(seconds: 2),
+                backgroundColor: AppConstants.accentColor,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.all(20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            );
+          }
+        });
+        
+        debugPrint('HomeScreen: Skeleton loading initiated for smooth UX');
+      } catch (e) {
+        debugPrint('HomeScreen: Initialization error: $e');
+      }
+    } else {
+      debugPrint('HomeScreen: Using cached data, no skeleton loading needed');
+    }
   }
 
   void _loadData() {
@@ -105,6 +245,7 @@ class _HomeScreenState extends State<HomeScreen>
       productProvider.refreshAllData(),
       celebrityProvider.loadCelebrities(forceRefresh: true),
       celebrityProvider.loadCelebrityPicks(forceRefresh: true),
+      _loadNavigationCategories(), // Refresh categories from backend
     ]);
 
     _hasInitialized = true; // Set flag back after refresh
@@ -114,6 +255,96 @@ class _HomeScreenState extends State<HomeScreen>
   String _formatPrice(double price) {
     final formatter = NumberFormat('#,###');
     return '${formatter.format(price)} IQD';
+  }
+
+  // Helper function to filter products by category using backend keywords
+  List<Product> _getProductsByCategory(List<Product> products, String category) {
+    if (category == 'home') return products;
+    
+    // Find the category keywords from backend data
+    final categoryData = _categories.firstWhere(
+      (cat) => cat['value'] == category,
+      orElse: () => {'keywords': <String>[]},
+    );
+    
+    final keywords = List<String>.from(categoryData['keywords'] ?? []);
+    
+    if (keywords.isEmpty) {
+      debugPrint('HomeScreen: No keywords found for category: $category');
+      return [];
+    }
+    
+    return products.where((product) {
+      final productName = product.name.toLowerCase();
+      final productDescription = product.description.toLowerCase();
+      final brand = product.brand.toLowerCase();
+      
+      // Check if product matches any of the category keywords
+      return keywords.any((keyword) {
+        final keywordLower = keyword.toLowerCase();
+        return productName.contains(keywordLower) ||
+               productDescription.contains(keywordLower) ||
+               brand.contains(keywordLower);
+      });
+    }).toList();
+  }
+
+  // Helper function to group products by brand
+  Map<String, List<Product>> _groupProductsByBrand(List<Product> products) {
+    final Map<String, List<Product>> brandGroups = {};
+    
+    for (final product in products) {
+      final brand = product.brand.isNotEmpty ? product.brand : 'Other';
+      if (!brandGroups.containsKey(brand)) {
+        brandGroups[brand] = [];
+      }
+      brandGroups[brand]!.add(product);
+    }
+    
+    // Sort brands by number of products (descending)
+    final sortedEntries = brandGroups.entries.toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+    
+    return Map.fromEntries(sortedEntries);
+  }
+
+  // Helper function to smoothly switch tabs without ghosting
+  void _switchToTab(int targetIndex) {
+    // Don't allow switching if categories are still loading
+    if (!_categoriesLoaded) {
+      return;
+    }
+    
+    // Ensure target index is valid
+    if (targetIndex < 0 || targetIndex >= _categories.length) {
+      return;
+    }
+    
+    final currentIndex = _selectedCategoryIndex;
+    final distance = (targetIndex - currentIndex).abs();
+    
+    // Prevent default animation if already in progress
+    if (_categoryController.indexIsChanging) {
+      return;
+    }
+    
+    // Update state immediately for instant UI feedback
+    setState(() {
+      _selectedCategoryIndex = targetIndex;
+    });
+    
+    // If switching to a distant tab (more than 2 positions away), use instant jump
+    if (distance > 2) {
+      // Use index directly without animation to prevent ghosting
+      _categoryController.index = targetIndex;
+    } else {
+      // Use smooth animation for close tabs
+      _categoryController.animateTo(
+        targetIndex,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOutCubic,
+      );
+    }
   }
 
   // Helper function to navigate to product with error handling and validation
@@ -357,20 +588,30 @@ class _HomeScreenState extends State<HomeScreen>
                     // Header
                     _buildHeader(isSmallScreen),
 
-                    // Banner Section
-                    _buildBannerSection(isSmallScreen),
+                    // Category Navigation Bar
+                    _buildCategoryNavigationBar(isSmallScreen),
 
-                    // Celebrity Beauty Picks
-                    _buildCelebritySection(isSmallScreen, isMediumScreen),
+                    // Conditional Content based on selected category
+                    if (!_categoriesLoaded || _selectedCategoryIndex == 0) ...[
+                      // HOME: Show original content
+                      // Banner Section
+                      _buildBannerSection(isSmallScreen),
 
-                    // New Arrivals
-                    _buildNewArrivalsSection(isSmallScreen, isMediumScreen),
+                      // Celebrity Beauty Picks
+                      _buildCelebritySection(isSmallScreen, isMediumScreen),
 
-                    // Bestselling Skincare
-                    _buildBestsellingSection(isSmallScreen, isMediumScreen),
+                      // New Arrivals
+                      _buildNewArrivalsSection(isSmallScreen, isMediumScreen),
 
-                    // Trending Makeup
-                    _buildTrendingSection(isSmallScreen, isMediumScreen),
+                      // Bestselling Skincare
+                      _buildBestsellingSection(isSmallScreen, isMediumScreen),
+
+                      // Trending Makeup
+                      _buildTrendingSection(isSmallScreen, isMediumScreen),
+                    ] else ...[
+                      // CATEGORY: Show products grouped by brand
+                      _buildCategoryContent(isSmallScreen, isMediumScreen),
+                    ],
 
                     const SizedBox(height: 40), // Bottom padding for nav bar
                   ],
@@ -386,30 +627,15 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildHeader(bool isSmallScreen) {
     return Padding(
       padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Bloom Beauty',
-            style: GoogleFonts.corinthia(
-              fontSize: isSmallScreen ? 42 : 50,
-              fontWeight: FontWeight.w700,
-              color: AppConstants.accentColor,
-            ),
+      child: Center(
+        child: Text(
+          'Bloom Beauty',
+          style: GoogleFonts.corinthia(
+            fontSize: isSmallScreen ? 42 : 50,
+            fontWeight: FontWeight.w700,
+            color: AppConstants.accentColor,
           ),
-          IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notifications coming soon!')),
-              );
-            },
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: AppConstants.accentColor,
-              size: isSmallScreen ? 24 : 28,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -501,14 +727,24 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildCelebritySection(bool isSmallScreen, bool isMediumScreen) {
     return Consumer<CelebrityProvider>(
       builder: (context, celebrityProvider, child) {
-        // Handle loading state
-        if (celebrityProvider.isLoading) {
-          return _buildLoadingSection(
-              'Loading Celebrity Picks...', isSmallScreen);
+        // Check if we should show skeleton loading
+        final isLoading = celebrityProvider.isLoading;
+        final isInitializing = !celebrityProvider.isInitialized;
+        final hasNeverLoaded = celebrityProvider.celebrities.isEmpty && 
+                              celebrityProvider.celebrityPicks.isEmpty;
+        
+        // Show skeleton during any loading state or if we've never loaded data
+        if (isLoading || isInitializing || (!_hasInitialized && hasNeverLoaded)) {
+          return SkeletonSection(
+            title: 'Celebrity Picks',
+            isSmallScreen: isSmallScreen,
+            isHorizontal: true,
+            itemCount: 3,
+          );
         }
 
-        // Handle error state
-        if (celebrityProvider.hasError) {
+        // Handle error state (only show after we've tried to load)
+        if (celebrityProvider.hasError && _hasInitialized) {
           return _buildErrorSection(
             'Failed to load celebrity picks',
             () => celebrityProvider.loadCelebrityPicks(forceRefresh: true),
@@ -519,7 +755,8 @@ class _HomeScreenState extends State<HomeScreen>
         // Get celebrity picks data
         final celebrityPicks = celebrityProvider.celebrityPicks;
 
-        if (celebrityPicks.isEmpty) {
+        // Only show empty state if we've successfully initialized but have no data
+        if (celebrityPicks.isEmpty && _hasInitialized && !isLoading && !isInitializing) {
           return _buildEmptySection(
               'No celebrity picks available', isSmallScreen);
         }
@@ -752,13 +989,24 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildNewArrivalsSection(bool isSmallScreen, bool isMediumScreen) {
     return ProductConsumer(
       builder: (context, productProvider, child) {
-        // Handle loading state
-        if (productProvider.isLoading) {
-          return _buildLoadingSection('Loading New Arrivals...', isSmallScreen);
+        // Check if we should show skeleton loading
+        final isLoading = productProvider.isLoading;
+        final isInitializing = !productProvider.isInitialized;
+        final hasNeverLoaded = productProvider.products.isEmpty &&
+                              productProvider.newArrivals.isEmpty;
+        
+        // Show skeleton during any loading state or if we've never loaded data
+        if (isLoading || isInitializing || (!_hasInitialized && hasNeverLoaded)) {
+          return SkeletonSection(
+            title: 'New Arrivals',
+            isSmallScreen: isSmallScreen,
+            isHorizontal: false,
+            itemCount: 3,
+          );
         }
 
-        // Handle error state
-        if (productProvider.hasError) {
+        // Handle error state (only show after we've tried to load)
+        if (productProvider.hasError && _hasInitialized) {
           return _buildErrorSection(
             'Failed to load new arrivals',
             () => productProvider.loadNewArrivals(),
@@ -769,7 +1017,8 @@ class _HomeScreenState extends State<HomeScreen>
         // Get new arrivals data
         final newArrivals = productProvider.newArrivals;
 
-        if (newArrivals.isEmpty) {
+        // Only show empty state if we've successfully initialized but have no data
+        if (newArrivals.isEmpty && _hasInitialized && !isLoading && !isInitializing) {
           return _buildEmptySection('No new arrivals available', isSmallScreen);
         }
 
@@ -1079,14 +1328,24 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildBestsellingSection(bool isSmallScreen, bool isMediumScreen) {
     return ProductConsumer(
       builder: (context, productProvider, child) {
-        // Handle loading state
-        if (productProvider.isLoading) {
-          return _buildLoadingSection(
-              'Loading Bestselling Products...', isSmallScreen);
+        // Check if we should show skeleton loading
+        final isLoading = productProvider.isLoading;
+        final isInitializing = !productProvider.isInitialized;
+        final hasNeverLoaded = productProvider.products.isEmpty &&
+                              productProvider.bestsellingProducts.isEmpty;
+        
+        // Show skeleton during any loading state or if we've never loaded data
+        if (isLoading || isInitializing || (!_hasInitialized && hasNeverLoaded)) {
+          return SkeletonSection(
+            title: 'Bestselling Products',
+            isSmallScreen: isSmallScreen,
+            isHorizontal: true,
+            itemCount: 3,
+          );
         }
 
-        // Handle error state
-        if (productProvider.hasError) {
+        // Handle error state (only show after we've tried to load)
+        if (productProvider.hasError && _hasInitialized) {
           return _buildErrorSection(
             'Failed to load bestselling products',
             () => productProvider.loadBestsellingProducts(),
@@ -1097,7 +1356,8 @@ class _HomeScreenState extends State<HomeScreen>
         // Get bestselling products data
         final bestsellingProducts = productProvider.bestsellingProducts;
 
-        if (bestsellingProducts.isEmpty) {
+        // Only show empty state if we've successfully initialized but have no data
+        if (bestsellingProducts.isEmpty && _hasInitialized && !isLoading && !isInitializing) {
           return _buildEmptySection(
               'No bestselling products available', isSmallScreen);
         }
@@ -1150,14 +1410,24 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildTrendingSection(bool isSmallScreen, bool isMediumScreen) {
     return ProductConsumer(
       builder: (context, productProvider, child) {
-        // Handle loading state
-        if (productProvider.isLoading) {
-          return _buildLoadingSection(
-              'Loading Trending Products...', isSmallScreen);
+        // Check if we should show skeleton loading
+        final isLoading = productProvider.isLoading;
+        final isInitializing = !productProvider.isInitialized;
+        final hasNeverLoaded = productProvider.products.isEmpty &&
+                              productProvider.trendingProducts.isEmpty;
+        
+        // Show skeleton during any loading state or if we've never loaded data
+        if (isLoading || isInitializing || (!_hasInitialized && hasNeverLoaded)) {
+          return SkeletonSection(
+            title: 'Trending Products',
+            isSmallScreen: isSmallScreen,
+            isHorizontal: true,
+            itemCount: 3,
+          );
         }
 
-        // Handle error state
-        if (productProvider.hasError) {
+        // Handle error state (only show after we've tried to load)
+        if (productProvider.hasError && _hasInitialized) {
           return _buildErrorSection(
             'Failed to load trending products',
             () => productProvider.loadTrendingProducts(),
@@ -1168,7 +1438,8 @@ class _HomeScreenState extends State<HomeScreen>
         // Get trending products data
         final trendingProducts = productProvider.trendingProducts;
 
-        if (trendingProducts.isEmpty) {
+        // Only show empty state if we've successfully initialized but have no data
+        if (trendingProducts.isEmpty && _hasInitialized && !isLoading && !isInitializing) {
           return _buildEmptySection(
               'No trending products available', isSmallScreen);
         }
@@ -1581,6 +1852,256 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+
+  Widget _buildCategoryNavigationBar(bool isSmallScreen) {
+    return Container(
+      width: double.infinity,
+      color: AppConstants.backgroundColor,
+      padding: EdgeInsets.symmetric(
+        vertical: isSmallScreen ? 12 : 16,
+      ),
+      child: TabBar(
+        controller: _categoryController,
+        isScrollable: true,
+        labelColor: AppConstants.accentColor,
+        unselectedLabelColor: AppConstants.textSecondary,
+        labelStyle: TextStyle(
+          fontSize: isSmallScreen ? 13 : 15,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.0,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: isSmallScreen ? 13 : 15,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.8,
+        ),
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(
+            color: AppConstants.accentColor,
+            width: 2,
+          ),
+          insets: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 12),
+        ),
+        dividerColor: Colors.transparent,
+        indicatorSize: TabBarIndicatorSize.tab,
+        padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
+        tabAlignment: TabAlignment.start,
+        onTap: _categoriesLoaded ? (index) {
+          _switchToTab(index);
+        } : null, // Disable tapping when categories are loading
+        tabs: _categoriesLoaded 
+          ? _categories.map((category) {
+              return Tab(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 8 : 12,
+                    vertical: isSmallScreen ? 8 : 10,
+                  ),
+                  child: Text(
+                    category['name']!,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              );
+            }).toList()
+          : [
+              Tab(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 8 : 12,
+                    vertical: isSmallScreen ? 8 : 10,
+                  ),
+                  child: Text(
+                    'HOME',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              Tab(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 8 : 12,
+                    vertical: isSmallScreen ? 8 : 10,
+                  ),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppConstants.accentColor,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryContent(bool isSmallScreen, bool isMediumScreen) {
+    final selectedCategory = _categories[_selectedCategoryIndex]['value']!;
+    
+    return ProductConsumer(
+      builder: (context, productProvider, child) {
+        // Check if we should show skeleton loading
+        final isLoading = productProvider.isLoading;
+        final isInitializing = !productProvider.isInitialized;
+        final hasNeverLoaded = productProvider.products.isEmpty;
+        
+        // Show skeleton during any loading state or if we've never loaded data
+        if (isLoading || isInitializing || (!_hasInitialized && hasNeverLoaded)) {
+          return SkeletonSection(
+            title: _categories[_selectedCategoryIndex]['name']!,
+            isSmallScreen: isSmallScreen,
+            isHorizontal: false,
+            itemCount: 6,
+          );
+        }
+
+        // Handle error state
+        if (productProvider.hasError && _hasInitialized) {
+          return _buildErrorSection(
+            'Failed to load ${selectedCategory} products',
+            () => productProvider.initialize(),
+            isSmallScreen,
+          );
+        }
+
+        // Get all products and filter by category
+        final allProducts = [
+          ...productProvider.products,
+          ...productProvider.newArrivals,
+          ...productProvider.bestsellingProducts,
+          ...productProvider.trendingProducts,
+        ];
+        
+        final categoryProducts = _getProductsByCategory(allProducts, selectedCategory);
+        
+        // Group products by brand
+        final brandGroups = _groupProductsByBrand(categoryProducts);
+
+        // Only show empty state if we've successfully initialized but have no data
+        if (brandGroups.isEmpty && _hasInitialized && !isLoading && !isInitializing) {
+          return _buildEmptySection(
+            'No ${selectedCategory} products available',
+            isSmallScreen,
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Category header
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                isSmallScreen ? 12 : 16,
+                isSmallScreen ? 16 : 24,
+                isSmallScreen ? 12 : 16,
+                isSmallScreen ? 12 : 16,
+              ),
+              child: Text(
+                _categories[_selectedCategoryIndex]['name']!.toUpperCase(),
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 16 : 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppConstants.accentColor,
+                  letterSpacing: isSmallScreen ? 0.8 : 1.2,
+                ),
+              ),
+            ),
+            
+            // Brand sections
+            ...brandGroups.entries.take(10).map((entry) {
+              final brandName = entry.key;
+              final brandProducts = entry.value.take(4).toList(); // Show max 4 products per brand
+              
+              return _buildBrandSection(brandName, brandProducts, isSmallScreen);
+            }),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBrandSection(String brandName, List<Product> products, bool isSmallScreen) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Brand header
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            isSmallScreen ? 12 : 16,
+            isSmallScreen ? 20 : 24,
+            isSmallScreen ? 12 : 16,
+            isSmallScreen ? 8 : 12,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(isSmallScreen ? 4 : 6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppConstants.accentColor.withValues(alpha: 0.1),
+                ),
+                child: Icon(
+                  Icons.local_offer_outlined,
+                  color: AppConstants.accentColor,
+                  size: isSmallScreen ? 14 : 16,
+                ),
+              ),
+              SizedBox(width: isSmallScreen ? 8 : 12),
+              Expanded(
+                child: Text(
+                  brandName,
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 14 : 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppConstants.textPrimary,
+                  ),
+                ),
+              ),
+              Text(
+                '${products.length} products',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 12 : 13,
+                  color: AppConstants.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // Horizontal product list
+        SizedBox(
+          height: isSmallScreen ? 240 : 260,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
+            itemCount: products.length,
+            physics: const BouncingScrollPhysics(),
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: true,
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return _buildHorizontalProductCard(
+                product, 
+                isSmallScreen, 
+                index, 
+                'brand_${brandName.toLowerCase().replaceAll(' ', '_')}'
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+
 
   Widget _buildCelebrityPickCard(Product product, bool isSmallScreen) {
     return GestureDetector(

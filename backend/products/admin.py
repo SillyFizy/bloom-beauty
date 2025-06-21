@@ -20,7 +20,6 @@ class CategoryAdmin(admin.ModelAdmin):
     list_filter = ['is_active', 'parent']
     search_fields = ['name', 'description']
     readonly_fields = ['created_at', 'updated_at']
-    prepopulated_fields = {'slug': ('name',)}
     inlines = [SubcategoryInline]
     
     def product_count(self, obj):
@@ -40,7 +39,6 @@ class BrandAdmin(admin.ModelAdmin):
     list_filter = ['is_active']
     search_fields = ['name', 'description']
     readonly_fields = ['created_at', 'updated_at', 'display_logo_large']
-    prepopulated_fields = {'slug': ('name',)}
     
     def display_logo(self, obj):
         if obj.logo:
@@ -172,7 +170,6 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ['is_active', 'is_featured', 'category', 'brand', 'created_at']
     search_fields = ['name', 'description', 'sku']
     readonly_fields = ['created_at', 'updated_at', 'display_featured_image']
-    prepopulated_fields = {'slug': ('name',)}
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'description', 'category', 'brand', 'featured_image', 'display_featured_image')
@@ -184,13 +181,13 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('stock', 'sku', 'low_stock_threshold')
         }),
         ('Product Details', {
-            'fields': ('weight', 'dimensions', 'attributes')
+            'fields': ('attributes',)
         }),
         ('Status', {
             'fields': ('is_active', 'is_featured')
         }),
         ('SEO', {
-            'fields': ('slug', 'meta_keywords', 'meta_description')
+            'fields': ('meta_keywords', 'meta_description')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at')

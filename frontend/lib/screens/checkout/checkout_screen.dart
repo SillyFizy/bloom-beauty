@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/cart_provider.dart';
 import '../../utils/formatters.dart';
+import '../../utils/validators.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -48,6 +50,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _isProcessing = true;
     });
 
+    // Format the phone number to Iraqi format before processing
+    final formattedPhone = Validators.formatIraqiPhoneNumber(_phoneController.text.trim());
+    
+    // TODO: Use formattedPhone when submitting the order to backend
+    
     // Simulate order processing
     await Future.delayed(const Duration(seconds: 2));
 
@@ -158,7 +165,7 @@ const Text(
               context.read<CartProvider>().clearCart();
               Navigator.of(context).pop(); // Close dialog
               Navigator.of(context).pop(); // Close checkout screen
-              Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+              context.go('/home');
             },
 child: const Text(
 
@@ -239,12 +246,7 @@ child: const Text(
                                 label: 'Phone Number',
                                 icon: Icons.phone,
                                 keyboardType: TextInputType.phone,
-                                validator: (value) {
-                                  if (value?.isEmpty ?? true) {
-                                    return 'Phone number is required';
-                                  }
-                                  return null;
-                                },
+                                validator: Validators.validatePhoneNumber,
                                 isSmallScreen: isSmallScreen,
                               ),
                               const SizedBox(height: 16),

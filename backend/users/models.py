@@ -1,15 +1,68 @@
 # users/models.py
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
+
+class UserManager(BaseUserManager):
+    """Custom user manager for User model that uses phone number instead of username"""
+    
+    def create_user(self, phone_number, password=None, **extra_fields):
+        """Create and return a regular user with a phone number and password"""
+        if not phone_number:
+            raise ValueError('The phone number must be set')
+        
+        extra_fields.setdefault('is_staff', False)
+        extra_fields.setdefault('is_superuser', False)
+        
+        user = self.model(phone_number=phone_number, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+    
+    def create_superuser(self, phone_number, password=None, **extra_fields):
+        """Create and return a superuser with a phone number and password"""
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+        
+        return self.create_user(phone_number, password, **extra_fields)
 
 class User(AbstractUser):
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',
         message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
     )
-    phone_number = models.CharField(validators=[phone_regex], max_length=17, blank=True, null=True)
+    phone_number = models.CharField(
+        validators=[phone_regex], 
+        max_length=17, 
+        unique=True,  # Make phone number unique
+        help_text="Phone number for authentication"
+    )
+    
+    # Make email optional since we're using phone number for auth
+    email = models.EmailField(_('email address'), blank=True, null=True)
+    
+    # Override username field to not be required for authentication
+    username = models.CharField(
+        _('username'),
+        max_length=150,
+        blank=True,
+        null=True,
+        help_text=_('Optional. 150 characters or fewer. Letters, digits and @/./+/-/_ only.'),
+    )
+    
+    # Use phone number as the unique identifier for authentication
+    USERNAME_FIELD = 'phone_number'
+    REQUIRED_FIELDS = ['first_name', 'last_name']  # Remove email from required fields
+    
+    # Use the custom user manager
+    objects = UserManager()
+    
     address_line1 = models.CharField(max_length=255, blank=True, null=True)
     address_line2 = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
@@ -62,11 +115,11 @@ class User(AbstractUser):
         verbose_name_plural = _('users')
     
     def __str__(self):
-        return self.username
+        return self.phone_number or f"User {self.id}"
     
     @property
     def full_name(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.first_name} {self.last_name}".strip()
     
     @property
     def full_address(self):
@@ -117,4 +170,4 @@ class PointTransaction(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.transaction_type} - {self.points} - {self.user.username}"
+        return f"{self.transaction_type} - {self.points} - {self.user.phone_number}"

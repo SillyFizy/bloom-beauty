@@ -6,6 +6,7 @@ import '../../models/product_model.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/search_provider.dart';
 import '../../providers/product_provider.dart';
+import '../../providers/recently_viewed_provider.dart';
 import '../../widgets/product/enhanced_product_card.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -102,7 +103,7 @@ class _SearchScreenState extends State<SearchScreen> {
       final productProvider = context.read<ProductProvider>();
 
       // Add to recently viewed
-      await productProvider.addToRecentlyViewed(product);
+      context.read<RecentlyViewedProvider>().addProduct(product);
 
       // Navigate with only ID - product detail will fetch fresh data
       if (mounted) {

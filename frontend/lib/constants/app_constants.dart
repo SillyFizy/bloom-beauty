@@ -8,7 +8,7 @@ class AppConstants {
   static const String version = '1.0.0';
 
   // ✅ CENTRALIZED IP CONFIGURATION - Change this IP to affect all API requests
-  static const String _serverIP = '192.168.0.189'; // Change this IP address as needed
+  static const String _serverIP = '192.168.68.127'; // Change this IP address as needed
   static const String _serverPort = '8000';
   
   // Platform-aware API URLs - uses centralized IP configuration
@@ -75,8 +75,8 @@ class AppConstants {
   /// Get the current server port (for debugging/info purposes)  
   static String get serverPort => _serverPort;
   
-  /// Get the full API base URL with /api suffix
-  static String get apiBaseUrl => '$baseUrl/api';
+  /// Get the full API base URL with /api/v1 suffix
+  static String get apiBaseUrl => '$baseUrl/api/v1';
   
   /// Get the full media base URL for images
   static String get mediaBaseUrl => '$baseUrl/media';

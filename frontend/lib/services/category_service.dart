@@ -9,7 +9,7 @@ class CategoryService {
   /// Get all available categories from backend
   Future<List<Category>> getAllCategories() async {
     try {
-      final response = await ApiService.get('/v1/products/categories/');
+      final response = await ApiService.get('/products/categories/');
 
       // Handle different response formats
       List<dynamic> categoriesJson;
@@ -43,7 +43,7 @@ class CategoryService {
   Future<Category?> getCategoryById(int categoryId) async {
     try {
       final response =
-          await ApiService.get('/v1/products/categories/$categoryId/');
+          await ApiService.get('/products/categories/$categoryId/');
       return Category.fromJson(response);
     } catch (e) {
       print('Error fetching category by ID: $e');
@@ -81,7 +81,7 @@ class CategoryService {
             imageUrl: parent.imageUrl,
             parentId: parent.parentId,
             parentName: parent.parentName,
-            slug: parent.slug,
+    
             isActive: parent.isActive,
             createdAt: parent.createdAt,
             updatedAt: parent.updatedAt,

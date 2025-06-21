@@ -5,7 +5,6 @@ class Category {
   final String imageUrl;
   final int? parentId;
   final String? parentName;
-  final String slug;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -18,7 +17,6 @@ class Category {
     required this.imageUrl,
     this.parentId,
     this.parentName,
-    required this.slug,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
@@ -33,7 +31,6 @@ class Category {
       imageUrl: json['image'] ?? _getPlaceholderImage(json['name'] ?? ''),
       parentId: json['parent'],
       parentName: json['parent_name'],
-      slug: json['slug'] ?? '',
       isActive: json['is_active'] ?? true,
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
@@ -53,7 +50,6 @@ class Category {
       'image': imageUrl,
       'parent': parentId,
       'parent_name': parentName,
-      'slug': slug,
       'is_active': isActive,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),

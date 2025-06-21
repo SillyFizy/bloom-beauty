@@ -1,6 +1,5 @@
 # products/models.py
 from django.db import models
-from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Avg, Count
 import math
@@ -11,7 +10,6 @@ class Category(models.Model):
     description = models.TextField(blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='subcategories')
     image = models.ImageField(upload_to='categories/', blank=True, null=True)
-    slug = models.SlugField(max_length=100, unique=True, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -22,17 +20,11 @@ class Category(models.Model):
     
     def __str__(self):
         return self.name
-    
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
 
 class Brand(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     logo = models.ImageField(upload_to='brands/', blank=True, null=True)
-    slug = models.SlugField(max_length=100, unique=True, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -42,11 +34,6 @@ class Brand(models.Model):
     
     def __str__(self):
         return self.name
-    
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
 
 class ProductAttribute(models.Model):
     name = models.CharField(max_length=50)
@@ -72,11 +59,8 @@ class Product(models.Model):
     featured_image = models.ImageField(upload_to='products/', blank=True, null=True)
     stock = models.PositiveIntegerField(default=0)
     sku = models.CharField(max_length=100, unique=True, null=True, blank=True)
-    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
-    weight = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    dimensions = models.CharField(max_length=100, null=True, blank=True)
     meta_keywords = models.CharField(max_length=255, null=True, blank=True, help_text="Comma separated keywords for SEO")
     meta_description = models.TextField(null=True, blank=True, help_text="Meta description for SEO")
     low_stock_threshold = models.PositiveIntegerField(default=10)
@@ -89,11 +73,6 @@ class Product(models.Model):
     
     def __str__(self):
         return self.name
-    
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
     
     @property
     def is_on_sale(self):
@@ -108,9 +87,6 @@ class Product(models.Model):
     @property
     def is_low_stock(self):
         return self.stock <= self.low_stock_threshold
-    
-    def get_absolute_url(self):
-        return f"/products/{self.slug}/"
     
     @property
     def rating(self):
@@ -261,8 +237,6 @@ class Review(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.product.name} - {self.rating} stars"
-
-
 
 class ProductRating(models.Model):
     """Aggregated rating statistics for products - Simple and Clean"""
