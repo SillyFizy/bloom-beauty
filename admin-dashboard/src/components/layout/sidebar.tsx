@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Package, LayoutDashboard, ShoppingCart, Users, Truck } from 'lucide-react';
+import { Package, LayoutDashboard, ShoppingCart, Users, Truck, Folder, Tag } from 'lucide-react';
 
 const sidebarItems = [
   {
@@ -31,6 +31,16 @@ const sidebarItems = [
     title: 'Shipping',
     href: '/shipping',
     icon: Truck,
+  },
+  {
+    title: 'Categories',
+    href: '/categories',
+    icon: Folder,
+  },
+  {
+    title: 'Brands',
+    href: '/brands',
+    icon: Tag,
   },
 ];
 

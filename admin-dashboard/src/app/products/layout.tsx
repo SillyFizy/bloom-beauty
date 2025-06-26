@@ -7,7 +7,7 @@ export default function ProductsLayout({
 }) {
   return (
     <DashboardLayout title="Products">
-      {children}
+          {children}
     </DashboardLayout>
   );
 } 

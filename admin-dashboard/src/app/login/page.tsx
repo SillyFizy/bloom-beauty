@@ -56,14 +56,14 @@ export default function LoginPage() {
               Password
             </label>
             <div className="relative">
-              <Input
-                id="password"
+            <Input
+              id="password"
                 type={showPassword ? 'text' : 'password'}
-                {...register('password', { required: 'Required' })}
-                placeholder="••••••••"
-                disabled={isSubmitting}
+              {...register('password', { required: 'Required' })}
+              placeholder="••••••••"
+              disabled={isSubmitting}
                 className="pr-10"
-              />
+            />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}

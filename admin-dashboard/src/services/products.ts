@@ -253,11 +253,19 @@ export class CategoriesService {
     return apiClient.get<Category>(`${this.basePath}/${id}/`);
   }
 
-  async createCategory(data: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> {
+  async createCategory(data: any): Promise<Category> {
+    if (data instanceof FormData) {
+      return apiClient.uploadFile<Category>(`${this.basePath}/`, data);
+    }
     return apiClient.post<Category>(`${this.basePath}/`, data);
   }
 
-  async updateCategory(id: number, data: Partial<Category>): Promise<Category> {
+  async updateCategory(id: number, data: any): Promise<Category> {
+    if (data instanceof FormData) {
+      return apiClient.patch<Category>(`${this.basePath}/${id}/`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    }
     return apiClient.patch<Category>(`${this.basePath}/${id}/`, data);
   }
 
@@ -281,11 +289,19 @@ export class BrandsService {
     return apiClient.get<Brand>(`${this.basePath}/${id}/`);
   }
 
-  async createBrand(data: Omit<Brand, 'id' | 'created_at' | 'updated_at'>): Promise<Brand> {
+  async createBrand(data: any): Promise<Brand> {
+    if (data instanceof FormData) {
+      return apiClient.uploadFile<Brand>(`${this.basePath}/`, data);
+    }
     return apiClient.post<Brand>(`${this.basePath}/`, data);
   }
 
-  async updateBrand(id: number, data: Partial<Brand>): Promise<Brand> {
+  async updateBrand(id: number, data: any): Promise<Brand> {
+    if (data instanceof FormData) {
+      return apiClient.patch<Brand>(`${this.basePath}/${id}/`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    }
     return apiClient.patch<Brand>(`${this.basePath}/${id}/`, data);
   }
 
