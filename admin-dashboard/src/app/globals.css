@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Initial background color to prevent flash during load */
+:root {
+  background-color: #ffffff;
+}
+
+html {
+  background-color: #ffffff;
+}
+
+@layer base {
+  :root {
+    /* Bloom Beauty Theme - Elegant Golden & White (copied from uidashboard) */
+    --background: 0 0% 98%; /* Very light gray */
+    --foreground: 0 0% 18%; /* Dark gray */
+    --card: 0 0% 100%; /* Pure white */
+    --card-foreground: 0 0% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 18%;
+    --primary: 41 53% 55%; /* Golden */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%; /* Light gray */
+    --secondary-foreground: 0 0% 18%;
+    --muted: 0 0% 91%; /* Border color */
+    --muted-foreground: 0 0% 48%; /* Medium gray */
+    --accent: 340 32% 75%; /* Pink */
+    --accent-foreground: 0 0% 18%;
+    --destructive: 4 90% 58%; /* Error color */
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 91%; /* Light gray borders */
+    --input: 0 0% 91%;
+    --ring: 41 53% 55%; /* Golden focus ring */
+    --radius: 0.75rem;
+    --success: 122 39% 49%; /* Success green */
+    --warning: 36 100% 50%; /* Warning orange */
+  }
+
+  .dark {
+    --background: 15 23 42;
+    --foreground: 248 250 252;
+    --card: 30 41 59;
+    --card-foreground: 248 250 252;
+    --popover: 30 41 59;
+    --popover-foreground: 248 250 252;
+    --primary: 199 160 82; /* Golden - C7A052 */
+    --primary-foreground: 15 23 42;
+    --secondary: 51 65 85;
+    --secondary-foreground: 248 250 252;
+    --muted: 51 65 85;
+    --muted-foreground: 148 163 184;
+    --accent: 228 158 177; /* Pink - E49EB1 */
+    --accent-foreground: 15 23 42;
+    --destructive: 239 68 68;
+    --destructive-foreground: 248 250 252;
+    --border: 51 65 85;
+    --input: 51 65 85;
+    --ring: 199 160 82; /* Golden for focus rings */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html, body {
+    @apply bg-white text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-primary-100 text-primary-900;
+  }
+
+  /* Focus */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Status badges */
+  .status-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset;
+  }
+
+  .status-badge-success {
+    @apply bg-green-50 text-green-700 ring-green-600/10;
+  }
+
+  .status-badge-warning {
+    @apply bg-orange-50 text-orange-700 ring-orange-600/10;
+  }
+
+  .status-badge-error {
+    @apply bg-red-50 text-red-700 ring-red-600/10;
+  }
+
+  .status-badge-info {
+    @apply bg-blue-50 text-blue-700 ring-blue-600/10;
+  }
+
+  .status-badge-neutral {
+    @apply bg-slate-50 text-slate-700 ring-slate-600/10;
+  }
+} 

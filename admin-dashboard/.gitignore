@@ -1,0 +1,23 @@
+# Node
+node_modules/
+# Next.js build
+.next/
+out/
+dist/
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+# Testing
+coverage/
+# Env files
+.env
+.env.*
+# macOS / Windows system files
+.DS_Store
+Thumbs.db
+# Optional lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock 
