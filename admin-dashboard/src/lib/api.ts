@@ -156,13 +156,24 @@ class ApiClient {
 
   // File upload method
   async uploadFile<T>(url: string, formData: FormData, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.post<T>(url, formData, {
+    // Default to POST but allow caller to specify PUT/PATCH via config.method
+    const method = (config?.method || 'POST').toUpperCase();
+
+    const axiosConfig: AxiosRequestConfig = {
       ...config,
+      method: method as any,
       headers: {
         ...config?.headers,
         'Content-Type': 'multipart/form-data',
       },
+    };
+
+    const response = await this.client.request<T>({
+      url,
+      data: formData,
+      ...axiosConfig,
     });
+
     return response.data;
   }
 
