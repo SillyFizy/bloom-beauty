@@ -54,7 +54,7 @@ export const CategoryTable: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {categories.map((cat) => (
+                {categories.map((cat: any) => (
                   <tr key={cat.id} className="border-b hover:bg-muted/50">
                     <td className="py-3">
                       {cat.image ? (

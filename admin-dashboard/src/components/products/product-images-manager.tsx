@@ -62,7 +62,8 @@ export const ProductImagesManager: React.FC<ProductImagesManagerProps> = ({ prod
     if (!files.length) return;
     setUploading(true);
     try {
-      for (const [idx, file] of files.entries()) {
+      for (let idx = 0; idx < files.length; idx++) {
+        const file = files[idx];
         await productsService.uploadProductImage(productId, file, undefined, mainId === null && idx === 0);
       }
       toast.success('Images uploaded');

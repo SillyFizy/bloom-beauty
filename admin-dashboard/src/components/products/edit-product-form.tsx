@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+
 import { Product } from '@/types/product';
 import { updateProduct } from '@/services/products';
 import { categoriesService, brandsService } from '@/services/products';
@@ -438,9 +438,9 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Category *</label>
-                    <Select
+                    <select
                       {...register('category')}
-                      className={`${errors.category ? 'border-red-500 focus:border-red-500' : ''}`}
+                      className={`w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.category ? 'border-red-500 focus:border-red-500' : ''}`}
                     >
                       <option value="">Select category</option>
                       {categories.map((category) => (
@@ -448,7 +448,7 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
                           {category.name}
                         </option>
                       ))}
-                    </Select>
+                    </select>
                     {errors.category && (
                       <p className="text-sm text-red-500 flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" />
@@ -459,9 +459,9 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Brand *</label>
-                    <Select
+                    <select
                       {...register('brand')}
-                      className={`${errors.brand ? 'border-red-500 focus:border-red-500' : ''}`}
+                      className={`w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.brand ? 'border-red-500 focus:border-red-500' : ''}`}
                     >
                       <option value="">Select brand</option>
                       {brands.map((brand) => (
@@ -469,7 +469,7 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
                           {brand.name}
                         </option>
                       ))}
-                    </Select>
+                    </select>
                     {errors.brand && (
                       <p className="text-sm text-red-500 flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" />

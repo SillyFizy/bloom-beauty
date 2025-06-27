@@ -30,7 +30,7 @@ export function useProducts(filters: ProductFilters = {}) {
   return useQuery({
     queryKey: [...QUERY_KEYS.products, filters],
     queryFn: () => productsService.getProducts(filters),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData, // React Query v5 replacement for keepPreviousData
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

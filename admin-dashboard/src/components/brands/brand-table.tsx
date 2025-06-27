@@ -56,7 +56,7 @@ export const BrandTable: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {brands.map((b) => (
+                {brands.map((b: any) => (
                   <tr key={b.id} className="border-b hover:bg-muted/50">
                     <td className="py-3">
                       {b.logo ? (

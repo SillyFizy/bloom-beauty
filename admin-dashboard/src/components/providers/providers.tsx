@@ -14,7 +14,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 5 * 60 * 1000, // 5 minutes
-            cacheTime: 10 * 60 * 1000, // 10 minutes
+            gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime in v5)
             retry: (failureCount, error: any) => {
               // Don't retry on 4xx errors except 401
               if (error?.status >= 400 && error?.status < 500 && error?.status !== 401) {
@@ -41,8 +41,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       </ThemeProvider>
       {process.env.NODE_ENV === 'development' && (
         <ReactQueryDevtools 
-          initialIsOpen={false} 
-          position="bottom-right"
+          initialIsOpen={false}
         />
       )}
     </QueryClientProvider>

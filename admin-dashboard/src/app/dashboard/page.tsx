@@ -21,8 +21,8 @@ import { useToastContext } from "@/components/providers/ToastProvider";
 export default function DashboardPage() {
   const { data: stats } = useProductStats();
   const { data: productsData } = useProducts({ page: 1, page_size: 50, ordering: "-created_at" });
-  const products = productsData?.results || [];
-  const lowStockProducts = products.filter((p) => p.is_low_stock);
+  const products = (productsData as any)?.results || [];
+  const lowStockProducts = products.filter((p: any) => p.is_low_stock);
   const { showComingSoon } = useToastContext();
 
   const summaryCards = [
@@ -50,14 +50,14 @@ export default function DashboardPage() {
   ];
 
   // Calculate inventory value
-  const inventoryValue = products.reduce((sum, product) => {
+  const inventoryValue = products.reduce((sum: number, product: any) => {
     const price = product.sale_price ?? product.price;
     return sum + price * product.stock_quantity;
   }, 0);
 
   summaryCards.splice(2, 0, {
     title: "Inventory Value",
-    value: formatCurrency(inventoryValue),
+    value: formatCurrency(inventoryValue) as any,
     icon: DollarSign,
     description: "Total stock value",
     color: "bg-purple-500",
@@ -97,7 +97,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-4">
                 {products.length > 0 ? (
-                  products.slice(0, 5).map((product) => (
+                  products.slice(0, 5).map((product: any) => (
                     <div
                       key={product.id}
                       className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
@@ -151,7 +151,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-4">
                 {lowStockProducts.length > 0 ? (
-                  lowStockProducts.slice(0, 5).map((product) => (
+                  lowStockProducts.slice(0, 5).map((product: any) => (
                     <div
                       key={product.id}
                       className="flex items-center justify-between p-3 bg-red-50 rounded-lg"

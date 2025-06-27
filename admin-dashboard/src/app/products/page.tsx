@@ -66,8 +66,8 @@ function ProductsPageInner() {
   // Mutations
   const deleteProduct = useDeleteProduct();
 
-  const products = productsData?.results || [];
-  const totalCount = productsData?.count || 0;
+  const products = (productsData as any)?.results || [];
+  const totalCount = (productsData as any)?.count || 0;
   const totalPages = Math.ceil(totalCount / (filters.page_size || 20));
 
   // Handle pagination
@@ -88,7 +88,7 @@ function ProductsPageInner() {
     if (selectedProducts.length === products.length) {
       setSelectedProducts([]);
     } else {
-      setSelectedProducts(products.map(p => p.id));
+      setSelectedProducts(products.map((p: any) => p.id));
     }
   };
 
@@ -317,7 +317,7 @@ function ProductsPageInner() {
                     </td>
                   </tr>
                 ) : (
-                  products.map((product) => (
+                  products.map((product: any) => (
                     <ProductTableRow
                       key={product.id}
                       product={product}
@@ -497,7 +497,7 @@ function ProductTableRow({ product, isSelected, onSelect, onDelete, onEdit, cate
           )}
           <div>
             <h3 className="font-medium text-slate-900">{product.name}</h3>
-            <p className="text-sm text-slate-500">SKU: {product.sku}</p>
+            <p className="text-sm text-slate-500">SKU: {(product as any).sku || 'N/A'}</p>
           </div>
         </div>
       </td>
