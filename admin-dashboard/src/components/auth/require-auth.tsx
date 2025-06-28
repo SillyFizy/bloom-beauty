@@ -11,7 +11,7 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children 
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !token) {
+    if (!loading && !token && pathname !== '/login') {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     }
   }, [token, loading, pathname, router]);

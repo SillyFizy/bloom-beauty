@@ -12,6 +12,15 @@ import {
   CelebrityStats,
   RoutineItemFormData,
   ProductPromotionFormData,
+  CelebrityProductPromotion,
+  CelebrityMorningRoutineItem,
+  CelebrityEveningRoutineItem,
+  PromotionFilters,
+  PromotionsResponse,
+  AvailableProductsFilters,
+  AvailableProductsResponse,
+  BulkPromotionData,
+  BulkPromotionResponse,
 } from '@/types/celebrity';
 
 // Query keys for cache management
@@ -27,28 +36,27 @@ export const CELEBRITY_QUERY_KEYS = {
 
 // Celebrity queries
 export function useCelebrities(filters: CelebrityFilters = {}) {
-  return useQuery({
-    queryKey: [...CELEBRITY_QUERY_KEYS.celebrities, filters],
+  return useQuery<CelebritiesResponse>({
+    queryKey: ['celebrities', filters],
     queryFn: () => celebritiesService.getCelebrities(filters),
-    placeholderData: (previousData) => previousData, // React Query v5 replacement for keepPreviousData
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 }
 
 export function useCelebrity(id: number) {
-  return useQuery({
-    queryKey: CELEBRITY_QUERY_KEYS.celebrity(id),
-    queryFn: () => celebritiesService.getCelebrity(id),
-    enabled: !!id && id > 0,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+  return useQuery<Celebrity>({
+    queryKey: ['celebrity', id],
+    queryFn: () => celebritiesService.getCelebrityById(id),
+    enabled: !!id,
   });
 }
 
+// Alias for useCelebrity for backward compatibility
+export const useCelebrityById = useCelebrity;
+
 export function useCelebrityStats() {
-  return useQuery({
-    queryKey: CELEBRITY_QUERY_KEYS.celebrityStats,
+  return useQuery<CelebrityStats>({
+    queryKey: ['celebrity-stats'],
     queryFn: () => celebritiesService.getCelebrityStats(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -58,7 +66,7 @@ export function useCelebrityStats() {
 export function useCelebrityPromotions(celebrityId: number, promotionType?: string) {
   return useQuery({
     queryKey: [...CELEBRITY_QUERY_KEYS.celebrityPromotions(celebrityId), promotionType],
-    queryFn: () => celebritiesService.getCelebrityPromotions(celebrityId, promotionType),
+    queryFn: () => celebritiesService.getCelebrityPromotionsAdmin(celebrityId, { promotion_type: promotionType }),
     enabled: !!celebrityId && celebrityId > 0,
     staleTime: 5 * 60 * 1000,
   });
@@ -98,15 +106,13 @@ export function useCreateCelebrity() {
 
   return useMutation({
     mutationFn: (data: CelebrityFormData) => celebritiesService.createCelebrity(data),
-    onSuccess: (newCelebrity) => {
-      // Invalidate and refetch celebrities list
-      queryClient.invalidateQueries({ queryKey: CELEBRITY_QUERY_KEYS.celebrities });
-      queryClient.invalidateQueries({ queryKey: CELEBRITY_QUERY_KEYS.celebrityStats });
-      
-      toast.success(`Celebrity ${newCelebrity.full_name} created successfully!`);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['celebrities'] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity-stats'] });
+      toast.success('Celebrity created successfully');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to create celebrity');
+      toast.error(error?.message || 'Failed to create celebrity');
     },
   });
 }
@@ -117,18 +123,14 @@ export function useUpdateCelebrity() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<CelebrityFormData> }) =>
       celebritiesService.updateCelebrity(id, data),
-    onSuccess: (updatedCelebrity, { id }) => {
-      // Update the celebrity in cache
-      queryClient.setQueryData(CELEBRITY_QUERY_KEYS.celebrity(id), updatedCelebrity);
-      
-      // Invalidate celebrities list to reflect changes
-      queryClient.invalidateQueries({ queryKey: CELEBRITY_QUERY_KEYS.celebrities });
-      queryClient.invalidateQueries({ queryKey: CELEBRITY_QUERY_KEYS.celebrityStats });
-      
-      toast.success(`Celebrity ${updatedCelebrity.full_name} updated successfully!`);
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['celebrities'] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity', id] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity-stats'] });
+      toast.success('Celebrity updated successfully');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update celebrity');
+      toast.error(error?.message || 'Failed to update celebrity');
     },
   });
 }
@@ -138,18 +140,13 @@ export function useDeleteCelebrity() {
 
   return useMutation({
     mutationFn: (id: number) => celebritiesService.deleteCelebrity(id),
-    onSuccess: (_, deletedId) => {
-      // Remove from cache
-      queryClient.removeQueries({ queryKey: CELEBRITY_QUERY_KEYS.celebrity(deletedId) });
-      
-      // Invalidate celebrities list
-      queryClient.invalidateQueries({ queryKey: CELEBRITY_QUERY_KEYS.celebrities });
-      queryClient.invalidateQueries({ queryKey: CELEBRITY_QUERY_KEYS.celebrityStats });
-      
-      toast.success('Celebrity deleted successfully!');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['celebrities'] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity-stats'] });
+      toast.success('Celebrity deleted successfully');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete celebrity');
+      toast.error(error?.message || 'Failed to delete celebrity');
     },
   });
 }
@@ -206,7 +203,33 @@ export function useBulkDeleteCelebrities() {
   });
 }
 
-// Promotion mutations
+// Celebrity product promotion hooks
+export function useCelebrityPromotionsAdmin(celebrityId: number, filters: PromotionFilters = {}) {
+  return useQuery<PromotionsResponse>({
+    queryKey: ['celebrity-promotions-admin', celebrityId, filters],
+    queryFn: () => celebritiesService.getCelebrityPromotionsAdmin(celebrityId, filters),
+    enabled: !!celebrityId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCelebrityPromotionDetail(celebrityId: number, promotionId: number) {
+  return useQuery<CelebrityProductPromotion>({
+    queryKey: ['celebrity-promotion-detail', celebrityId, promotionId],
+    queryFn: () => celebritiesService.getCelebrityPromotionDetail(celebrityId, promotionId),
+    enabled: !!celebrityId && !!promotionId,
+  });
+}
+
+export function useAvailableProductsForCelebrity(celebrityId: number, filters: AvailableProductsFilters = {}) {
+  return useQuery<AvailableProductsResponse>({
+    queryKey: ['available-products-for-celebrity', celebrityId, filters],
+    queryFn: () => celebritiesService.getAvailableProductsForCelebrity(celebrityId, filters),
+    enabled: !!celebrityId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
 export function useCreateCelebrityPromotion() {
   const queryClient = useQueryClient();
 
@@ -214,19 +237,40 @@ export function useCreateCelebrityPromotion() {
     mutationFn: ({ celebrityId, data }: { celebrityId: number; data: ProductPromotionFormData }) =>
       celebritiesService.createCelebrityPromotion(celebrityId, data),
     onSuccess: (_, { celebrityId }) => {
-      // Invalidate celebrity promotions
-      queryClient.invalidateQueries({ 
-        queryKey: CELEBRITY_QUERY_KEYS.celebrityPromotions(celebrityId) 
-      });
-      // Refresh celebrity details
-      queryClient.invalidateQueries({ 
-        queryKey: CELEBRITY_QUERY_KEYS.celebrity(celebrityId) 
-      });
-      
-      toast.success('Product promotion added successfully!');
+      queryClient.invalidateQueries({ queryKey: ['celebrity-promotions-admin', celebrityId] });
+      queryClient.invalidateQueries({ queryKey: ['available-products-for-celebrity', celebrityId] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity', celebrityId] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity-stats'] });
+      toast.success('Product promotion created successfully');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to add product promotion');
+      toast.error(error?.message || 'Failed to create product promotion');
+    },
+  });
+}
+
+export function useUpdateCelebrityPromotion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ 
+      celebrityId, 
+      promotionId, 
+      data 
+    }: { 
+      celebrityId: number; 
+      promotionId: number; 
+      data: Partial<ProductPromotionFormData> 
+    }) =>
+      celebritiesService.updateCelebrityPromotion(celebrityId, promotionId, data),
+    onSuccess: (_, { celebrityId, promotionId }) => {
+      queryClient.invalidateQueries({ queryKey: ['celebrity-promotions-admin', celebrityId] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity-promotion-detail', celebrityId, promotionId] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity', celebrityId] });
+      toast.success('Product promotion updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to update product promotion');
     },
   });
 }
@@ -235,22 +279,57 @@ export function useDeleteCelebrityPromotion() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ promotionId, celebrityId }: { promotionId: number; celebrityId: number }) =>
-      celebritiesService.deleteCelebrityPromotion(promotionId),
+    mutationFn: ({ celebrityId, promotionId }: { celebrityId: number; promotionId: number }) =>
+      celebritiesService.deleteCelebrityPromotion(celebrityId, promotionId),
     onSuccess: (_, { celebrityId }) => {
-      // Invalidate celebrity promotions
-      queryClient.invalidateQueries({ 
-        queryKey: CELEBRITY_QUERY_KEYS.celebrityPromotions(celebrityId) 
-      });
-      // Refresh celebrity details
-      queryClient.invalidateQueries({ 
-        queryKey: CELEBRITY_QUERY_KEYS.celebrity(celebrityId) 
-      });
-      
-      toast.success('Product promotion removed successfully!');
+      queryClient.invalidateQueries({ queryKey: ['celebrity-promotions-admin', celebrityId] });
+      queryClient.invalidateQueries({ queryKey: ['available-products-for-celebrity', celebrityId] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity', celebrityId] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity-stats'] });
+      toast.success('Product promotion deleted successfully');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to remove product promotion');
+      toast.error(error?.message || 'Failed to delete product promotion');
+    },
+  });
+}
+
+export function useBulkManageCelebrityPromotions() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ celebrityId, data }: { celebrityId: number; data: BulkPromotionData }) =>
+      celebritiesService.bulkManageCelebrityPromotions(celebrityId, data),
+    onSuccess: (result: BulkPromotionResponse, { celebrityId, data }) => {
+      queryClient.invalidateQueries({ queryKey: ['celebrity-promotions-admin', celebrityId] });
+      queryClient.invalidateQueries({ queryKey: ['available-products-for-celebrity', celebrityId] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity', celebrityId] });
+      queryClient.invalidateQueries({ queryKey: ['celebrity-stats'] });
+      
+      if (data.action === 'add') {
+        const successCount = result.created_count || 0;
+        const errorCount = result.error_count || 0;
+        
+        if (successCount > 0) {
+          toast.success(`${successCount} product${successCount > 1 ? 's' : ''} added successfully`);
+        }
+        if (errorCount > 0) {
+          toast.error(`${errorCount} product${errorCount > 1 ? 's' : ''} failed to add`);
+        }
+      } else {
+        const removedCount = result.removed_count || 0;
+        const errorCount = result.error_count || 0;
+        
+        if (removedCount > 0) {
+          toast.success(`${removedCount} promotion${removedCount > 1 ? 's' : ''} removed successfully`);
+        }
+        if (errorCount > 0) {
+          toast.error(`${errorCount} promotion${errorCount > 1 ? 's' : ''} failed to remove`);
+        }
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to manage promotions');
     },
   });
 }
@@ -261,7 +340,7 @@ export function useCreateMorningRoutineItem() {
 
   return useMutation({
     mutationFn: (data: { celebrity_id: number; product_id: number; order: number; description?: string }) =>
-      celebritiesService.addMorningRoutineItem(data),
+      celebritiesService.addMorningRoutineItem({ ...data, product: data.product_id }),
     onSuccess: (_, { celebrity_id }) => {
       // Invalidate morning routine
       queryClient.invalidateQueries({ 
@@ -285,7 +364,7 @@ export function useCreateEveningRoutineItem() {
 
   return useMutation({
     mutationFn: (data: { celebrity_id: number; product_id: number; order: number; description?: string }) =>
-      celebritiesService.addEveningRoutineItem(data),
+      celebritiesService.addEveningRoutineItem({ ...data, product: data.product_id }),
     onSuccess: (_, { celebrity_id }) => {
       // Invalidate evening routine
       queryClient.invalidateQueries({ 
@@ -394,6 +473,25 @@ export function useUpdateEveningRoutineItem() {
 // Convenience aliases for the add hooks
 export const useAddMorningRoutineItem = useCreateMorningRoutineItem;
 export const useAddEveningRoutineItem = useCreateEveningRoutineItem;
+
+// Additional aliases for backward compatibility
+export const useCelebrityMorningRoutine = useMorningRoutine;
+export const useCelebrityEveningRoutine = useEveningRoutine;
+export const useDeleteCelebrityRoutineItem = ({ celebrityId, routineType, itemId }: { celebrityId: number; routineType: 'morning' | 'evening'; itemId: number }) => {
+  const deleteMorning = useDeleteMorningRoutineItem();
+  const deleteEvening = useDeleteEveningRoutineItem();
+  
+  return {
+    mutateAsync: async () => {
+      if (routineType === 'morning') {
+        return deleteMorning.mutateAsync({ itemId, celebrityId });
+      } else {
+        return deleteEvening.mutateAsync({ itemId, celebrityId });
+      }
+    },
+    isPending: deleteMorning.isPending || deleteEvening.isPending,
+  };
+};
 
 // Search hook
 export function useSearchCelebrities(query: string) {

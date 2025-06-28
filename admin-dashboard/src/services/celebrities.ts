@@ -11,6 +11,12 @@ import {
   CelebrityEveningRoutineItem,
   RoutineItemFormData,
   ProductPromotionFormData,
+  PromotionFilters,
+  PromotionsResponse,
+  AvailableProductsFilters,
+  AvailableProductsResponse,
+  BulkPromotionData,
+  BulkPromotionResponse,
 } from '@/types/celebrity';
 
 class CelebritiesService {
@@ -22,7 +28,7 @@ class CelebritiesService {
     return apiClient.get<CelebritiesResponse>(`${this.baseUrl}/${queryString}`);
   }
 
-  async getCelebrity(id: number): Promise<Celebrity> {
+  async getCelebrityById(id: number): Promise<Celebrity> {
     return apiClient.get<Celebrity>(`${this.baseUrl}/${id}/`);
   }
 
@@ -47,31 +53,72 @@ class CelebritiesService {
     return apiClient.get<CelebrityStats>(`${this.baseUrl}/stats/`);
   }
 
-  // Celebrity promotions
-  async getCelebrityPromotions(celebrityId: number, promotionType?: string): Promise<{
-    celebrity: string;
-    promotions: CelebrityProductPromotion[];
-  }> {
-    const queryString = promotionType ? buildQueryString({ type: promotionType }) : '';
-    return apiClient.get(`${this.baseUrl}/${celebrityId}/promotions/${queryString}`);
+  // Celebrity product promotion management
+  async getCelebrityPromotionsAdmin(
+    celebrityId: number, 
+    filters: PromotionFilters = {}
+  ): Promise<PromotionsResponse> {
+    const queryString = buildQueryString(filters);
+    return apiClient.get<PromotionsResponse>(
+      `${this.baseUrl}/${celebrityId}/admin/promotions/${queryString}`
+    );
   }
 
   async createCelebrityPromotion(
-    celebrityId: number,
+    celebrityId: number, 
     data: ProductPromotionFormData
   ): Promise<CelebrityProductPromotion> {
-    return apiClient.post(`${this.baseUrl}/${celebrityId}/promotions/`, data);
+    return apiClient.post<CelebrityProductPromotion>(
+      `${this.baseUrl}/${celebrityId}/admin/promotions/`,
+      data
+    );
+  }
+
+  async getCelebrityPromotionDetail(
+    celebrityId: number, 
+    promotionId: number
+  ): Promise<CelebrityProductPromotion> {
+    return apiClient.get<CelebrityProductPromotion>(
+      `${this.baseUrl}/${celebrityId}/admin/promotions/${promotionId}/`
+    );
   }
 
   async updateCelebrityPromotion(
-    promotionId: number,
+    celebrityId: number, 
+    promotionId: number, 
     data: Partial<ProductPromotionFormData>
   ): Promise<CelebrityProductPromotion> {
-    return apiClient.patch(`promotions/${promotionId}/`, data);
+    return apiClient.patch<CelebrityProductPromotion>(
+      `${this.baseUrl}/${celebrityId}/admin/promotions/${promotionId}/`,
+      data
+    );
   }
 
-  async deleteCelebrityPromotion(promotionId: number): Promise<void> {
-    return apiClient.delete(`promotions/${promotionId}/`);
+  async deleteCelebrityPromotion(
+    celebrityId: number, 
+    promotionId: number
+  ): Promise<void> {
+    return apiClient.delete(`${this.baseUrl}/${celebrityId}/admin/promotions/${promotionId}/`);
+  }
+
+  async getAvailableProductsForCelebrity(
+    celebrityId: number, 
+    filters: AvailableProductsFilters = {}
+  ): Promise<AvailableProductsResponse> {
+    const queryString = buildQueryString(filters);
+    return apiClient.get<AvailableProductsResponse>(
+      `${this.baseUrl}/${celebrityId}/admin/available-products/${queryString}`
+    );
+  }
+
+  async bulkManageCelebrityPromotions(
+    celebrityId: number, 
+    data: BulkPromotionData
+  ): Promise<BulkPromotionResponse> {
+    return apiClient.post<BulkPromotionResponse>(
+      `${this.baseUrl}/${celebrityId}/admin/bulk-promotions/`,
+      data
+    );
   }
 
   // Morning routine management
@@ -92,12 +139,12 @@ class CelebritiesService {
   // Add convenience method for the new hook structure
   async addMorningRoutineItem(data: {
     celebrity_id: number;
-    product_id: number;
+    product: number;
     order: number;
     description?: string;
   }): Promise<CelebrityMorningRoutineItem> {
     return this.createMorningRoutineItem(data.celebrity_id, {
-      product_id: data.product_id,
+      product: data.product,
       order: data.order,
       description: data.description,
     });
@@ -132,12 +179,12 @@ class CelebritiesService {
   // Add convenience method for the new hook structure
   async addEveningRoutineItem(data: {
     celebrity_id: number;
-    product_id: number;
+    product: number;
     order: number;
     description?: string;
   }): Promise<CelebrityEveningRoutineItem> {
     return this.createEveningRoutineItem(data.celebrity_id, {
-      product_id: data.product_id,
+      product: data.product,
       order: data.order,
       description: data.description,
     });

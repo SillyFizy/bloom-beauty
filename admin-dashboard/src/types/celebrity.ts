@@ -22,7 +22,7 @@ export interface Celebrity {
   // Related data (when fetching details)
   morning_routine_items?: CelebrityMorningRoutineItem[];
   evening_routine_items?: CelebrityEveningRoutineItem[];
-  product_promotions?: CelebrityProductPromotion[];
+  product_promotions: CelebrityProductPromotion[];
 }
 
 export interface CelebrityListItem {
@@ -52,21 +52,8 @@ export interface CelebrityFormData {
 
 export interface CelebrityProductPromotion {
   id: number;
-  celebrity: {
-    id: number;
-    full_name: string;
-    image?: string;
-  };
-  product: {
-    id: number;
-    name: string;
-    featured_image?: string;
-    price: number;
-    brand?: {
-      id: number;
-      name: string;
-    };
-  };
+  celebrity: CelebrityBasic;
+  product: ProductBasic;
   testimonial?: string;
   promotion_type: 'general' | 'morning_routine' | 'evening_routine' | 'special_pick';
   is_featured: boolean;
@@ -74,35 +61,61 @@ export interface CelebrityProductPromotion {
   updated_at: string;
 }
 
-export interface CelebrityRoutineItem {
+export interface CelebrityBasic {
   id: number;
-  product: {
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  image?: string;
+  is_active: boolean;
+}
+
+export interface ProductBasic {
+  id: number;
+  name: string;
+  price: number;
+  sale_price?: number;
+  featured_image?: string;
+  category?: {
     id: number;
     name: string;
-    featured_image?: string;
-    price: number;
-    brand?: {
-      id: number;
-      name: string;
-    };
   };
+  brand?: {
+    id: number;
+    name: string;
+  };
+  is_active: boolean;
+  stock: number;
+}
+
+export interface CelebrityMorningRoutineItem {
+  id: number;
+  celebrity: CelebrityBasic;
+  product: ProductBasic;
   order: number;
   description?: string;
   created_at: string;
+  updated_at: string;
 }
 
-export interface CelebrityMorningRoutineItem extends CelebrityRoutineItem {}
-
-export interface CelebrityEveningRoutineItem extends CelebrityRoutineItem {}
+export interface CelebrityEveningRoutineItem {
+  id: number;
+  celebrity: CelebrityBasic;
+  product: ProductBasic;
+  order: number;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface RoutineItemFormData {
-  product_id: number;
+  product: number;
   order: number;
   description?: string;
 }
 
 export interface ProductPromotionFormData {
-  product_id: number;
+  product: number;
   testimonial?: string;
   promotion_type: 'general' | 'morning_routine' | 'evening_routine' | 'special_pick';
   is_featured: boolean;
@@ -129,4 +142,58 @@ export interface CelebrityStats {
   total_promotions: number;
   featured_promotions: number;
   total_routine_items: number;
+}
+
+export interface PromotionFilters {
+  page?: number;
+  page_size?: number;
+  promotion_type?: string;
+  is_featured?: boolean;
+  search?: string;
+}
+
+export interface AvailableProductsFilters {
+  page?: number;
+  page_size?: number;
+  category_id?: number;
+  brand_id?: number;
+  search?: string;
+}
+
+export interface PromotionsResponse {
+  results: CelebrityProductPromotion[];
+  count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
+export interface AvailableProductsResponse {
+  results: ProductBasic[];
+  count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
+export interface BulkPromotionData {
+  action: 'add' | 'remove';
+  product_ids: number[];
+  promotion_data?: {
+    testimonial?: string;
+    promotion_type: 'general' | 'morning_routine' | 'evening_routine' | 'special_pick';
+    is_featured: boolean;
+  };
+}
+
+export interface BulkPromotionResponse {
+  created?: CelebrityProductPromotion[];
+  removed_count?: number;
+  errors: string[];
+  created_count?: number;
+  error_count: number;
 } 

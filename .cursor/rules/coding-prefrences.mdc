@@ -25,3 +25,4 @@ is likely only to be run once
 — Never add stubbing or fake data patterns to code that affects the dev
 or prod environments
 - Never overwrite my .env file without first asking and confirming
+- dont use && in powershell commands its not supported, use ';'

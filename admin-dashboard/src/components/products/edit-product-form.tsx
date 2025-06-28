@@ -5,6 +5,8 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { CelebritySelector, SelectedCelebrity } from './celebrity-selector';
+import { celebritiesService } from '@/services/celebrities';
 
 import { Product } from '@/types/product';
 import { updateProduct } from '@/services/products';
@@ -62,6 +64,8 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [activeTab, setActiveTab] = useState<'basic' | 'images' | 'variants'>('basic');
+  const [selectedCelebrities, setSelectedCelebrities] = useState<SelectedCelebrity[]>([]);
+  const [originalCelebrities, setOriginalCelebrities] = useState<SelectedCelebrity[]>([]);
   const queryClient = useQueryClient();
 
   // Generate unique SKU
@@ -192,12 +196,33 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
 
       await updateProduct(product.id, formData);
 
+      // Handle celebrity promotions if product is featured
+      if (data.is_featured && selectedCelebrities.length > 0) {
+        for (const celebrity of selectedCelebrities) {
+          try {
+            await celebritiesService.createCelebrityPromotion(celebrity.id, {
+              product: product.id,
+              testimonial: celebrity.testimonial || '',
+              promotion_type: 'general',
+              is_featured: true,
+            });
+          } catch (error) {
+            console.error(`Failed to create promotion for celebrity ${celebrity.name}:`, error);
+            // Continue with other celebrities even if one fails
+          }
+        }
+        
+        if (selectedCelebrities.length > 0) {
+          toast.success(`Product updated with ${selectedCelebrities.length} celebrity endorsement${selectedCelebrities.length > 1 ? 's' : ''}`);
+        }
+      } else {
+        toast.success('Product updated successfully');
+      }
+
       // Refresh caches (fire-and-forget)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.product(product.id) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productStats });
-
-      toast.success('Product updated successfully');
       onSuccess();
     } catch (_) {
       /* Error toast already displayed by apiClient interceptor */
@@ -515,6 +540,24 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
                   </label>
                 </div>
               </div>
+
+              {/* Celebrity Endorsements - shown only when is_featured is checked */}
+              {formValues.is_featured && (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-rose-100 rounded-lg">
+                      <Star className="w-5 h-5 text-rose-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">Featured Product Endorsements</h3>
+                  </div>
+
+                  <CelebritySelector
+                    selectedCelebrities={selectedCelebrities}
+                    onCelebritiesChange={setSelectedCelebrities}
+                    productName={formValues.name || 'this product'}
+                  />
+                </div>
+              )}
 
               {/* Form Actions */}
               <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
