@@ -23,6 +23,7 @@ export const QUERY_KEYS = {
   categories: ['categories'],
   brands: ['brands'],
   productStats: ['products', 'stats'],
+  lowStock: ['products', 'lowStock'],
 } as const;
 
 // Products queries
@@ -233,5 +234,13 @@ export function useUpdateStock() {
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update stock');
     },
+  });
+}
+
+export function useLowStockProducts() {
+  return useQuery({
+    queryKey: QUERY_KEYS.lowStock,
+    queryFn: () => productsService.getLowStockProducts(),
+    staleTime: 5 * 60 * 1000,
   });
 } 

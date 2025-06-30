@@ -4,7 +4,7 @@ import React from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useProducts, useProductStats } from "@/hooks/use-products";
+import { useProducts, useProductStats, useLowStockProducts } from "@/hooks/use-products";
 import { formatCurrency, cn } from "@/lib/utils";
 import {
   Package,
@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   BarChart,
   ShoppingCart,
+  Truck,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,9 +21,9 @@ import { useToastContext } from "@/components/providers/ToastProvider";
 
 export default function DashboardPage() {
   const { data: stats } = useProductStats();
-  const { data: productsData } = useProducts({ page: 1, page_size: 50, ordering: "-created_at" });
+  const { data: lowStockProducts = [] } = useLowStockProducts();
+  const { data: productsData } = useProducts({ page: 1, page_size: 1000, ordering: "-created_at" });
   const products = (productsData as any)?.results || [];
-  const lowStockProducts = products.filter((p: any) => p.is_low_stock);
   const { showComingSoon } = useToastContext();
 
   const summaryCards = [
@@ -42,7 +43,7 @@ export default function DashboardPage() {
     },
     {
       title: "Low Stock Alert",
-      value: stats?.low_stock_products ?? 0,
+      value: lowStockProducts.length,
       icon: AlertTriangle,
       description: "≤ threshold units remaining",
       color: "bg-red-500",
@@ -51,8 +52,9 @@ export default function DashboardPage() {
 
   // Calculate inventory value
   const inventoryValue = products.reduce((sum: number, product: any) => {
-    const price = product.sale_price ?? product.price;
-    return sum + price * product.stock_quantity;
+    const price = product.sale_price ?? product.price ?? 0;
+    const qty = product.stock_quantity ?? product.stock ?? 0;
+    return sum + price * qty;
   }, 0);
 
   summaryCards.splice(2, 0, {
@@ -149,20 +151,20 @@ export default function DashboardPage() {
               <CardTitle>Low Stock Alert</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-80 overflow-y-auto">
                 {lowStockProducts.length > 0 ? (
-                  lowStockProducts.slice(0, 5).map((product: any) => (
+                  lowStockProducts.map((product: any) => (
                     <div
                       key={product.id}
                       className="flex items-center justify-between p-3 bg-red-50 rounded-lg"
                     >
                       <div>
                         <h4 className="font-medium text-slate-900">{product.name}</h4>
-                        <p className="text-sm text-slate-500">{product.sku}</p>
+                        <p className="text-sm text-slate-500">{product.sku ?? '-'}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-red-600">
-                          {product.stock_quantity} units
+                          {product.stock ?? product.stock_quantity ?? 0} units
                         </p>
                         <p className="text-sm text-slate-500">Low stock</p>
                       </div>
@@ -211,15 +213,23 @@ export default function DashboardPage() {
                 <p className="text-sm text-slate-500">Performance insights</p>
               </Button>
 
-              <Button
-                variant="outline"
-                onClick={showComingSoon}
-                className="p-4 h-auto flex flex-col items-start text-left"
+              <Link
+                href="/orders"
+                className="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 <ShoppingCart className="h-8 w-8 text-primary mb-2" />
-                <h3 className="font-medium text-slate-900">Bulk Actions</h3>
-                <p className="text-sm text-slate-500">Update multiple products</p>
-              </Button>
+                <h3 className="font-medium text-slate-900">Manage Orders</h3>
+                <p className="text-sm text-slate-500">View and process orders</p>
+              </Link>
+
+              <Link
+                href="/shipping"
+                className="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                <Truck className="h-8 w-8 text-primary mb-2" />
+                <h3 className="font-medium text-slate-900">Configure Shipping</h3>
+                <p className="text-sm text-slate-500">Manage shipping zones & rates</p>
+              </Link>
             </div>
           </CardContent>
         </Card>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Package, LayoutDashboard, ShoppingCart, Users, Truck, Folder, Tag, Star } from 'lucide-react';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 const sidebarItems = [
   {
@@ -51,6 +52,7 @@ const sidebarItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const user = useCurrentUser();
 
   return (
     <div className="flex h-full w-64 flex-col bg-white shadow-lg border-r border-border">
@@ -91,11 +93,11 @@ export function Sidebar() {
       <div className="border-t border-border p-4">
         <div className="flex items-center">
           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-            <span className="text-sm font-medium text-white">A</span>
+            <span className="text-sm font-medium text-white">{user.initials}</span>
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-foreground">Admin User</p>
-            <p className="text-xs text-muted-foreground">admin@bloombeauty.com</p>
+            <p className="text-sm font-medium text-foreground">{user.fullName}</p>
+            <p className="text-xs text-muted-foreground">{user.phoneNumber || '-'}</p>
           </div>
         </div>
       </div>

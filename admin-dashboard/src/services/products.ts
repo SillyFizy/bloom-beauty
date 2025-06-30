@@ -30,7 +30,18 @@ export class ProductsService {
       page_size: filters.page_size || 20,
     });
 
-    return apiClient.get<ProductsResponse>(`${this.basePath}/${queryString}`);
+    const apiUrl = `${this.basePath}/${queryString}`;
+    console.log('🌐 API Call:', apiUrl);
+    console.log('📋 Filters sent to API:', {
+      search: filters.search,
+      category: filters.category,
+      brand: filters.brand,
+      ordering: filters.ordering || '-created_at',
+      page: filters.page || 1,
+      page_size: filters.page_size || 20,
+    });
+
+    return apiClient.get<ProductsResponse>(apiUrl);
   }
 
   // Get single product by ID
@@ -142,10 +153,21 @@ export class ProductsService {
     active_products: number;
     featured_products: number;
     low_stock_products: number;
-    out_of_stock_products: number;
     on_sale_products: number;
   }> {
-    return apiClient.get<any>(`${this.basePath}/stats/`);
+    // Fetch stats and low-stock list in parallel
+    const [rawStats, lowStock] = await Promise.all([
+      apiClient.get<any>(`${this.basePath}/stats/`),
+      apiClient.get<any[]>(`${this.basePath}/low_stock/`).catch(() => []),
+    ]);
+
+    return {
+      total_products: rawStats.total_products ?? 0,
+      active_products: rawStats.total_products ?? 0, // stats endpoint already excludes inactive
+      featured_products: rawStats.featured_count ?? 0,
+      low_stock_products: lowStock.length,
+      on_sale_products: rawStats.on_sale_count ?? 0,
+    };
   }
 
   // Get featured products
@@ -155,7 +177,8 @@ export class ProductsService {
 
   // Get low stock products
   async getLowStockProducts(): Promise<ProductListItem[]> {
-    return apiClient.get<ProductListItem[]>(`${this.basePath}/low_stock/`);
+    const response = await apiClient.get<ProductsResponse>(`${this.basePath}/low_stock/`);
+    return response.results ?? [];
   }
 
   // Get products on sale

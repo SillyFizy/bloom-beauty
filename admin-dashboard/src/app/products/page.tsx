@@ -20,7 +20,8 @@ import {
   Gem,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useProducts, useProductStats, useCategories, useBrands, useDeleteProduct, QUERY_KEYS } from '@/hooks/use-products';
+import { Card, CardContent } from '@/components/ui/card';
+import { useProducts, useProductStats, useCategories, useBrands, useDeleteProduct, useLowStockProducts, QUERY_KEYS } from '@/hooks/use-products';
 import { useQueryClient } from '@tanstack/react-query';
 import { ProductFilters, ProductListItem } from '@/types/product';
 import { formatCurrency, formatDate, cn, debounce } from '@/lib/utils';
@@ -61,6 +62,14 @@ function ProductsPageInner() {
   const { data: stats } = useProductStats();
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
+  const { data: lowStockProducts = [] } = useLowStockProducts();
+  
+  // Debug logging
+  console.log('🔍 Debug Info:');
+  console.log('Current filters:', filters);
+  console.log('Categories data:', categories);
+  console.log('Brands data:', brands);
+  console.log('Products data:', productsData);
   
   // Mutations
   const deleteProduct = useDeleteProduct();
@@ -68,6 +77,46 @@ function ProductsPageInner() {
   const products = (productsData as any)?.results || [];
   const totalCount = (productsData as any)?.count || 0;
   const totalPages = Math.ceil(totalCount / (filters.page_size || 20));
+
+  // Calculate inventory value like in dashboard
+  const { data: allProductsData } = useProducts({ page: 1, page_size: 1000, ordering: "-created_at" });
+  const allProducts = (allProductsData as any)?.results || [];
+  const inventoryValue = allProducts.reduce((sum: number, product: any) => {
+    const price = product.sale_price ?? product.price ?? 0;
+    const qty = product.stock_quantity ?? product.stock ?? 0;
+    return sum + price * qty;
+  }, 0);
+
+  const summaryCards = [
+    {
+      title: "Total Products",
+      value: stats?.total_products ?? 0,
+      icon: Package,
+      description: `${stats?.active_products ?? 0} active`,
+      color: "bg-blue-500",
+    },
+    {
+      title: "Featured Products",
+      value: stats?.featured_products ?? 0,
+      icon: TrendingUp,
+      description: "Currently featured",
+      color: "bg-green-500",
+    },
+    {
+      title: "Inventory Value",
+      value: formatCurrency(inventoryValue) as any,
+      icon: DollarSign,
+      description: "Total stock value",
+      color: "bg-purple-500",
+    },
+    {
+      title: "Low Stock Alert",
+      value: lowStockProducts.length,
+      icon: AlertTriangle,
+      description: "≤ threshold units remaining",
+      color: "bg-red-500",
+    },
+  ];
 
   // Handle pagination
   const handlePageChange = (page: number) => {
@@ -134,30 +183,24 @@ function ProductsPageInner() {
       <div className="flex-1 space-y-6 p-6 bg-background">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard
-            title="Total Products"
-            value={stats?.total_products || 0}
-            icon={Package}
-            color="primary"
-          />
-          <StatsCard
-            title="Active Products"
-            value={stats?.active_products || 0}
-            icon={TrendingUp}
-            color="success"
-          />
-          <StatsCard
-            title="Featured Products"
-            value={stats?.featured_products || 0}
-            icon={Star}
-            color="accent"
-          />
-          <StatsCard
-            title="Low Stock"
-            value={stats?.low_stock_products || 0}
-            icon={AlertTriangle}
-            color="warning"
-          />
+          {summaryCards.map((stat, index) => (
+            <Card key={index} className="card-hover">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">{stat.title}</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {typeof stat.value === "number" ? stat.value.toLocaleString() : stat.value}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">{stat.description}</p>
+                  </div>
+                  <div className={cn("p-3 rounded-full", stat.color)}>
+                    <stat.icon className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Header and Actions */}
@@ -170,14 +213,6 @@ function ProductsPageInner() {
           </div>
           
           <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-12 rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-primary hover:text-white"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-            </Button>
             <Button 
               size="sm" 
               onClick={handleAddProduct}
@@ -204,11 +239,15 @@ function ProductsPageInner() {
           
           <select
             value={filters.category || ''}
-            onChange={(e) => setFilters(prev => ({ 
-              ...prev, 
-              category: e.target.value ? Number(e.target.value) : undefined,
-              page: 1 
-            }))}
+            onChange={(e) => {
+              const newCategoryFilter = e.target.value ? Number(e.target.value) : undefined;
+              console.log('📂 Category filter changed:', e.target.value, '→', newCategoryFilter);
+              setFilters(prev => ({ 
+                ...prev, 
+                category: newCategoryFilter,
+                page: 1 
+              }));
+            }}
             className="h-12 rounded-xl border border-slate-200 bg-white px-3 text-slate-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 shadow-sm hover:shadow-md transition-all duration-200"
           >
             <option value="">All Categories</option>
@@ -221,11 +260,15 @@ function ProductsPageInner() {
 
           <select
             value={filters.brand || ''}
-            onChange={(e) => setFilters(prev => ({ 
-              ...prev, 
-              brand: e.target.value ? Number(e.target.value) : undefined,
-              page: 1 
-            }))}
+            onChange={(e) => {
+              const newBrandFilter = e.target.value ? Number(e.target.value) : undefined;
+              console.log('🏷️ Brand filter changed:', e.target.value, '→', newBrandFilter);
+              setFilters(prev => ({ 
+                ...prev, 
+                brand: newBrandFilter,
+                page: 1 
+              }));
+            }}
             className="h-12 rounded-xl border border-slate-200 bg-white px-3 text-slate-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 shadow-sm hover:shadow-md transition-all duration-200"
           >
             <option value="">All Brands</option>
@@ -405,40 +448,6 @@ function ProductsPageInner() {
         onSuccess={handleAddProductSuccess}
       />
     </>
-  );
-}
-
-// Stats Card Component
-interface StatsCardProps {
-  title: string;
-  value: number;
-  icon: React.ComponentType<{ className?: string }>;
-  color: 'primary' | 'success' | 'accent' | 'warning';
-}
-
-function StatsCard({ title, value, icon: Icon, color }: StatsCardProps) {
-  const colorClasses = {
-    primary: 'bg-primary-50 text-primary-700 ring-primary-700/10',
-    success: 'bg-green-50 text-green-700 ring-green-700/10',
-    accent: 'bg-accent-50 text-accent-700 ring-accent-700/10',
-    warning: 'bg-orange-50 text-orange-700 ring-orange-700/10'
-  };
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl bg-white p-6 shadow-lg ring-1 ring-slate-900/5 transition-all duration-200 hover:shadow-xl">
-      <dt>
-        <div className={cn(
-          "absolute rounded-xl p-3",
-          colorClasses[color]
-        )}>
-          <Icon className="h-6 w-6" />
-        </div>
-        <p className="ml-16 truncate text-sm font-medium text-slate-500">{title}</p>
-      </dt>
-      <dd className="ml-16 flex items-center">
-        <p className="text-2xl font-semibold text-slate-900">{value.toLocaleString()}</p>
-      </dd>
-    </div>
   );
 }
 
