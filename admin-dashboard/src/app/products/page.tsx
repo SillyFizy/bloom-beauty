@@ -20,7 +20,6 @@ import {
   Gem,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { RequireAuth } from '@/components/auth/require-auth';
 import { useProducts, useProductStats, useCategories, useBrands, useDeleteProduct, QUERY_KEYS } from '@/hooks/use-products';
 import { useQueryClient } from '@tanstack/react-query';
 import { ProductFilters, ProductListItem } from '@/types/product';
@@ -571,9 +570,5 @@ function ProductTableRow({ product, isSelected, onSelect, onDelete, onEdit, cate
 }
 
 export default function ProductsPage() {
-  return (
-    <RequireAuth>
-      <ProductsPageInner />
-    </RequireAuth>
-  );
+  return <ProductsPageInner />;
 } 

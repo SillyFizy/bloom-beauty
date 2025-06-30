@@ -11,6 +11,6 @@ export function useCustomers(filters: CustomerFilters = {}) {
   return useQuery<CustomersResponse, Error>({
     queryKey: QUERY_KEYS.customerList(filters),
     queryFn: () => customersService.getCustomers(filters),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 } 

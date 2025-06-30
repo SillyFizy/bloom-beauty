@@ -12,6 +12,11 @@ class OrdersService {
   async updateOrderStatus(orderId: number, status: OrderStatus) {
     return apiClient.patch(`${this.baseUrl}/${orderId}/`, { status });
   }
+
+  // Fetch single order with its items for detail view
+  async getOrder(orderId: number) {
+    return apiClient.get<any>(`${this.baseUrl}/${orderId}/`);
+  }
 }
 
 export const ordersService = new OrdersService(); 

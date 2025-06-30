@@ -1,5 +1,6 @@
-import { redirect } from 'next/navigation';
+'use client';
 
 export default function HomePage() {
-  redirect('/dashboard');
+  // Middleware handles routing immediately, this should rarely be seen
+  return null;
 } 

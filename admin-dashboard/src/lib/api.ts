@@ -5,8 +5,8 @@ import toast from 'react-hot-toast';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 const MEDIA_BASE_URL = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || 'http://localhost:8000/media';
 
-// Request timeout in milliseconds
-const REQUEST_TIMEOUT = 30000;
+// Request timeout in milliseconds - reduced for faster responses
+const REQUEST_TIMEOUT = 10000;
 
 export interface ApiResponse<T = any> {
   data: T;
@@ -19,6 +19,24 @@ export interface ApiError {
   status: number;
   errors?: Record<string, string[]>;
 }
+
+// Cache token to avoid repeated localStorage access
+let cachedToken: string | null = null;
+
+const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  // Use cached token if available
+  if (cachedToken) return cachedToken;
+  
+  // Get from localStorage and cache it
+  cachedToken = localStorage.getItem('auth_token');
+  return cachedToken;
+};
+
+const clearTokenCache = () => {
+  cachedToken = null;
+};
 
 class ApiClient {
   private client: AxiosInstance;
@@ -37,21 +55,13 @@ class ApiClient {
   }
 
   private setupInterceptors(): void {
-    // Request interceptor
+    // Request interceptor - optimized for speed
     this.client.interceptors.request.use(
       (config) => {
-        // Add auth token if available
-        const token = localStorage.getItem('auth_token');
+        // Add auth token if available - use cached version
+        const token = getAuthToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
-        }
-
-        // Add timestamp to prevent caching issues
-        if (config.method === 'get') {
-          config.params = {
-            ...config.params,
-            _t: Date.now(),
-          };
         }
 
         return config;
@@ -61,7 +71,7 @@ class ApiClient {
       }
     );
 
-    // Response interceptor
+    // Response interceptor - simplified error handling
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
         return response;
@@ -69,8 +79,8 @@ class ApiClient {
       (error) => {
         const apiError = this.handleError(error);
         
-        // Show toast for non-404 errors
-        if (apiError.status !== 404) {
+        // Only show toast for critical errors to avoid UI slowdown
+        if (apiError.status >= 500 || apiError.status === 0) {
           toast.error(apiError.message);
         }
 
@@ -81,7 +91,6 @@ class ApiClient {
 
   private handleError(error: any): ApiError {
     if (error.response) {
-      // Server responded with error status
       const { status, data } = error.response;
       
       let message = 'An error occurred';
@@ -99,7 +108,6 @@ class ApiClient {
         } else if (data.non_field_errors) {
           message = data.non_field_errors[0] || message;
         } else {
-          // Handle field-specific errors
           errors = data;
           const firstError = Object.values(data)[0];
           if (Array.isArray(firstError) && firstError.length > 0) {
@@ -108,24 +116,27 @@ class ApiClient {
         }
       }
 
-      return {
-        message,
-        status,
-        errors,
-      };
+      return { message, status, errors };
     } else if (error.request) {
-      // Network error
       return {
         message: 'Network error. Please check your connection.',
         status: 0,
       };
     } else {
-      // Other error
       return {
         message: error.message || 'An unexpected error occurred',
         status: 0,
       };
     }
+  }
+
+  // Update token cache when login/logout occurs
+  updateTokenCache(token: string | null) {
+    cachedToken = token;
+  }
+
+  clearTokenCache() {
+    clearTokenCache();
   }
 
   // Generic HTTP methods
@@ -156,7 +167,6 @@ class ApiClient {
 
   // File upload method
   async uploadFile<T>(url: string, formData: FormData, config?: AxiosRequestConfig): Promise<T> {
-    // Default to POST but allow caller to specify PUT/PATCH via config.method
     const method = (config?.method || 'POST').toUpperCase();
 
     const axiosConfig: AxiosRequestConfig = {
@@ -194,19 +204,21 @@ class ApiClient {
 export const apiClient = new ApiClient();
 
 // Utility function for building query strings
+// Returns a string that is either:
+//   ""                    -> when no params provided
+//   "?key1=value1&key2=2" -> when params exist
+// This allows consumers to simply concatenate it to a base path using
+// `${path}/${queryString}` (note the preceding `/`) without worrying about
+// leading question-marks or empty strings.
 export const buildQueryString = (params: Record<string, any>): string => {
   const searchParams = new URLSearchParams();
-  
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      if (Array.isArray(value)) {
-        value.forEach(v => searchParams.append(key, String(v)));
-      } else {
-        searchParams.append(key, String(value));
-      }
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== null && value !== undefined && value !== '') {
+      searchParams.append(key, String(value));
     }
-  });
-  
-  const queryString = searchParams.toString();
-  return queryString ? `?${queryString}` : '';
+  }
+
+  const qs = searchParams.toString();
+  return qs ? `?${qs}` : '';
 }; 

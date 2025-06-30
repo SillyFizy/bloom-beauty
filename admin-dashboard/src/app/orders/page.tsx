@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useOrders } from '@/hooks/use-orders';
 import { OrderTable } from '@/components/orders/order-table';
 import { Loader2, Search } from 'lucide-react';
+import { OrdersResponse } from '@/types/order';
 
 export default function OrdersPage() {
   const [search, setSearch] = useState('');
@@ -14,6 +15,9 @@ export default function OrdersPage() {
 
   const filters = { search: debouncedSearch, page_size: 50 } as const;
   const { data, isLoading, isError, refetch } = useOrders(filters);
+
+  // Type assertion for the data
+  const ordersData = data as OrdersResponse | undefined;
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -48,16 +52,16 @@ export default function OrdersPage() {
           <div className="flex items-center justify-center py-32">
             <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
           </div>
-        ) : isError || !data ? (
+        ) : isError || !ordersData ? (
           <div className="flex items-center justify-center py-32 text-center">
             <p className="text-sm text-slate-500 max-w-xs">Failed to load orders. Please try again later.</p>
           </div>
-        ) : data.results.length === 0 ? (
+        ) : ordersData.results.length === 0 ? (
           <div className="flex items-center justify-center py-32 text-center">
             <p className="text-sm text-slate-500 max-w-xs">No orders found.</p>
           </div>
         ) : (
-          <OrderTable orders={data.results} />
+          <OrderTable orders={ordersData.results} />
         )}
       </div>
     </DashboardLayout>

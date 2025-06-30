@@ -11,7 +11,7 @@ export function useOrders(filters: OrderFilters = {}) {
   return useQuery<OrdersResponse, Error>({
     queryKey: QUERY_KEYS.orderList(filters),
     queryFn: () => ordersService.getOrders(filters),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -23,5 +23,14 @@ export function useUpdateOrderStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.orders });
     },
+  });
+}
+
+// Fetch single order detail
+export function useOrder(orderId: number) {
+  return useQuery({
+    queryKey: ['order', orderId],
+    queryFn: () => ordersService.getOrder(orderId),
+    enabled: !!orderId,
   });
 } 

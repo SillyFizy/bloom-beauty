@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useCustomers } from '@/hooks/use-customers';
 import { CustomerTable } from '@/components/customers/customer-table';
 import { Loader2, Search } from 'lucide-react';
+import { CustomersResponse } from '@/types/customer';
 
 export default function CustomersPage() {
   const [search, setSearch] = useState('');
@@ -14,6 +15,9 @@ export default function CustomersPage() {
 
   const filters = { search: debouncedSearch, page_size: 50 } as const;
   const { data, isLoading, isError, refetch } = useCustomers(filters);
+
+  // Type assertion for the data
+  const customersData = data as CustomersResponse | undefined;
 
   // Debounce search input
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,18 +55,18 @@ export default function CustomersPage() {
           <div className="flex items-center justify-center py-32">
             <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
           </div>
-        ) : isError || !data ? (
+        ) : isError || !customersData ? (
           <div className="flex items-center justify-center py-32 text-center">
             <p className="text-sm text-slate-500 max-w-xs">
               Failed to load customers. Please try again later.
             </p>
           </div>
-        ) : data.results.length === 0 ? (
+        ) : customersData.results.length === 0 ? (
           <div className="flex items-center justify-center py-32 text-center">
             <p className="text-sm text-slate-500 max-w-xs">No customers found.</p>
           </div>
         ) : (
-          <CustomerTable customers={data.results} />
+          <CustomerTable customers={customersData.results} />
         )}
       </div>
     </DashboardLayout>

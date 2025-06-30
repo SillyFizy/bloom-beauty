@@ -1,33 +1,40 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
+  // Optimize for speed
   experimental: {
-    optimizePackageImports: ['lucide-react'],
+    optimizePackageImports: ['lucide-react', '@tanstack/react-query'],
   },
+  
+  // Faster builds
+  typescript: {
+    // Only type-check in production builds
+    ignoreBuildErrors: process.env.NODE_ENV === 'development',
+  },
+  
+  // Optimize images
   images: {
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: '192.168.68.127',
-        port: '8000',
-        pathname: '/media/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/media/**',
-      },
-      {
-        protocol: 'http',
-        hostname: '127.0.0.1',
-        port: '8000',
-        pathname: '/media/**',
-      },
-    ],
-    formats: ['image/webp', 'image/avif'],
+    domains: ['localhost'],
+    formats: ['image/webp'],
   },
+  
+  // Reduce bundle size
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  
+  // Faster development
+  reactStrictMode: false, // Disable for faster development
+  
+  // Optimize webpack
+  webpack: (config, { dev }) => {
+    if (dev) {
+      // Faster development builds
+      config.optimization.splitChunks = false;
+    }
+    return config;
+  },
+  
+  swcMinify: true,
   async headers() {
     return [
       {
