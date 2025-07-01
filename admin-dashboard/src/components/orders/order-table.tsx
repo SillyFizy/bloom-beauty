@@ -10,11 +10,14 @@ interface OrderTableProps {
 }
 
 const statusOptions: { value: OrderStatus; label: string }[] = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
   { value: 'processing', label: 'Processing' },
+  { value: 'packed', label: 'Packed' },
   { value: 'shipped', label: 'Shipped' },
+  { value: 'delivered', label: 'Delivered' },
   { value: 'returned', label: 'On the Way Back' },
   { value: 'cancelled', label: 'Rejected' },
-  { value: 'delivered', label: 'Delivered' },
 ];
 
 // Format IQD currency
@@ -29,12 +32,15 @@ const formatIQD = (amount: number): string => {
 
 // Status colors
 const getStatusColor = (status: OrderStatus): string => {
-  const colorMap = {
+  const colorMap: Record<OrderStatus, string> = {
+    pending: "bg-orange-100 text-orange-800 border-orange-200",
+    confirmed: "bg-cyan-100 text-cyan-800 border-cyan-200",
     processing: "bg-blue-100 text-blue-800 border-blue-200",
+    packed: "bg-purple-100 text-purple-800 border-purple-200",
     shipped: "bg-green-100 text-green-800 border-green-200",
+    delivered: "bg-emerald-100 text-emerald-800 border-emerald-200",
     returned: "bg-yellow-100 text-yellow-800 border-yellow-200",
     cancelled: "bg-red-100 text-red-800 border-red-200",
-    delivered: "bg-emerald-100 text-emerald-800 border-emerald-200",
   };
   return colorMap[status] || "bg-gray-100 text-gray-800 border-gray-200";
 };

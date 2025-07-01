@@ -72,7 +72,7 @@ export function useToast() {
   }, []);
 
   const showComingSoon = useCallback(() => {
-    toast({ description: 'Coming Soon', variant: 'default' });
+    return toast({ description: 'Coming Soon', variant: 'default' });
   }, [toast]);
 
   return {

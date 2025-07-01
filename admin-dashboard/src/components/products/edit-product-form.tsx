@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { CelebritySelector, SelectedCelebrity } from './celebrity-selector';
+import { NavigationCategorySelector } from './navigation-category-selector';
 import { celebritiesService } from '@/services/celebrities';
 
 import { Product } from '@/types/product';
@@ -17,6 +18,11 @@ import { VariantManager } from './variant-manager';
 import type { Category, Brand } from '@/types/product';
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/hooks/use-products';
+import { 
+  useAddCategoryProducts,
+  useRemoveCategoryProducts,
+  useCategoryProducts
+} from '@/hooks/use-navigation-categories';
 import { 
   Package, 
   DollarSign, 
@@ -32,7 +38,8 @@ import {
   AlertCircle,
   CheckCircle,
   Hash,
-  Shuffle
+  Shuffle,
+  Grid3X3
 } from 'lucide-react';
 
 const productSchema = z.object({
@@ -53,6 +60,12 @@ const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>;
 
+interface SelectedNavigationCategory {
+  id: number;
+  name: string;
+  is_featured?: boolean;
+}
+
 interface EditProductFormProps {
   product: Product;
   onSuccess: () => void;
@@ -66,7 +79,64 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
   const [activeTab, setActiveTab] = useState<'basic' | 'images' | 'variants'>('basic');
   const [selectedCelebrities, setSelectedCelebrities] = useState<SelectedCelebrity[]>([]);
   const [originalCelebrities, setOriginalCelebrities] = useState<SelectedCelebrity[]>([]);
+  const [selectedNavigationCategories, setSelectedNavigationCategories] = useState<SelectedNavigationCategory[]>([]);
+  const [originalNavigationCategories, setOriginalNavigationCategories] = useState<SelectedNavigationCategory[]>([]);
   const queryClient = useQueryClient();
+
+  // Navigation category hooks
+  // const { data: productNavigationCategories = [], isLoading: loadingNavCategories } = useCategoryProducts(product.id);
+  const addNavCategoryMutation = useAddCategoryProducts();
+  const removeNavCategoryMutation = useRemoveCategoryProducts();
+
+  // Helper function to check if navigation categories have changed
+  const hasNavigationCategoriesChanged = () => {
+    if (selectedNavigationCategories.length !== originalNavigationCategories.length) {
+      return true;
+    }
+    
+    const originalIds = new Set(originalNavigationCategories.map(cat => cat.id));
+    const selectedIds = new Set(selectedNavigationCategories.map(cat => cat.id));
+    
+    // Check if any IDs are different
+    const selectedIdsArray = Array.from(selectedIds);
+    const originalIdsArray = Array.from(originalIds);
+    
+    if (selectedIdsArray.some(id => !originalIds.has(id))) return true;
+    if (originalIdsArray.some(id => !selectedIds.has(id))) return true;
+    
+    // Check if featured status changed for any category
+    const hasFeaturedChanges = selectedNavigationCategories.some(selected => {
+      const original = originalNavigationCategories.find(cat => cat.id === selected.id);
+      return original && original.is_featured !== selected.is_featured;
+    });
+    
+    return hasFeaturedChanges;
+  };
+
+  // Helper function to check if celebrities have changed
+  const hasCelebritiesChanged = () => {
+    if (selectedCelebrities.length !== originalCelebrities.length) {
+      return true;
+    }
+    
+    const originalIds = new Set(originalCelebrities.map(cel => cel.id));
+    const selectedIds = new Set(selectedCelebrities.map(cel => cel.id));
+    
+    // Check if any IDs are different
+    const selectedIdsArray = Array.from(selectedIds);
+    const originalIdsArray = Array.from(originalIds);
+    
+    if (selectedIdsArray.some(id => !originalIds.has(id))) return true;
+    if (originalIdsArray.some(id => !selectedIds.has(id))) return true;
+    
+    // Check if testimonials changed for any celebrity
+    const hasTestimonialChanges = selectedCelebrities.some(selected => {
+      const original = originalCelebrities.find(cel => cel.id === selected.id);
+      return original && original.testimonial !== selected.testimonial;
+    });
+    
+    return hasTestimonialChanges;
+  };
 
   // Generate unique SKU
   const generateSku = () => {
@@ -100,6 +170,9 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
 
   // Watch form values for live preview
   const formValues = watch();
+
+  // Combined dirty state - form fields OR navigation categories OR celebrities changed
+  const hasAnyChanges = isDirty || hasNavigationCategoriesChanged() || hasCelebritiesChanged();
 
   // Reinitialize form when `product` prop changes (e.g., after full data fetch)
   useEffect(() => {
@@ -182,6 +255,19 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Load existing navigation categories for the product
+  // useEffect(() => {
+  //   if (productNavigationCategories.length > 0) {
+  //     const navCategories = productNavigationCategories.map(categoryProduct => ({
+  //       id: categoryProduct.product.id, // This should be the navigation category ID
+  //       name: categoryProduct.product.name, // This should be the navigation category name
+  //       is_featured: categoryProduct.is_featured,
+  //     }));
+  //     setSelectedNavigationCategories(navCategories);
+  //     setOriginalNavigationCategories(navCategories);
+  //   }
+  // }, [productNavigationCategories]);
+
   const onSubmit = async (data: ProductFormData) => {
     try {
       setIsLoading(true);
@@ -215,7 +301,48 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
         if (selectedCelebrities.length > 0) {
           toast.success(`Product updated with ${selectedCelebrities.length} celebrity endorsement${selectedCelebrities.length > 1 ? 's' : ''}`);
         }
-      } else {
+      } 
+
+      // Handle navigation category changes
+      const originalCategoryIds = new Set(originalNavigationCategories.map(cat => cat.id));
+      const selectedCategoryIds = new Set(selectedNavigationCategories.map(cat => cat.id));
+      
+      // Categories to add
+      const categoriesToAdd = selectedNavigationCategories.filter(cat => !originalCategoryIds.has(cat.id));
+      
+      // Categories to remove
+      const categoriesToRemove = originalNavigationCategories.filter(cat => !selectedCategoryIds.has(cat.id));
+      
+      // Add new navigation categories
+      for (const category of categoriesToAdd) {
+        try {
+          await addNavCategoryMutation.mutateAsync({
+            categoryId: category.id,
+            data: {
+              product_ids: [product.id],
+              clear_existing: false,
+            },
+          });
+        } catch (error) {
+          console.error(`Failed to add product to navigation category ${category.name}:`, error);
+        }
+      }
+      
+      // Remove navigation categories
+      if (categoriesToRemove.length > 0) {
+        for (const category of categoriesToRemove) {
+          try {
+            await removeNavCategoryMutation.mutateAsync({
+              categoryId: category.id,
+              productIds: [product.id],
+            });
+          } catch (error) {
+            console.error(`Failed to remove product from navigation category ${category.name}:`, error);
+          }
+        }
+      }
+
+      if (!data.is_featured || (selectedCelebrities.length === 0 && categoriesToAdd.length === 0 && categoriesToRemove.length === 0)) {
         toast.success('Product updated successfully');
       }
 
@@ -267,7 +394,7 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
               Featured
             </div>
           )}
-          {isDirty && (
+          {hasAnyChanges && (
             <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
               <AlertCircle className="w-3 h-3" />
               Unsaved
@@ -559,6 +686,22 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
                 </div>
               )}
 
+              {/* Navigation Category Selector */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Grid3X3 className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800">Navigation Categories</h3>
+                </div>
+
+                <NavigationCategorySelector
+                  selectedCategories={selectedNavigationCategories}
+                  onCategoriesChange={(categories) => setSelectedNavigationCategories(categories)}
+                  productName={formValues.name || 'this product'}
+                />
+              </div>
+
               {/* Form Actions */}
               <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
                 <Button
@@ -573,7 +716,7 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
                 </Button>
                 <Button 
                   type="submit" 
-                  disabled={isLoading || !isDirty}
+                  disabled={isLoading || !hasAnyChanges}
                   className="flex items-center gap-2"
                 >
                   {isLoading ? (

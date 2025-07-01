@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/hooks/use-products';
 import { ProductImagesManager } from './product-images-manager';
 import { VariantManager } from './variant-manager';
+import { NavigationCategorySelector } from './navigation-category-selector';
 import { 
   Package, 
   DollarSign, 
@@ -29,11 +30,13 @@ import {
   CheckCircle,
   Hash,
   Shuffle,
-  Plus
+  Plus,
+  Grid3X3
 } from 'lucide-react';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { CelebritySelector, SelectedCelebrity } from './celebrity-selector';
 import { celebritiesService } from '@/services/celebrities';
+import { useAddCategoryProducts } from '@/hooks/use-navigation-categories';
 
 const productSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -66,6 +69,12 @@ interface DraftVariant {
   images: File[];
 }
 
+interface SelectedNavigationCategory {
+  id: number;
+  name: string;
+  is_featured?: boolean;
+}
+
 export function AddProductForm({ onSuccess, onCancel }: AddProductFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -77,7 +86,11 @@ export function AddProductForm({ onSuccess, onCancel }: AddProductFormProps) {
   const [variantForm, setVariantForm] = useState<{ name: string; sku: string; price_adjustment: string; stock: string; images: File[] }>({ name: '', sku: '', price_adjustment: '', stock: '', images: [] });
   const [draftCreating, setDraftCreating] = useState(false);
   const [selectedCelebrities, setSelectedCelebrities] = useState<SelectedCelebrity[]>([]);
+  const [selectedNavigationCategories, setSelectedNavigationCategories] = useState<SelectedNavigationCategory[]>([]);
   const queryClient = useQueryClient();
+  
+  // Navigation category mutation
+  const addCategoryProductsMutation = useAddCategoryProducts();
 
   // Generate unique SKU
   const generateSku = () => {
@@ -214,11 +227,33 @@ export function AddProductForm({ onSuccess, onCancel }: AddProductFormProps) {
         }
       }
 
+      // Associate product with navigation categories
+      if (selectedNavigationCategories.length > 0) {
+        for (const navCategory of selectedNavigationCategories) {
+          try {
+            await addCategoryProductsMutation.mutateAsync({
+              categoryId: navCategory.id,
+              data: {
+                product_ids: [newProduct.id],
+                clear_existing: false,
+              },
+            });
+          } catch (error) {
+            console.error(`Failed to associate product with navigation category ${navCategory.name}:`, error);
+            // Continue with other categories even if one fails
+          }
+        }
+        
+        if (selectedNavigationCategories.length > 0) {
+          toast.success(`Product associated with ${selectedNavigationCategories.length} navigation categor${selectedNavigationCategories.length > 1 ? 'ies' : 'y'}`);
+        }
+      }
+
       // refresh queries
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productStats });
 
-      if (!formValues.is_featured || selectedCelebrities.length === 0) {
+      if (!formValues.is_featured || (selectedCelebrities.length === 0 && selectedNavigationCategories.length === 0)) {
         toast.success('Product created successfully');
       }
       handleFinalSave();
@@ -571,6 +606,22 @@ export function AddProductForm({ onSuccess, onCancel }: AddProductFormProps) {
                   />
                 </div>
               )}
+
+              {/* Navigation Category Selector */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Grid3X3 className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800">Navigation Categories</h3>
+                </div>
+
+                <NavigationCategorySelector
+                  selectedCategories={selectedNavigationCategories}
+                  onCategoriesChange={(categories) => setSelectedNavigationCategories(categories)}
+                  productName={formValues.name || 'this product'}
+                />
+              </div>
 
               {/* Form Actions */}
               <div className="sticky bottom-0 bg-white border-t border-slate-200 -mx-6 px-6 py-4 mt-8">
