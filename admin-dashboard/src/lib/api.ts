@@ -2,8 +2,8 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import toast from 'react-hot-toast';
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
-const MEDIA_BASE_URL = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || 'http://localhost:8000/media';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://18.158.60.33/api/v1';
+const MEDIA_BASE_URL = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || 'http://18.158.60.33/media';
 
 // Request timeout in milliseconds - reduced for faster responses
 const REQUEST_TIMEOUT = 10000;

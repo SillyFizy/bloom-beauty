@@ -32,6 +32,11 @@ const nextConfig = {
         port: '8000',
         pathname: '/media/**',
       },
+      {
+        protocol: 'http',
+        hostname: '18.158.60.33',
+        pathname: '/media/**',
+      },
     ],
     formats: ['image/webp'],
   },
@@ -66,8 +71,8 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: http://192.168.68.127:8000 http://localhost:8000 http://127.0.0.1:8000",
-              "connect-src 'self' http://192.168.68.127:8000 http://localhost:8000 http://127.0.0.1:8000",
+              "img-src 'self' data: blob: http://192.168.68.127:8000 http://localhost:8000 http://127.0.0.1:8000 http://18.158.60.33",
+              "connect-src 'self' http://192.168.68.127:8000 http://localhost:8000 http://127.0.0.1:8000 http://18.158.60.33",
               "frame-src 'none'",
               "object-src 'none'",
               "base-uri 'self'",
@@ -82,13 +87,13 @@ const nextConfig = {
     return [
       {
         source: '/api/v1/:path*',
-        destination: 'http://192.168.68.127:8000/api/v1/:path*',
+        destination: 'http://18.158.60.33/api/v1/:path*',
       },
     ];
   },
   env: {
-    BACKEND_URL: process.env.BACKEND_URL || 'http://192.168.68.127:8000',
-    API_BASE_URL: process.env.API_BASE_URL || 'http://192.168.68.127:8000/api/v1',
+    BACKEND_URL: process.env.BACKEND_URL || 'http://18.158.60.33',
+    API_BASE_URL: process.env.API_BASE_URL || 'http://18.158.60.33/api/v1',
   },
 };
 

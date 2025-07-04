@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   description: 'Modern admin dashboard for managing Bloom Beauty products, celebrities, and orders',
   keywords: ['admin', 'dashboard', 'beauty', 'e-commerce', 'management'],
   authors: [{ name: 'Bloom Beauty Team' }],
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export const viewport: Viewport = {
@@ -28,12 +32,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} bg-[#fafafa]`}>
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-      </head>
-      <body className={`${inter.className} antialiased bg-background min-h-screen`}>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className={`${inter.className} antialiased bg-[#fafafa] min-h-screen`}>
         <Providers>
           {children}
         </Providers>
